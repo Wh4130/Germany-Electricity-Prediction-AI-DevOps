@@ -1,0 +1,13 @@
+[project]
+name = "ai-deployment"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Huang Lin Chun", email = "huang0jin@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "holidays>=0.105",
+    "pandas>=3.0.6",
+]
