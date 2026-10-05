@@ -33,7 +33,7 @@ Derived columns (added by us):
 | `day_of_week_raw` | Weekday number, 0 = Monday ... 6 = Sunday |
 | `day_of_week` | Weekday name |
 | `month` | Month number |
-| `is_holiday` | German nationwide public holiday (`holidays.Germany()`), weekends don't count |
+| `is_holiday` | German nationwide public holiday (`holidays.Germany()`); also True when the holiday falls on a weekend |
 
 ## EDA ideas (rough draft)
 
