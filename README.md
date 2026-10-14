@@ -12,7 +12,11 @@ Exploring and analysing German electricity consumption data from SMARD.
 ```
 src/data/
 ├── raw/        # SMARD downloads, untouched
-└── intermin/   # cleaned data + calendar columns (the folder name is spelled "intermin")
+├── intermin/   # cleaned data + calendar columns (the folder name is spelled "intermin")
+└── features/   # output of the feature pipelines, one sub-folder per feature group
+    ├── calendar/
+    ├── electricity_price/
+    └── weather/
 ```
 
 | Folder | File | Rows | Content |
@@ -21,6 +25,8 @@ src/data/
 | `raw/` | `Realisierter_Stromverbrauch_..._Stunde.csv` | 52608 | SMARD hourly export as downloaded |
 | `intermin/` | `data_daily.csv` | 2192 | Renamed and cleaned columns + calendar columns, standard CSV (`,` separated, `.` decimal) |
 | `intermin/` | `data_hourly.csv` | 52608 | Same as above, hourly |
+| `features/<name>/` | `data_daily.csv` | | Daily output of the pipeline for that feature group |
+| `features/<name>/` | `data_hourly.csv` | | Hourly output, only if the feature exists at hourly resolution |
 
 Notes:
 - `raw/` is never edited. Everything else can be rebuilt from it (and from the notebooks listed below).
@@ -30,6 +36,14 @@ Notes:
 |---|---|
 | `src/notebooks/data_quality_check_and_cleansing.ipynb` | `raw/` -> `intermin/` |
 | `src/notebooks/explortory_data_analysis.ipynb` | EDA on `intermin/` |
+
+## Feature pipelines
+
+Each feature group has one pipeline script in `src/pipelines/`, named after its folder in `src/data/features/` (e.g. `src/pipelines/calendar.py` -> `src/data/features/calendar/`).
+
+- The result of a pipeline is saved in the matching folder under `src/data/features/`, named `data_daily.csv`.
+- If the feature also exists at hourly resolution, it is saved as `data_hourly.csv` in the same folder. If there is no hourly version, skip it.
+- Folders with only a `.gitkeep` are placeholders: the pipeline has not been run yet.
 
 ## Column reference
 
