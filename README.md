@@ -7,9 +7,33 @@ Exploring and analysing German electricity consumption data from SMARD.
 - Files: daily (`_Tag.csv`) and hourly (`_Stunde.csv`) data in `src/data/raw/`
 - Official docs: [`smard-user-guide-09-2021-data.pdf`](./smard-user-guide-09-2021-data.pdf), section 2.1 ~ 2.3.
 
+## Data folder structure
+
+```
+src/data/
+├── raw/        # SMARD downloads, untouched
+└── intermin/   # cleaned data + calendar columns (the folder name is spelled "intermin")
+```
+
+| Folder | File | Rows | Content |
+|---|---|---|---|
+| `raw/` | `Realisierter_Stromverbrauch_..._Tag.csv` | 2192 | SMARD daily export as downloaded (`;` separated, German number format) |
+| `raw/` | `Realisierter_Stromverbrauch_..._Stunde.csv` | 52608 | SMARD hourly export as downloaded |
+| `intermin/` | `data_daily.csv` | 2192 | Renamed and cleaned columns + calendar columns, standard CSV (`,` separated, `.` decimal) |
+| `intermin/` | `data_hourly.csv` | 52608 | Same as above, hourly |
+
+Notes:
+- `raw/` is never edited. Everything else can be rebuilt from it (and from the notebooks listed below).
+- Hourly timestamps are naive local time (Europe/Berlin). SMARD has no 02:00 on the spring DST day and a duplicated 02:00 on the autumn one; keep this in mind when joining external hourly data.
+
+| Notebook | What it does |
+|---|---|
+| `src/notebooks/data_quality_check_and_cleansing.ipynb` | `raw/` -> `intermin/` |
+| `src/notebooks/explortory_data_analysis.ipynb` | EDA on `intermin/` |
+
 ## Column reference
 
-CSV format: separator `;`, decimal `,`, thousands `.`, dates as `dd.mm.yyyy`.
+CSV format of the raw files: separator `;`, decimal `,`, thousands `.`, dates as `dd.mm.yyyy`. The files in `intermin/` are standard CSV.
 
 | Original column name | English column name | Type | Unit | Description |
 |---|---|---|---|---|
@@ -34,6 +58,17 @@ Derived columns (added by us):
 | `day_of_week` | Weekday name |
 | `month` | Month number |
 | `is_holiday` | German nationwide public holiday (`holidays.Germany()`); also True when the holiday falls on a weekend |
+
+## Features
+
+Overview of what is available for modelling. Target: `actual_consumption`.
+
+| Feature | Where | Status | Usable at prediction time? |
+|---|---|---|---|
+| Calendar: `day_of_week_raw`, `day_of_week`, `month`, `is_holiday` | `intermin/` | available | yes, known in advance |
+| `residual_load`, `hydro_pumped_storage`, `actual_consumption_incl_pumped` | `intermin/` | available, but **not features** | no, `residual_load` is built from the target, the other two are measured at the same time as it |
+| Lags of `actual_consumption` (e.g. 1 / 7 days, 24 / 168 hours) | derive from the target | to do | yes if the lag is at least the forecast horizon |
+| Weather (temperature, sunshine, ...) | | in progress (teammate) | use forecasts, not observations |
 
 ## EDA ideas (rough draft)
 
