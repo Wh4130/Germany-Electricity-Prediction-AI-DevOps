@@ -39,11 +39,11 @@ Notes:
 
 Notebooks in `src/notebooks/` (data quality check, EDA) only read the data. They do not clean or write any dataset, that is done by the pipelines. File names and paths of the notebooks may change.
 
-## Run everything (`main.py`)
+## Run everything (`src/pipelines/main.py`)
 
 ```
-uv run python main.py                   # whole data flow
-uv run python main.py --forceDownload   # download the lookup files again
+uv run python src/pipelines/main.py                   # whole data flow
+uv run python src/pipelines/main.py --forceDownload   # download the lookup files again
 ```
 
 ```mermaid
@@ -51,7 +51,7 @@ flowchart LR
     A["scripts<br/>(downloads)"] --> B["cleansing<br/>raw → intermin"] --> C["feature pipelines<br/>→ features/*"] --> D["merge_all<br/>→ final"]
 ```
 
-Downloads are skipped when their file exists, a failed step stops the run. To add a data source, append it to `DOWNLOADS` / `PIPELINES` in `main.py` (see "Adding a feature pipeline").
+Downloads are skipped when their file exists, a failed step stops the run. To add a data source, append it to `DOWNLOADS` / `PIPELINES` in `src/pipelines/main.py` (see "Adding a feature pipeline").
 
 ## Scripts
 
@@ -87,7 +87,7 @@ Each feature group has one pipeline, `src/pipelines/<feature>_pipeline.py`, and 
    - Only the new columns (no copy of the `intermin/` columns), and column names that no other feature uses (add a prefix if needed, e.g. `price_`). A duplicate name stops `merge_all.py`.
    - `data_hourly.csv` only if the feature exists at hourly resolution, otherwise skip it: `merge_all.py` skips that file for the hourly data and prints it.
 3. **Data from outside SMARD** is downloaded by a script `src/scripts/<name>_etl.py` into `intermin/<name>.csv` (a lookup table, no row index). The pipeline only reads that file, there is no network call inside a pipeline.
-4. **Hook it up.** `merge_all.py` finds new feature folders by itself, nothing to change there. In `main.py`, add the ETL script to `DOWNLOADS` (if there is one) and the pipeline to `PIPELINES`, before `merge_all.py`.
+4. **Hook it up.** `merge_all.py` finds new feature folders by itself, nothing to change there. In `src/pipelines/main.py`, add the ETL script to `DOWNLOADS` (if there is one) and the pipeline to `PIPELINES`, before `merge_all.py`.
 5. **Document it**: new columns in "Column reference", status in "Features".
 
 A folder with only a `.gitkeep` is a placeholder, its pipeline does not exist or has not been run yet.
