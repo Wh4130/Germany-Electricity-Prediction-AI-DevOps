@@ -8,8 +8,8 @@ Run the whole data flow, in order, with the default paths of every step.
     4. src/pipelines/merge_all.py          intermin + all features -> final
 
 Run (from the project root)
-    uv run python main.py
-    uv run python main.py --forceDownload   # download again, even if the files exist
+    uv run python src/pipelines/main.py
+    uv run python src/pipelines/main.py --forceDownload   # download again, even if the files exist
 
 With --forceDownload a failed download (e.g. HTTP 429 of ferien-api.de) is not an error as long as
 the old file exists: the old file is kept and the run goes on.
@@ -21,7 +21,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 
 # (name, script, output file: when it exists the download is skipped)
 DOWNLOADS = [
