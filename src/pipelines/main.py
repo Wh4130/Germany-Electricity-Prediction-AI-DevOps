@@ -5,7 +5,8 @@ Run the whole data flow, in order, with the default paths of every step.
        -> skipped when its output file already exists, they only need to run once
     2. src/pipelines/cleansing.py          raw -> intermin
     3. src/pipelines/calendar_pipeline.py  intermin -> features/calendar
-    4. src/pipelines/merge_all.py          intermin + all features -> final
+    4. src/pipelines/weather_pipeline.py   intermin -> features/weather
+    5. src/pipelines/merge_all.py          intermin + all features -> final
 
 Run (from the project root)
     uv run python src/pipelines/main.py
@@ -27,11 +28,13 @@ ROOT = Path(__file__).resolve().parents[2]
 DOWNLOADS = [
     ("school holidays", "src/scripts/school_holidays_etl.py", "src/data/intermin/school_holidays.csv"),
     ("population", "src/scripts/population_etl.py", "src/data/intermin/population_by_land.csv"),
+    ("weather", "src/scripts/weather_etl.py", "src/data/intermin/weather_daily_by_city.csv"),
 ]
 
 PIPELINES = [
     "src/pipelines/cleansing.py",
     "src/pipelines/calendar_pipeline.py",
+    "src/pipelines/weather_pipeline.py",
     "src/pipelines/merge_all.py",  # always the last one: merges intermin and all features
 ]
 
