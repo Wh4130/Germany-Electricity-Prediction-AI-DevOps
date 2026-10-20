@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# per-city weather lookup tables (large, rebuild with src/scripts/weather_etl.py)
+src/data/intermin/weather_daily_by_city.csv
+src/data/intermin/weather_hourly_by_city.csv

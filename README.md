@@ -70,6 +70,7 @@ One-off ETL scripts in `src/scripts/` download the data that does not come from 
 | `src/scripts/day_ahead_price_etl.py` | [SMARD](https://www.smard.de) (Bundesnetzagentur, CC BY 4.0), one request per week, about 2 minutes | `intermin/day_ahead_price.csv` | Uses the JSON files of the SMARD website charts, not a documented API, so it can change. SMARD gets the data from ENTSO-E. Cite as "Bundesnetzagentur \| SMARD.de". |
 | `src/scripts/gas_price_etl.py` | IMF PCPS `M.W00.PNGASEU.USD` via [DBnomics](https://db.nomics.world) (one request, no registration) | `intermin/gas_price_eu.csv` | DBnomics is a copy of the IMF data and some months behind (up to 2025-06), enough for our data. Cite as "IMF PCPS via DBnomics". |
 | `src/scripts/industrial_production_etl.py` | Eurostat `sts_inpr_m` ([API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/api-statistics), one request) | `intermin/industrial_production.csv` | |
+| `src/scripts/weather_etl.py` | [Open-Meteo](https://open-meteo.com) historical weather archive, 15 cities x 2 resolutions (30 requests, ~5-10 min) | `intermin/weather_daily_by_city.csv`, `intermin/weather_hourly_by_city.csv` | Not committed to git (`.gitignore`): `weather_hourly_by_city.csv` alone is ~40 MB. Re-run this script to regenerate it, the source data does not change. |
 
 They only need to run once (the data does not change).
 
@@ -85,6 +86,7 @@ The pipelines in `src/pipelines/` turn the data in `src/data/` into the next sta
 | `src/pipelines/economic_indicators_pipeline.py` | `intermin/` (incl. `industrial_production.csv`, `gas_price_eu.csv`) | `features/economic_indicators/data_daily.csv`, `features/economic_indicators/data_hourly.csv` |
 | `src/pipelines/electricity_price_pipeline.py` | `intermin/` (incl. `day_ahead_price.csv`) | `features/electricity_price/data_daily.csv`, `features/electricity_price/data_hourly.csv` |
 | `src/pipelines/generation_pipeline.py` | `intermin/` (incl. `generation_by_source.csv`) | `features/generation/data_daily.csv`, `features/generation/data_hourly.csv` |
+| `src/pipelines/weather_pipeline.py` | `intermin/weather_daily_by_city.csv`, `intermin/weather_hourly_by_city.csv` (made by `src/scripts/weather_etl.py`) | `features/weather/data_daily.csv`, `features/weather/data_hourly.csv` |
 | `src/pipelines/merge_all.py` | `intermin/data_*.csv` + every `features/*/data_*.csv` | `final/data_daily.csv`, `final/data_hourly.csv` |
 
 ### Adding a feature pipeline
@@ -173,7 +175,20 @@ The other 5 sources (biomass, hydro, other renewable, pumped storage, other conv
 
 ### Weather (`features/weather/`)
 
-Not documented yet.
+Produced by `weather_pipeline.py` from the per-city weather `weather_etl.py` downloads (Open-Meteo historical archive), population-weighted across the 15 largest German cities. The files hold only these columns (plus the row index), no copy of the `intermin/` columns: join them onto `intermin/` by the row index.
+
+| Column | Unit | Description |
+|---|---|---|
+| `hdd` | °C | Heating Degree Days: `max(0, 18 - temperature)`. Demand-side driver, higher on cold days |
+| `daylight_duration` | seconds | Length of daylight (sunrise to sunset). **Daily only** |
+| `shortwave_radiation_sum` (daily) / `shortwave_radiation` (hourly) | MJ/m² / W/m² | Solar radiation reaching the surface. Supply-side driver (solar generation) |
+| `wind_speed_10m_max` (daily) / `wind_speed_10m` (hourly) | km/h | Wind speed, 10 m above ground. Supply-side driver (wind generation) |
+| `precipitation_sum` (daily) / `precipitation` (hourly) | mm | Total precipitation (rain + showers + snowfall water equivalent) |
+
+Notes:
+- Daily columns are aggregated over the day (`_sum`/`_max` suffix); hourly columns are the instantaneous value for that hour.
+- `daylight_duration` is daily only: at hourly resolution it would repeat the same value across all 24 hours of a day, information already captured by the `hour`/`month` calendar columns.
+- The hourly data correctly handles the two German DST transition days: 23 rows on the spring one (no `02:00`), 25 on the autumn one (`02:00` occurs twice, with different weather values - two distinct real hours), matching `intermin/data_hourly.csv` row for row.
 
 ### Electricity price (`features/electricity_price/`)
 
@@ -197,6 +212,7 @@ Overview of what is available for modelling. Target: `actual_consumption`.
 | Lags of `actual_consumption` (e.g. 1 / 7 days, 24 / 168 hours) | derive from the target | to do | yes if the lag is at least the forecast horizon |
 | `generation_*` (realised generation by source) | `features/generation/` | available, but **not features as they are** | no, the same-hour values are the target seen from the supply side (target leakage), only a shifted version (e.g. the day before) can be tested |
 | Weather (temperature, sunshine, ...) | | in progress (teammate) | use forecasts, not observations |
+| Weather: HDD, daylight, solar radiation, wind, precipitation (see the weather columns above) | `features/weather/` | available (`weather_pipeline.py`) | no, built from historical observations - at prediction time use weather **forecasts**, not these observed values |
 
 ### Considered, not done
 
