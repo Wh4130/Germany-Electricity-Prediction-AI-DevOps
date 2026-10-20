@@ -13,3 +13,6 @@ wheels/
 # per-city weather lookup tables (large, rebuild with src/scripts/weather_etl.py)
 src/data/intermin/weather_daily_by_city.csv
 src/data/intermin/weather_hourly_by_city.csv
+
+# per-unit MaStR solar lookup table (230MB, exceeds GitHub's 100MB limit, rebuild with src/scripts/mastr_etl.py)
+src/data/intermin/mastr_solar.csv
