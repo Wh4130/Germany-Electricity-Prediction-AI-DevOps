@@ -4,9 +4,12 @@ Run the whole data flow, in order, with the default paths of every step.
     1. download the data that does not come from SMARD (src/scripts/*_etl.py)
        -> skipped when its output file already exists, they only need to run once
     2. src/pipelines/cleansing.py          raw -> intermin
-    3. src/pipelines/calendar_pipeline.py  intermin -> features/calendar
-    4. src/pipelines/weather_pipeline.py   intermin -> features/weather
-    5. src/pipelines/merge_all.py          intermin + all features -> final
+    3. src/pipelines/calendar_pipeline.py            intermin -> features/calendar
+       src/pipelines/economic_indicators_pipeline.py intermin -> features/economic_indicators
+       src/pipelines/electricity_price_pipeline.py   intermin -> features/electricity_price
+       src/pipelines/generation_pipeline.py          intermin -> features/generation
+       src/pipelines/weather_pipeline.py             intermin -> features/weather
+
 
 Run (from the project root)
     uv run python src/pipelines/main.py
@@ -28,22 +31,30 @@ ROOT = Path(__file__).resolve().parents[2]
 DOWNLOADS = [
     ("school holidays", "src/scripts/school_holidays_etl.py", "src/data/intermin/school_holidays.csv"),
     ("population", "src/scripts/population_etl.py", "src/data/intermin/population_by_land.csv"),
+    ("industrial production", "src/scripts/industrial_production_etl.py", "src/data/intermin/industrial_production.csv"),
+    ("gas price", "src/scripts/gas_price_etl.py", "src/data/intermin/gas_price_eu.csv"),
+    ("day-ahead price", "src/scripts/day_ahead_price_etl.py", "src/data/intermin/day_ahead_price.csv"),
     ("weather", "src/scripts/weather_etl.py", "src/data/intermin/weather_daily_by_city.csv"),
 ]
 
 PIPELINES = [
     "src/pipelines/cleansing.py",
+    "src/pipelines/cleansing_generation.py",
     "src/pipelines/calendar_pipeline.py",
+    "src/pipelines/economic_indicators_pipeline.py",
+    "src/pipelines/electricity_price_pipeline.py",
+    "src/pipelines/generation_pipeline.py",
     "src/pipelines/weather_pipeline.py",
     "src/pipelines/merge_all.py",  # always the last one: merges intermin and all features
 ]
 
 
 TOTAL_STEPS = len(DOWNLOADS) + len(PIPELINES)
+LABEL_WIDTH = max([len(name) for name, _, _ in DOWNLOADS] + [len(Path(script).stem) for script in PIPELINES])
 
 
 def header(step: int, label: str, status: str) -> None:
-    print(f"[{step}/{TOTAL_STEPS}] {label:<18} {status}")
+    print(f"[{step}/{TOTAL_STEPS}] {label:<{LABEL_WIDTH}} {status}")
 
 
 def run(script: str) -> None:
