@@ -25,16 +25,23 @@ Release alignment ("as known on day d")
     The value itself is the latest revised figure from GENESIS ("pseudo-real-time"):
     publication timing is respected, revisions are not.
 
-Outputs (in ``src/data/intermin``)
-    ipi_energy_intensive_daily.csv    column ``index`` = 0..N-1 (join key)
-    ipi_energy_intensive_hourly.csv   column ``index`` = 0..N-1 (join key)
-    ipi_energy_intensive_monthly.csv  monthly audit table (no join key)
-    ipi_energy_intensive_metadata.json
+Reference-month alignment (``--alignment reference_month``, ABLATION ONLY)
+    Every day/hour of month m gets month m's value, ~5-6 weeks before it was published.
+    This leaks information a real forecast could not have; use it only as an oracle
+    upper bound to measure how much the release lag costs. Written to separate files
+    (``ipi_energy_intensive_refmonth_*``) so it cannot be mixed up with the main variant.
+
+Outputs (in ``src/data/intermin``), <stem> = ipi_energy_intensive | ipi_energy_intensive_refmonth
+    <stem>_daily.csv    column ``index`` = 0..N-1 (join key)
+    <stem>_hourly.csv   column ``index`` = 0..N-1 (join key)
+    <stem>_monthly.csv  monthly audit table (no join key)
+    <stem>_metadata.json
 
     Same calendars and join-key convention as oxcgrt_pipeline.py.
 
 Usage (from the project root)
     python src/pipelines/production_index_pipeline.py
+    python src/pipelines/production_index_pipeline.py --alignment reference_month
     python src/pipelines/production_index_pipeline.py --input-format simple
 """
 
@@ -65,8 +72,14 @@ DEFAULT_SIMPLE_FILE = "ipi_monthly_simple.csv"
 RELEASE_CALENDAR_FILE = "ipi_release_calendar.csv"
 
 DEFAULT_RAW_DIR = Path("src/data/external_raw")
-DEFAULT_OUT_DIR = Path("src/data/intermin")
+DEFAULT_OUT_DIR = Path("src/data/features/policy")
 OUTPUT_STEM = "ipi_energy_intensive"
+
+# "release": as known on day d (main variant). "reference_month": month m's value on the days of
+# month m itself - uses figures before they were published, so ABLATION / oracle upper bound only.
+ALIGNMENTS = ("release", "reference_month")
+DEFAULT_ALIGNMENT = "release"
+OUTPUT_STEMS = {"release": OUTPUT_STEM, "reference_month": f"{OUTPUT_STEM}_refmonth"}
 
 START_DATE = "2019-01-01"
 END_DATE = "2024-12-31"
@@ -76,7 +89,9 @@ PREFIX = "ipi_ei"
 
 # Series selection on the concatenated GENESIS labels (case-insensitive regexes).
 # Every "include" must match, no "exclude" may match; "prefer" breaks ties.
-SERIES_INCLUDE = [r"energieintensiv|energy.intensive"]
+# Exact aggregate label in 42153-0001 is "Energieintensive Industriezweige". Anchoring on the
+# full phrase keeps out "Prod. Gew. (oh.Energie,Baugew.,energieintens.Ind.)" (= WITHOUT them).
+SERIES_INCLUDE = [r"energieintensive industriezweige|energy.intensive industr"]
 SA_INCLUDE = [r"saison|season"]                       # calendar + seasonally adjusted
 SA_EXCLUDE: list[str] = []
 CA_INCLUDE = [r"kalenderbereinigt|calendar.adjusted"]  # calendar adjusted only
@@ -117,11 +132,20 @@ def build_hourly_calendar(start: str = START_DATE, end: str = END_DATE) -> pd.Da
 # --------------------------------------------------------------------------------------
 # Reading the monthly series
 # --------------------------------------------------------------------------------------
+_FLAGGED_NUMBER = re.compile(r"^([+-]?[\d.,]+)\s*[A-Za-z]{1,2}$")
+
+
 def parse_number(raw: object) -> float:
-    """Parse a GENESIS value: decimal comma or point, special markers -> NaN."""
+    """Parse a GENESIS value: decimal comma or point, special markers -> NaN.
+
+    Trailing quality flags ("83,2p" provisional, "79,7r" revised, "e", "s", ...) are dropped.
+    """
     s = str(raw).strip()
     if s.lower() in MISSING_MARKERS:
         return np.nan
+    flagged = _FLAGGED_NUMBER.match(s)
+    if flagged:
+        s = flagged.group(1)
     if "," in s:
         s = s.replace(".", "").replace(",", ".")
     try:
@@ -356,11 +380,12 @@ def _monthly_for_merge(monthly: pd.DataFrame, releases: pd.DataFrame) -> pd.Data
     })
 
 
-def _finish(aligned: pd.DataFrame, cal: pd.DataFrame, extra: list[str]) -> pd.DataFrame:
+def _finish(aligned: pd.DataFrame, cal: pd.DataFrame, extra: list[str],
+            missing_hint: str = "download earlier months") -> pd.DataFrame:
     ref = aligned[f"{PREFIX}_ref_month"]
     if ref.isna().any():
         first_bad = aligned.loc[ref.isna(), "date"].min()
-        raise ValueError(f"No released month available on {first_bad.date()}; download earlier months.")
+        raise ValueError(f"No monthly value available on {first_bad.date()}; {missing_hint}.")
     ref_end = ref.dt.end_time.dt.normalize()
     aligned[f"{PREFIX}_staleness_days"] = (aligned["date"] - ref_end).dt.days.astype("int64")
     aligned.index = cal.index
@@ -390,6 +415,34 @@ def align_hourly(monthly: pd.DataFrame, releases: pd.DataFrame, start: str = STA
 
 
 # --------------------------------------------------------------------------------------
+# Reference-month alignment (ABLATION ONLY - leaks unpublished information)
+# --------------------------------------------------------------------------------------
+def _align_reference_month(monthly: pd.DataFrame, releases: pd.DataFrame, cal: pd.DataFrame,
+                           extra: list[str]) -> pd.DataFrame:
+    """Every day/hour of month m gets month m's value, regardless of when it was published.
+
+    ``ipi_ei_release_date`` still holds the (rule/curated) publication date, so the size of
+    the look-ahead is visible; ``ipi_ei_staleness_days`` is <= 0 (days to the month end).
+    """
+    m = _monthly_for_merge(monthly, releases)
+    left = cal.reset_index()
+    left["_ref_key"] = left["date"].dt.to_period("M")
+    aligned = left.merge(m, left_on="_ref_key", right_on=f"{PREFIX}_ref_month", how="left")
+    return _finish(aligned, cal, extra, missing_hint="the monthly data does not cover this month")
+
+
+def align_daily_reference_month(monthly: pd.DataFrame, releases: pd.DataFrame,
+                                start: str = START_DATE, end: str = END_DATE) -> pd.DataFrame:
+    return _align_reference_month(monthly, releases, build_daily_calendar(start, end), ["date"])
+
+
+def align_hourly_reference_month(monthly: pd.DataFrame, releases: pd.DataFrame,
+                                 start: str = START_DATE, end: str = END_DATE) -> pd.DataFrame:
+    return _align_reference_month(monthly, releases, build_hourly_calendar(start, end),
+                                  ["datetime_from", "date"])
+
+
+# --------------------------------------------------------------------------------------
 # Validation
 # --------------------------------------------------------------------------------------
 def _check_join_key(df: pd.DataFrame, name: str) -> None:
@@ -397,13 +450,22 @@ def _check_join_key(df: pd.DataFrame, name: str) -> None:
         raise AssertionError(f"{name}: index is not a 0-based consecutive join key")
 
 
+def _check_reference_month(df: pd.DataFrame, name: str) -> None:
+    mismatch = df[f"{PREFIX}_ref_month"] != df["date"].dt.to_period("M")
+    if mismatch.any():
+        raise AssertionError(f"{name}: {int(mismatch.sum())} rows not mapped to their own calendar month")
+
+
 def validate_daily(daily: pd.DataFrame, include_release_day: bool = INCLUDE_RELEASE_DAY,
-                   start: str = START_DATE, end: str = END_DATE) -> None:
+                   start: str = START_DATE, end: str = END_DATE, alignment: str = "release") -> None:
     _check_join_key(daily, "daily")
     if not pd.DatetimeIndex(daily["date"]).equals(pd.date_range(start, end, freq="D")):
         raise AssertionError("daily: dates are not the complete consecutive calendar")
     if daily[FEATURE_COLUMNS].isna().any().any():
         raise AssertionError("daily: NaN in feature columns")
+    if alignment == "reference_month":
+        _check_reference_month(daily, "daily")
+        return
     rel = daily[f"{PREFIX}_release_date"]
     leak = rel > daily["date"] if include_release_day else rel >= daily["date"]
     if leak.any():
@@ -411,13 +473,16 @@ def validate_daily(daily: pd.DataFrame, include_release_day: bool = INCLUDE_RELE
 
 
 def validate_hourly(hourly: pd.DataFrame, release_hour: int = RELEASE_HOUR,
-                    start: str = START_DATE, end: str = END_DATE) -> None:
+                    start: str = START_DATE, end: str = END_DATE, alignment: str = "release") -> None:
     _check_join_key(hourly, "hourly")
     expected = build_hourly_calendar(start, end)["datetime_from"].reset_index(drop=True)
     if not hourly["datetime_from"].reset_index(drop=True).equals(expected):
         raise AssertionError("hourly: timestamps differ from the reference hourly calendar")
     if hourly[FEATURE_COLUMNS].isna().any().any():
         raise AssertionError("hourly: NaN in feature columns")
+    if alignment == "reference_month":
+        _check_reference_month(hourly, "hourly")
+        return
     avail = (hourly[f"{PREFIX}_release_date"] + pd.Timedelta(hours=release_hour)).dt.tz_localize(TIMEZONE)
     leak = avail > hourly["datetime_from"]
     if leak.any():
@@ -438,14 +503,16 @@ def _format_for_csv(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def write_outputs(daily: pd.DataFrame, hourly: pd.DataFrame, monthly: pd.DataFrame,
-                  releases: pd.DataFrame, out_dir: Path, metadata: dict | None = None) -> dict[str, Path]:
+                  releases: pd.DataFrame, out_dir: Path, metadata: dict | None = None,
+                  alignment: str = "release") -> dict[str, Path]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    stem = OUTPUT_STEMS[alignment]
     paths = {
-        "daily": out_dir / f"{OUTPUT_STEM}_daily.csv",
-        "hourly": out_dir / f"{OUTPUT_STEM}_hourly.csv",
-        "monthly": out_dir / f"{OUTPUT_STEM}_monthly.csv",
-        "metadata": out_dir / f"{OUTPUT_STEM}_metadata.json",
+        "daily": out_dir / f"{stem}_daily.csv",
+        "hourly": out_dir / f"{stem}_hourly.csv",
+        # "monthly": out_dir / f"{stem}_monthly.csv",
+        "metadata": out_dir / f"{stem}_metadata.json",
     }
     _format_for_csv(daily).to_csv(paths["daily"], index=True, index_label=JOIN_KEY)
     _format_for_csv(hourly).to_csv(paths["hourly"], index=True, index_label=JOIN_KEY)
@@ -453,7 +520,7 @@ def write_outputs(daily: pd.DataFrame, hourly: pd.DataFrame, monthly: pd.DataFra
     audit = monthly.join(releases, how="left").reset_index()
     audit["ref_month"] = audit["ref_month"].astype(str)
     audit["release_date"] = audit["release_date"].dt.strftime("%Y-%m-%d")
-    audit.to_csv(paths["monthly"], index=False)
+    # audit.to_csv(paths["monthly"], index=False)
 
     paths["metadata"].write_text(json.dumps(metadata or {}, indent=2, default=str), encoding="utf-8")
     logger.info("Wrote %s (%d rows) and %s (%d rows)", paths["daily"], len(daily), paths["hourly"], len(hourly))
@@ -506,7 +573,10 @@ def run(
     rule_day: int = RULE_DAY,
     include_release_day: bool = INCLUDE_RELEASE_DAY,
     release_hour: int = RELEASE_HOUR,
+    alignment: str = DEFAULT_ALIGNMENT,
 ) -> dict[str, Path]:
+    if alignment not in ALIGNMENTS:
+        raise ValueError(f"alignment must be one of {ALIGNMENTS}, got {alignment!r}")
     raw_dir = Path(raw_dir)
     monthly, input_info = load_monthly_input(raw_dir, input_format, genesis_file, simple_file)
 
@@ -518,13 +588,24 @@ def run(
         compare_rule_with_curated(curated, rule_day)
     releases = assign_release_dates(monthly.index, curated, rule_day)
 
-    daily = align_daily(monthly, releases, start, end, include_release_day)
-    validate_daily(daily, include_release_day, start, end)
-    hourly = align_hourly(monthly, releases, start, end, release_hour)
-    validate_hourly(hourly, release_hour, start, end)
+    if alignment == "release":
+        daily = align_daily(monthly, releases, start, end, include_release_day)
+        hourly = align_hourly(monthly, releases, start, end, release_hour)
+        alignment_note = "Release-aligned: each value is used only from its (rule/curated) release date."
+    else:
+        logger.warning("alignment=reference_month: values are used BEFORE they were published "
+                       "(look-ahead). Use these files for ablation only, never for reported results.")
+        daily = align_daily_reference_month(monthly, releases, start, end)
+        hourly = align_hourly_reference_month(monthly, releases, start, end)
+        alignment_note = ("LEAKY ABLATION: month m's value is placed on the days of month m, about "
+                          "5-6 weeks before Destatis published it. Oracle upper bound only.")
+    validate_daily(daily, include_release_day, start, end, alignment)
+    validate_hourly(hourly, release_hour, start, end, alignment)
 
     metadata = {
         "pipeline": "production_index_pipeline",
+        "alignment": alignment,
+        "alignment_note": alignment_note,
         "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": f"Destatis GENESIS-Online {GENESIS_TABLE}, energy-intensive industrial branches, 2021=100",
         "licence": "DL-DE BY 2.0",
@@ -536,13 +617,15 @@ def run(
         "monthly_range": [str(monthly.index.min()), str(monthly.index.max())],
         "assumptions": [
             "Values are the latest revised GENESIS figures (pseudo-real-time).",
-            "Daily: month available on its release day; hourly: from the release hour.",
+            ("Daily: month available on its release day; hourly: from the release hour."
+             if alignment == "release" else
+             "Month m's value on all days/hours of month m (look-ahead; ablation only)."),
             "Values are as known on day d; shift to forecast origin in the feature pipeline.",
             "Audit columns (ref_month, release_date, release_source) are not model features.",
         ],
         "rows": {"daily": len(daily), "hourly": len(hourly), "monthly": len(monthly)},
     }
-    return write_outputs(daily, hourly, monthly, releases, Path(out_dir), metadata)
+    return write_outputs(daily, hourly, monthly, releases, Path(out_dir), metadata, alignment)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -559,6 +642,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--release-next-day", action="store_true",
                         help="daily: make a month available only from the day after its release")
     parser.add_argument("--release-hour", type=int, default=RELEASE_HOUR)
+    parser.add_argument("--alignment", choices=ALIGNMENTS, default=DEFAULT_ALIGNMENT,
+                        help="release: as known on day d (default). reference_month: month m on the "
+                             "days of month m - leaks unpublished data, ablation only; writes "
+                             f"{OUTPUT_STEMS['reference_month']}_*.csv")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -574,6 +661,7 @@ def main(argv: list[str] | None = None) -> None:
         rule_day=args.rule_day,
         include_release_day=not args.release_next_day,
         release_hour=args.release_hour,
+        alignment=args.alignment,
     )
 
 
