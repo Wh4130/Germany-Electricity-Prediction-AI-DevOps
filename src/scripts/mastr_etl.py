@@ -25,7 +25,7 @@ Why `AnlagenEegSolar`, not `EinheitenSolar`
     complete table.
 
 Known limitations of `AnlagenEegSolar` as a substitute (also documented, with their
-consequence for the feature, in src/pipelines/mastr_pipeline.py)
+consequence for the feature, in src/feature_engineering/mastr_pipeline.py)
     - EEG-registration scope: covers solar units registered for EEG support (feed-in
       tariff or market premium), which is the great majority of German PV but not,
       strictly, every single panel.

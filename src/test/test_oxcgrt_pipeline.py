@@ -9,7 +9,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.pipelines import oxcgrt_pipeline as ox
+from src.feature_engineering import oxcgrt_pipeline as ox
 
 REAL_RAW = PROJECT_ROOT / "src" / "data" / "external_raw" / ox.RAW_FILENAME
 

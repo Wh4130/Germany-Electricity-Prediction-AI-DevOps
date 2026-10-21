@@ -31,7 +31,7 @@ class GenerationBuilder:
 
     def __init__(self, generation: pd.DataFrame) -> None:
         """
-        `generation`: the file made by src/pipelines/cleansing_generation.py
+        `generation`: the file made by src/feature_engineering/cleansing_generation.py
         (columns datetime_utc and one column per source, MWh per hour)
         """
         generation = generation.assign(datetime_utc = pd.to_datetime(generation["datetime_utc"]))
@@ -105,7 +105,7 @@ def main():
         "--ginp",
         type = Path,
         default = ROOT / "src/data/intermin/generation_by_source.csv",
-        help = "input CSV path for the generation (made by src/pipelines/cleansing_generation.py)"
+        help = "input CSV path for the generation (made by src/feature_engineering/cleansing_generation.py)"
     )
     parser.add_argument(
         "--hourlyOutput",

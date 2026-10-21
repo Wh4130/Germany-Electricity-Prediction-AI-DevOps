@@ -13,7 +13,7 @@ Does not touch the network: src/scripts/weather_etl.py is the one that downloads
 per-city weather into intermin/weather_daily_by_city.csv and weather_hourly_by_city.csv.
 
 Run (from the project root)
-    uv run python src/pipelines/weather_pipeline.py
+    uv run python src/feature_engineering/weather_pipeline.py
 """
 
 import argparse

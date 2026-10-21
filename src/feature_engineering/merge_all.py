@@ -12,7 +12,7 @@ The files are joined by the row index (it is kept in every file on purpose). The
     - a column name already exists (two features with the same column name).
 
 Run (from the project root)
-    uv run python src/pipelines/merge_all.py
+    uv run python src/feature_engineering/merge_all.py
 """
 import argparse
 import os

@@ -49,7 +49,7 @@ restated here because they shape what this column does and does not mean)
       as new capacity comes online.
 
 Run (from the project root)
-    uv run python src/pipelines/mastr_pipeline.py
+    uv run python src/feature_engineering/mastr_pipeline.py
 """
 import argparse
 import os

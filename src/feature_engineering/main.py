@@ -3,18 +3,18 @@ Run the whole data flow, in order, with the default paths of every step.
 
     1. download the data that does not come from SMARD (src/scripts/*_etl.py)
        -> skipped when its output file already exists, they only need to run once
-    2. src/pipelines/cleansing.py          raw -> intermin
-    3. src/pipelines/calendar_pipeline.py            intermin -> features/calendar
-       src/pipelines/economic_indicators_pipeline.py intermin -> features/economic_indicators
-       src/pipelines/electricity_price_pipeline.py   intermin -> features/electricity_price
-       src/pipelines/generation_pipeline.py          intermin -> features/generation
-       src/pipelines/weather_pipeline.py             intermin -> features/weather
-       src/pipelines/mastr_pipeline.py               intermin -> features/mastr
+    2. src/feature_engineering/cleansing.py          raw -> intermin
+    3. src/feature_engineering/calendar_pipeline.py            intermin -> features/calendar
+       src/feature_engineering/economic_indicators_pipeline.py intermin -> features/economic_indicators
+       src/feature_engineering/electricity_price_pipeline.py   intermin -> features/electricity_price
+       src/feature_engineering/generation_pipeline.py          intermin -> features/generation
+       src/feature_engineering/weather_pipeline.py             intermin -> features/weather
+       src/feature_engineering/mastr_pipeline.py               intermin -> features/mastr
 
 
 Run (from the project root)
-    uv run python src/pipelines/main.py
-    uv run python src/pipelines/main.py --forceDownload   # download again, even if the files exist
+    uv run python src/feature_engineering/main.py
+    uv run python src/feature_engineering/main.py --forceDownload   # download again, even if the files exist
 
 With --forceDownload a failed download (e.g. HTTP 429 of ferien-api.de) is not an error as long as
 the old file exists: the old file is kept and the run goes on.
@@ -40,15 +40,15 @@ DOWNLOADS = [
 ]
 
 PIPELINES = [
-    "src/pipelines/cleansing.py",
-    "src/pipelines/cleansing_generation.py",
-    "src/pipelines/calendar_pipeline.py",
-    "src/pipelines/economic_indicators_pipeline.py",
-    "src/pipelines/electricity_price_pipeline.py",
-    "src/pipelines/generation_pipeline.py",
-    "src/pipelines/weather_pipeline.py",
-    "src/pipelines/mastr_pipeline.py",
-    "src/pipelines/merge_all.py",  # always the last one: merges intermin and all features
+    "src/feature_engineering/cleansing.py",
+    "src/feature_engineering/cleansing_generation.py",
+    "src/feature_engineering/calendar_pipeline.py",
+    "src/feature_engineering/economic_indicators_pipeline.py",
+    "src/feature_engineering/electricity_price_pipeline.py",
+    "src/feature_engineering/generation_pipeline.py",
+    "src/feature_engineering/weather_pipeline.py",
+    "src/feature_engineering/mastr_pipeline.py",
+    "src/feature_engineering/merge_all.py",  # always the last one: merges intermin and all features
 ]
 
 

@@ -27,8 +27,8 @@ Assumptions (also written to the metadata file)
       happens later in the feature pipeline, not here.
 
 Usage (from the project root)
-    python src/pipelines/oxcgrt_pipeline.py                # download if missing, then build
-    python src/pipelines/oxcgrt_pipeline.py --force-download
+    python src/feature_engineering/oxcgrt_pipeline.py                # download if missing, then build
+    python src/feature_engineering/oxcgrt_pipeline.py --force-download
 """
 
 from __future__ import annotations

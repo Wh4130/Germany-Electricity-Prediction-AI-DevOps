@@ -20,7 +20,7 @@ What this script does
 The values are REALISED values, only known after the hour. As a feature they can only be used with a lag.
 
 Run (from the project root)
-    uv run python src/pipelines/cleansing_generation.py
+    uv run python src/feature_engineering/cleansing_generation.py
 """
 import argparse
 import os
