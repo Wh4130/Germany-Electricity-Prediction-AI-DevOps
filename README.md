@@ -17,6 +17,8 @@ src/data/
 │   ├── calendar/
 │   ├── economic_indicators/
 │   ├── electricity_price/
+│   ├── generation/
+│   ├── mastr/
 │   └── weather/
 └── final/      # intermin + all features merged, the data for modelling
 ```
@@ -71,6 +73,7 @@ One-off ETL scripts in `src/scripts/` download the data that does not come from 
 | `src/scripts/gas_price_etl.py` | IMF PCPS `M.W00.PNGASEU.USD` via [DBnomics](https://db.nomics.world) (one request, no registration) | `intermin/gas_price_eu.csv` | DBnomics is a copy of the IMF data and some months behind (up to 2025-06), enough for our data. Cite as "IMF PCPS via DBnomics". |
 | `src/scripts/industrial_production_etl.py` | Eurostat `sts_inpr_m` ([API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/api-statistics), one request) | `intermin/industrial_production.csv` | |
 | `src/scripts/weather_etl.py` | [Open-Meteo](https://open-meteo.com) historical weather archive, 15 cities x 2 resolutions (30 requests, ~5-10 min) | `intermin/weather_daily_by_city.csv`, `intermin/weather_hourly_by_city.csv` | Not committed to git (`.gitignore`): `weather_hourly_by_city.csv` alone is ~40 MB. Re-run this script to regenerate it, the source data does not change. |
+| `src/scripts/mastr_etl.py` | [Marktstammdatenregister](https://www.marktstammdatenregister.de) (MaStR, Bundesnetzagentur) bulk export, via the [`open-mastr`](https://github.com/OpenEnergyPlatform/open-MaStR) package (one `AnlagenEegSolar` table download, ~5-10 min) | `intermin/mastr_solar.csv` | One row per solar (PV) unit (commissioning date, capacity). Not committed to git (`.gitignore`): ~230 MB, exceeds GitHub's 100 MB file size limit. Re-run this script to regenerate it. See the script docstring for why `AnlagenEegSolar` is used instead of the real unit registry (`EinheitenSolar`, currently broken in `open-mastr`) and the limitations that follow from it. |
 
 They only need to run once (the data does not change).
 
@@ -87,6 +90,7 @@ The pipelines in `src/pipelines/` turn the data in `src/data/` into the next sta
 | `src/pipelines/electricity_price_pipeline.py` | `intermin/` (incl. `day_ahead_price.csv`) | `features/electricity_price/data_daily.csv`, `features/electricity_price/data_hourly.csv` |
 | `src/pipelines/generation_pipeline.py` | `intermin/` (incl. `generation_by_source.csv`) | `features/generation/data_daily.csv`, `features/generation/data_hourly.csv` |
 | `src/pipelines/weather_pipeline.py` | `intermin/weather_daily_by_city.csv`, `intermin/weather_hourly_by_city.csv` (made by `src/scripts/weather_etl.py`) | `features/weather/data_daily.csv`, `features/weather/data_hourly.csv` |
+| `src/pipelines/mastr_pipeline.py` | `intermin/data_daily.csv`, `intermin/data_hourly.csv`, `intermin/mastr_solar.csv` (made by `src/scripts/mastr_etl.py`) | `features/mastr/data_daily.csv`, `features/mastr/data_hourly.csv` (same-day broadcast, see "MaStR solar capacity" below) |
 | `src/pipelines/merge_all.py` | `intermin/data_*.csv` + every `features/*/data_*.csv` | `final/data_daily.csv`, `final/data_hourly.csv` |
 
 ### Adding a feature pipeline
@@ -190,6 +194,20 @@ Notes:
 - `daylight_duration` is daily only: at hourly resolution it would repeat the same value across all 24 hours of a day, information already captured by the `hour`/`month` calendar columns.
 - The hourly data correctly handles the two German DST transition days: 23 rows on the spring one (no `02:00`), 25 on the autumn one (`02:00` occurs twice, with different weather values - two distinct real hours), matching `intermin/data_hourly.csv` row for row.
 
+### MaStR solar capacity (`features/mastr/`)
+
+Produced by `mastr_pipeline.py` from the per-unit solar data `mastr_etl.py` downloads (Marktstammdatenregister bulk export). Cumulative installed capacity, not generation - combine with a solar radiation variable (e.g. `shortwave_radiation`) for a generation proxy.
+
+| Column | Unit | Description |
+|---|---|---|
+| `solar_capacity_mw` | MW | Cumulative installed solar (PV) capacity in Germany as of that day. Daily file: real day-to-day value. Hourly file: the day's value repeated across all 24 hours (installed capacity does not change within a day), so it carries no intra-day information on its own |
+
+Known limitations (see `mastr_etl.py` / `mastr_pipeline.py` docstrings for the full detail):
+- Built from `AnlagenEegSolar` (the EEG-subsidy registration table), not the real unit registry `EinheitenSolar`, which currently fails to parse under `open-mastr` against MaStR's schema (a package/schema-version bug, not our data) - revisit once that is fixed.
+- No decommissioning date in the substitute table, so capacity only ever increases (never removed when a unit shuts down). About 1.4% of units are currently decommissioned; given PV's long service life this should be a small overestimate in later years, not a large one.
+- Coverage is EEG-subsidized units, the large majority of German PV but not strictly every panel.
+- Unlike weather, this does not need a forecast to be usable at prediction time (it is slow-moving, close to monotonic), but it does need periodic re-extraction from MaStR to stay current beyond the period it was built for (2019-2024).
+
 ### Electricity price (`features/electricity_price/`)
 
 Produced by `electricity_price_pipeline.py`. The day-ahead price is the market clearing price of the bidding zone Germany / Luxembourg (one price per hour, set by the last plant needed to meet the demand), EUR/MWh. It is known around noon of the day before, so it can be used to forecast the next day. It is driven by the demand itself (a high demand pushes the price up), so it is a signal of the expected scarcity, not a cause of the load.
@@ -213,6 +231,7 @@ Overview of what is available for modelling. Target: `actual_consumption`.
 | `generation_*` (realised generation by source) | `features/generation/` | available, but **not features as they are** | no, the same-hour values are the target seen from the supply side (target leakage), only a shifted version (e.g. the day before) can be tested |
 | Weather (temperature, sunshine, ...) | | in progress (teammate) | use forecasts, not observations |
 | Weather: HDD, daylight, solar radiation, wind, precipitation (see the weather columns above) | `features/weather/` | available (`weather_pipeline.py`) | no, built from historical observations - at prediction time use weather **forecasts**, not these observed values |
+| `solar_capacity_mw` (cumulative installed solar capacity, see the MaStR columns above) | `features/mastr/` | available (`mastr_pipeline.py`) | yes, slow-moving and close to monotonic (last known value or a simple trend extrapolation is reasonable), but needs periodic re-extraction from MaStR to stay current beyond 2024 |
 
 ### Considered, not done
 

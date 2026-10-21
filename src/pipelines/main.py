@@ -9,6 +9,7 @@ Run the whole data flow, in order, with the default paths of every step.
        src/pipelines/electricity_price_pipeline.py   intermin -> features/electricity_price
        src/pipelines/generation_pipeline.py          intermin -> features/generation
        src/pipelines/weather_pipeline.py             intermin -> features/weather
+       src/pipelines/mastr_pipeline.py               intermin -> features/mastr
 
 
 Run (from the project root)
@@ -35,6 +36,7 @@ DOWNLOADS = [
     ("gas price", "src/scripts/gas_price_etl.py", "src/data/intermin/gas_price_eu.csv"),
     ("day-ahead price", "src/scripts/day_ahead_price_etl.py", "src/data/intermin/day_ahead_price.csv"),
     ("weather", "src/scripts/weather_etl.py", "src/data/intermin/weather_daily_by_city.csv"),
+    ("mastr solar", "src/scripts/mastr_etl.py", "src/data/intermin/mastr_solar.csv"),
 ]
 
 PIPELINES = [
@@ -45,6 +47,7 @@ PIPELINES = [
     "src/pipelines/electricity_price_pipeline.py",
     "src/pipelines/generation_pipeline.py",
     "src/pipelines/weather_pipeline.py",
+    "src/pipelines/mastr_pipeline.py",
     "src/pipelines/merge_all.py",  # always the last one: merges intermin and all features
 ]
 

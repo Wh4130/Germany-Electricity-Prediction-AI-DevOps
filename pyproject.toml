@@ -12,6 +12,7 @@ dependencies = [
     "holidays>=0.105",
     "matplotlib>=3.11.2",
     "nbformat>=5.11.1",
+    "open-mastr>=1.0.0",
     "pandas>=3.0.6",
     "plotly>=7.1.0",
     "requests>=2.34.2",
