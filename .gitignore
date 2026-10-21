@@ -15,6 +15,7 @@ src/data/intermin/weather_daily_by_city.csv
 src/data/intermin/weather_hourly_by_city.csv
 
 # documentation
+src/documentation/
 *.md
 *.json
 
