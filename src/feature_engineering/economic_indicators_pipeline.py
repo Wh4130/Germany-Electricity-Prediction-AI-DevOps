@@ -16,19 +16,17 @@ class EconomicIndicatorsBuilder:
     The indicators are monthly: every day and every hour gets the value of its month.
 
     Done:
-    - industrial_production_index
     - gas_price_eu_usd
 
     Not done: carbon price (EUA), no free source found and the effect on the load is indirect and weak.
+    The industrial production index is not a feature here: the energy-intensive production index
+    of production_index_pipeline.py (features/ipi_energy_intensive) covers it.
     """
 
-    def __init__(self, industrial_production: pd.DataFrame, gas_price: pd.DataFrame) -> None:
+    def __init__(self, gas_price: pd.DataFrame) -> None:
         """
-        `industrial_production`: the file made by src/scripts/industrial_production_etl.py
-        (columns month, industrial_production_index)
         `gas_price`: the file made by src/scripts/gas_price_etl.py (columns month, gas_price_eu_usd)
         """
-        self.industrial_production = industrial_production.set_index("month")["industrial_production_index"]
         self.gas_price = gas_price.set_index("month")["gas_price_eu_usd"]
 
     def build(
@@ -37,7 +35,7 @@ class EconomicIndicatorsBuilder:
     ) -> pd.DataFrame:
         """ return all economic indicator features of `data` """
         return pd.DataFrame({
-            "industrial_production_index": self.industrial_production_index(data),
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
             "gas_price_eu_usd": self.gas_price_eu_usd(data),
         })
 
@@ -51,10 +49,6 @@ class EconomicIndicatorsBuilder:
         if missing:
             raise ValueError(f"no {name} for the months {missing}")
         return values
-
-    def industrial_production_index(self, data: pd.DataFrame) -> pd.Series:
-        """ German industrial production index (2021 = 100, seasonally adjusted) of the month """
-        return self.monthly_value(data, self.industrial_production, "industrial production index")
 
     def gas_price_eu_usd(self, data: pd.DataFrame) -> pd.Series:
         """ European natural gas price (IMF, US dollars per MMBtu) of the month """
@@ -92,13 +86,6 @@ def main():
         help = "input CSV path for daily data"
     )
     parser.add_argument(
-        "--industrialProductionInput",
-        "--ipinp",
-        type = Path,
-        default = ROOT / "src/data/intermin/industrial_production.csv",
-        help = "input CSV path for the industrial production index (made by src/scripts/industrial_production_etl.py)"
-    )
-    parser.add_argument(
         "--gasPriceInput",
         "--gpinp",
         type = Path,
@@ -122,10 +109,7 @@ def main():
 
     args = parser.parse_args()
 
-    builder = EconomicIndicatorsBuilder(
-        pd.read_csv(args.industrialProductionInput),
-        pd.read_csv(args.gasPriceInput),
-    )
+    builder = EconomicIndicatorsBuilder(pd.read_csv(args.gasPriceInput))
 
     save_features(builder.build(load_data(args.dailyInput)), args.dailyOutput)
     save_features(builder.build(load_data(args.hourlyInput)), args.hourlyOutput)

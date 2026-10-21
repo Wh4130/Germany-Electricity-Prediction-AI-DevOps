@@ -35,6 +35,9 @@ def merge(base: pd.DataFrame, features_directory: Path, frequency: str) -> pd.Da
         if not features.index.equals(base.index):
             raise ValueError(f"{path}: the row index differs from the base data")
 
+        # date_from in a feature file is only there to read the file, it is not merged
+        features = features.drop(columns = "date_from", errors = "ignore")
+
         overlap = set(features.columns) & set(merged.columns)
         if overlap:
             raise ValueError(f"{path}: column names already exist: {sorted(overlap)}")

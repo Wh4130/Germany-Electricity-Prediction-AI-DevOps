@@ -51,12 +51,16 @@ class ElectricityPriceBuilder:
         missing = sorted(set(utc_time[price.isna()]))
         if missing:
             raise ValueError(f"no day-ahead price for {len(missing)} hours, e.g. {missing[:3]}")
-        return pd.DataFrame({"day_ahead_price": price})
+        return pd.DataFrame({
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "day_ahead_price": price,
+        })
 
     def daily_features(self, data: pd.DataFrame) -> pd.DataFrame:
         """ features of the daily data """
         day = data["date_from"].dt.date
         features = pd.DataFrame({
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
             "day_ahead_price_mean": day.map(self.daily["mean"]),
             "day_ahead_price_min": day.map(self.daily["min"]),
             "day_ahead_price_max": day.map(self.daily["max"]),

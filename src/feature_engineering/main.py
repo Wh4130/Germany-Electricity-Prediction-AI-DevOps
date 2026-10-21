@@ -10,6 +10,7 @@ Run the whole data flow, in order, with the default paths of every step.
        src/feature_engineering/generation_pipeline.py          intermin -> features/generation
        src/feature_engineering/weather_pipeline.py             intermin -> features/weather
        src/feature_engineering/mastr_pipeline.py               intermin -> features/mastr
+       src/feature_engineering/policy_pipeline.py              features/policy (OxCGRT, production index) -> one file
 
 
 Run (from the project root)
@@ -32,7 +33,6 @@ ROOT = Path(__file__).resolve().parents[2]
 DOWNLOADS = [
     ("school holidays", "src/scripts/school_holidays_etl.py", "src/data/intermin/school_holidays.csv"),
     ("population", "src/scripts/population_etl.py", "src/data/intermin/population_by_land.csv"),
-    ("industrial production", "src/scripts/industrial_production_etl.py", "src/data/intermin/industrial_production.csv"),
     ("gas price", "src/scripts/gas_price_etl.py", "src/data/intermin/gas_price_eu.csv"),
     ("day-ahead price", "src/scripts/day_ahead_price_etl.py", "src/data/intermin/day_ahead_price.csv"),
     ("weather", "src/scripts/weather_etl.py", "src/data/intermin/weather_daily_by_city.csv"),
@@ -48,6 +48,7 @@ PIPELINES = [
     "src/feature_engineering/generation_pipeline.py",
     "src/feature_engineering/weather_pipeline.py",
     "src/feature_engineering/mastr_pipeline.py",
+    "src/feature_engineering/policy_pipeline.py",
     "src/feature_engineering/merge_all.py",  # always the last one: merges intermin and all features
 ]
 

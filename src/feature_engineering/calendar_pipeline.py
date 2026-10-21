@@ -120,6 +120,7 @@ class CalendarFeatureBuilder:
             )
 
         return pd.DataFrame({
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
             "month": self.month(data),
             "day_of_week_raw": self.day_of_week_raw(data),
             "day_of_week": self.day_of_week(data),

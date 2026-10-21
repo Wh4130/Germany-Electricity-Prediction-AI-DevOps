@@ -50,8 +50,8 @@ class GenerationBuilder:
         utc_time = local.dt.tz_convert("UTC").dt.tz_localize(None)
 
         features = pd.DataFrame({
-            f"generation_{source}": utc_time.map(self.generation_utc[source])
-            for source in self.SOURCES
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            **{f"generation_{source}": utc_time.map(self.generation_utc[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():
             raise ValueError(f"no generation for {int(features.isna().any(axis = 1).sum())} hours")
@@ -62,8 +62,8 @@ class GenerationBuilder:
         day = data["date_from"].dt.date
 
         features = pd.DataFrame({
-            f"generation_{source}": day.map(self.daily[source])
-            for source in self.SOURCES
+            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            **{f"generation_{source}": day.map(self.daily[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():
             raise ValueError(f"no generation for {int(features.isna().any(axis = 1).sum())} days")
