@@ -1,17 +1,17 @@
 """
-Create the solar (PV) installed-capacity feature for the daily data, from the per-unit
-MaStR data downloaded by src/scripts/mastr_etl.py.
+Create the solar (PV) installed-capacity feature for the daily data, from the MaStR data
+(the capacity commissioned on each day) downloaded by src/scripts/mastr_etl.py.
 
 What this pipeline does
-    For every day, sum the net capacity of every unit whose commissioning date is on or
-    before that day -> `solar_capacity_mw`, a single running total (MW) for all of Germany.
-    Units are never removed once commissioned (see "Known limitations" below), so the
-    series is non-decreasing by construction. Output is the new column only, same row
-    index as intermin/data_daily.csv (the row index is used by merge_all.py to join
-    features onto intermin/, see the project README).
+    For every day, sum the net capacity commissioned on or before that day (a running total
+    of the daily additions) -> `solar_capacity_mw`, a single running total (MW) for all of
+    Germany. Units are never removed once commissioned (see "Known limitations" below), so
+    the series is non-decreasing by construction. Output is `date_from_utc` (the key
+    merge_all.py uses to join the features onto intermin/) and the new column, same row
+    index as intermin/data_daily.csv.
 
-Does not touch the network: src/scripts/mastr_etl.py is the one that downloads the raw,
-per-unit MaStR data into intermin/mastr_solar.csv.
+Does not touch the network: src/scripts/mastr_etl.py is the one that downloads the raw MaStR
+data and adds up the capacity per commissioning date into intermin/mastr_solar.csv.
 
 Hourly file is a same-day broadcast, not real hourly resolution
     Installed capacity is a registry fact (when a unit was commissioned), not something
@@ -49,7 +49,7 @@ restated here because they shape what this column does and does not mean)
       as new capacity comes online.
 
 Run (from the project root)
-    uv run python src/pipelines/mastr_pipeline.py
+    uv run python src/feature_engineering/mastr_pipeline.py
 """
 import argparse
 import os
@@ -60,15 +60,15 @@ import pandas as pd
 
 class SolarCapacityFeatureBuilder:
     """
-    Create the cumulative installed solar capacity feature from the per-unit MaStR data
-    downloaded by src/scripts/mastr_etl.py.
+    Create the cumulative installed solar capacity feature from the MaStR data (the capacity
+    commissioned on each day) downloaded by src/scripts/mastr_etl.py.
 
     The builder does no file I/O and never changes its input: `build` returns a new
-    DataFrame with the same row index as `data`, holding only the new column.
+    DataFrame with the same row index as `data`, holding the key `date_from_utc` and the new column.
     """
 
     def __init__(self, solar_units: pd.DataFrame) -> None:
-        """ `solar_units`: the file made by src/scripts/mastr_etl.py (one row per unit) """
+        """ `solar_units`: the file made by src/scripts/mastr_etl.py (one row per commissioning date) """
         additions = solar_units.groupby("commission_date")["capacity_mw"].sum()
         self.cumulative_capacity = additions.sort_index().cumsum()
 
@@ -84,7 +84,10 @@ class SolarCapacityFeatureBuilder:
             )
 
         capacity = self.cumulative_capacity.reindex(dates, method = "ffill")
-        return pd.DataFrame({"solar_capacity_mw": capacity.to_numpy()}, index = data.index)
+        return pd.DataFrame({
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
+            "solar_capacity_mw": capacity.to_numpy(),
+        }, index = data.index)
 
 
 def load_data(path: Path) -> pd.DataFrame:
@@ -123,7 +126,7 @@ def main():
         "--solarInput", "--sinp",
         type = Path,
         default = ROOT / "src/data/intermin/mastr_solar.csv",
-        help = "input CSV path for per-unit solar data (made by src/scripts/mastr_etl.py)"
+        help = "input CSV path for the solar capacity per commissioning date (made by src/scripts/mastr_etl.py)"
     )
     parser.add_argument(
         "--dailyOutput", "--dout",

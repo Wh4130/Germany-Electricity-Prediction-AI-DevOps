@@ -14,6 +14,8 @@ COLUMN_MAP = {
     "Residuallast [MWh] Berechnete Auflösungen": "residual_load",
 }
 
+TIMEZONE = "Europe/Berlin"  # the time zone of `date_from`, used to make `date_from_utc`
+
 
 class RawDataCleanser:
     """Rename the SMARD columns and parse the date columns of the raw exports."""
@@ -35,6 +37,15 @@ class RawDataCleanser:
         # to datetime
         df["date_from"] = pd.to_datetime(df["date_from"], dayfirst = True)
         df["date_to"] = pd.to_datetime(df["date_to"], dayfirst = True)
+
+        # new column `date_from_utc`: the same time as `date_from`, in UTC (written without a time zone).
+        # It is the key to merge the features. `date_from` (local time) can not be the key: in the hourly
+        # data the 02:00 at the end of DST is there twice (the first one is summer time).
+        local = df["date_from"].dt.tz_localize(
+            TIMEZONE,
+            ambiguous = ~df["date_from"].duplicated(keep = "first").to_numpy(),
+        )
+        df.insert(2, "date_from_utc", local.dt.tz_convert("UTC").dt.tz_localize(None))
 
         return df
 

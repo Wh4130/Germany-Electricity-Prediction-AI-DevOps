@@ -40,9 +40,9 @@ Outputs (in ``src/data/intermin``), <stem> = ipi_energy_intensive | ipi_energy_i
     Same calendars and join-key convention as oxcgrt_pipeline.py.
 
 Usage (from the project root)
-    python src/pipelines/production_index_pipeline.py
-    python src/pipelines/production_index_pipeline.py --alignment reference_month
-    python src/pipelines/production_index_pipeline.py --input-format simple
+    python src/feature_engineering/production_index_pipeline.py
+    python src/feature_engineering/production_index_pipeline.py --alignment reference_month
+    python src/feature_engineering/production_index_pipeline.py --input-format simple
 """
 
 from __future__ import annotations

@@ -5,15 +5,14 @@ by src/scripts/weather_etl.py.
 What this pipeline does
     1. Population-weight the 15 cities into a single national value per date/time.
     2. Convert temperature to HDD (Heating Degree Days).
-    3. Output only the new columns, row index reset to 0, 1, 2, ... matching intermin/'s row
-       order (the row index is used by merge_all.py to join features onto intermin/, see the
-       project README).
+    3. Output `date_from_utc` (the key merge_all.py uses to join the features onto intermin/) and
+       the new columns, row index reset to 0, 1, 2, ... in the row order of intermin/.
 
 Does not touch the network: src/scripts/weather_etl.py is the one that downloads the raw,
 per-city weather into intermin/weather_daily_by_city.csv and weather_hourly_by_city.csv.
 
 Run (from the project root)
-    uv run python src/pipelines/weather_pipeline.py
+    uv run python src/feature_engineering/weather_pipeline.py
 """
 
 import argparse
@@ -23,6 +22,7 @@ from pathlib import Path
 import pandas as pd
 
 BASE_TEMP = 18  # HDD base temperature, common energy-industry reference
+TIMEZONE = "Europe/Berlin"  # the time zone of the `date` column of the weather files
 
 # must match the columns src/scripts/weather_etl.py writes into intermin/weather_*_by_city.csv
 
@@ -53,7 +53,7 @@ class WeatherFeatureBuilder:
 
     The builder does no file I/O and never changes its input: `build_daily`/`build_hourly`
     return a new DataFrame, population-weighted across cities into one row per date/time, with
-    the row index reset to 0, 1, 2, ... (same order as intermin/, no date/time column left in).
+    the row index reset to 0, 1, 2, ... (same order as intermin/) and `date_from_utc` as the first column.
     """
 
     def __init__(self, city_weights: dict[str, float]) -> None:
@@ -87,17 +87,31 @@ class WeatherFeatureBuilder:
         """ HDD = max(0, base_temp - temperature) """
         return (BASE_TEMP - temperature).clip(lower = 0)
 
+    @staticmethod
+    def with_key(features: pd.DataFrame) -> pd.DataFrame:
+        """
+        reset the row index and put `date_from_utc` first, made from the local `date` of the rows
+        (the first of two equal times is summer time, like in cleansing.py)
+        """
+        local = features.index.to_series().reset_index(drop = True)
+        summer = ~local.duplicated(keep = "first").to_numpy()
+        utc = local.dt.tz_localize(TIMEZONE, ambiguous = summer).dt.tz_convert("UTC").dt.tz_localize(None)
+
+        features = features.reset_index(drop = True)
+        features.insert(0, "date_from_utc", utc)
+        return features
+
     def build_daily(self, weather_by_city: pd.DataFrame) -> pd.DataFrame:
         features = self.weighted_average(weather_by_city, DAILY_VARS)
         features = features.rename(columns = {"temperature_2m_mean": "hdd"})
         features["hdd"] = self.heating_degree_days(features["hdd"])
-        return features.reset_index(drop = True)
+        return self.with_key(features)
 
     def build_hourly(self, weather_by_city: pd.DataFrame) -> pd.DataFrame:
         features = self.weighted_average(weather_by_city, HOURLY_VARS)
         features = features.rename(columns = {"temperature_2m": "hdd"})
         features["hdd"] = self.heating_degree_days(features["hdd"])
-        return features.reset_index(drop = True)
+        return self.with_key(features)
 
 
 def load_data(path: Path) -> pd.DataFrame:

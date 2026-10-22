@@ -31,7 +31,7 @@ class GenerationBuilder:
 
     def __init__(self, generation: pd.DataFrame) -> None:
         """
-        `generation`: the file made by src/pipelines/cleansing_generation.py
+        `generation`: the file made by src/feature_engineering/cleansing_generation.py
         (columns datetime_utc and one column per source, MWh per hour)
         """
         generation = generation.assign(datetime_utc = pd.to_datetime(generation["datetime_utc"]))
@@ -50,8 +50,8 @@ class GenerationBuilder:
         utc_time = local.dt.tz_convert("UTC").dt.tz_localize(None)
 
         features = pd.DataFrame({
-            f"generation_{source}": utc_time.map(self.generation_utc[source])
-            for source in self.SOURCES
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
+            **{f"generation_{source}": utc_time.map(self.generation_utc[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():
             raise ValueError(f"no generation for {int(features.isna().any(axis = 1).sum())} hours")
@@ -62,8 +62,8 @@ class GenerationBuilder:
         day = data["date_from"].dt.date
 
         features = pd.DataFrame({
-            f"generation_{source}": day.map(self.daily[source])
-            for source in self.SOURCES
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
+            **{f"generation_{source}": day.map(self.daily[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():
             raise ValueError(f"no generation for {int(features.isna().any(axis = 1).sum())} days")
@@ -105,7 +105,7 @@ def main():
         "--ginp",
         type = Path,
         default = ROOT / "src/data/intermin/generation_by_source.csv",
-        help = "input CSV path for the generation (made by src/pipelines/cleansing_generation.py)"
+        help = "input CSV path for the generation (made by src/feature_engineering/cleansing_generation.py)"
     )
     parser.add_argument(
         "--hourlyOutput",

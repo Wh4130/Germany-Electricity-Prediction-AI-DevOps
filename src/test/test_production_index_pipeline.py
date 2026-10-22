@@ -12,7 +12,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.pipelines import production_index_pipeline as ipi
+from src.feature_engineering import production_index_pipeline as ipi
 
 SEED_CALENDAR = PROJECT_ROOT / "src" / "data" / "external_raw" / ipi.RELEASE_CALENDAR_FILE
 
@@ -306,7 +306,7 @@ def test_validate_detects_leakage(aligned_inputs):
 
 
 def test_calendars_match_oxcgrt_pipeline():
-    from src.pipelines import oxcgrt_pipeline as ox
+    from src.feature_engineering import oxcgrt_pipeline as ox
     pd.testing.assert_frame_equal(ipi.build_daily_calendar(), ox.build_daily_calendar())
     pd.testing.assert_frame_equal(ipi.build_hourly_calendar(), ox.build_hourly_calendar())
 

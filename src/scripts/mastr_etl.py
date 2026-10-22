@@ -1,5 +1,5 @@
 """
-ETL: German installed solar (PV) capacity, per unit -> src/data/intermin/mastr_solar.csv
+ETL: German installed solar (PV) capacity commissioned per day -> src/data/intermin/mastr_solar.csv
 
 Source
     Marktstammdatenregister (MaStR), via the `open-mastr` package
@@ -25,7 +25,7 @@ Why `AnlagenEegSolar`, not `EinheitenSolar`
     complete table.
 
 Known limitations of `AnlagenEegSolar` as a substitute (also documented, with their
-consequence for the feature, in src/pipelines/mastr_pipeline.py)
+consequence for the feature, in src/feature_engineering/mastr_pipeline.py)
     - EEG-registration scope: covers solar units registered for EEG support (feed-in
       tariff or market premium), which is the great majority of German PV but not,
       strictly, every single panel.
@@ -45,15 +45,22 @@ consequence for the feature, in src/pipelines/mastr_pipeline.py)
       dropped for the same reason: clearly bad data, not real 0 kW installations.
 
 What this script does
-    1. Extract:  db.download(data = ["solar"]) pulls the solar bulk tables (not the full
-                 multi-GB dump) into the local SQLite database, then `AnlagenEegSolar` is
-                 read into pandas.
+    1. Extract:  db.download(data = ["solar"]) downloads the MaStR bulk export (one zip of about
+                 3.2 GB, 20 - 60 minutes, it starts again from zero if the connection breaks),
+                 loads the solar tables into the local SQLite database, then `AnlagenEegSolar`
+                 is read into pandas.
     2. Transform: keep one row per unit (latest update wins), keep only plausible
                  commissioning dates (>= 1991-01-01), convert capacity kW -> MW.
     3. Check:    no duplicated unit IDs, no null commissioning dates or capacities, no
                  negative or zero capacities.
-    4. Load:     save as CSV (no row index, a lookup table like population_by_land.csv).
-                 One row per unit - the pipeline does the date-level aggregation.
+    4. Aggregate: add up the capacity of the units by commissioning date (`capacity_mw`, and
+                 `n_units` as the number of units). The pipeline only needs this, and the file is
+                 small (one row per day, not one per unit), so it is committed to git.
+    5. Load:     save as CSV (no row index, a lookup table like population_by_land.csv).
+                 One row per commissioning date. The pipeline adds them up over time (cumulative sum).
+
+    The download is the full MaStR export and can break half way (connection reset by the
+    server). Run the script again; every machine needs it only once if the CSV is in git.
 
 Run (from the project root)
     uv run python src/scripts/mastr_etl.py
@@ -114,11 +121,20 @@ def check(solar_units: pd.DataFrame) -> None:
         raise ValueError("non-positive capacity_mw")
 
 
+def aggregate(solar_units: pd.DataFrame) -> pd.DataFrame:
+    """ the capacity that was commissioned on each day (the pipeline only needs this, not every unit) """
+    return (
+        solar_units.groupby("commission_date")
+        .agg(capacity_mw = ("capacity_mw", "sum"), n_units = ("mastr_nummer", "count"))
+        .reset_index()
+    )
+
+
 def main():
     ROOT = Path(__file__).resolve().parents[2]
 
     parser = argparse.ArgumentParser(
-        description = "Download MaStR solar (PV) units and save one row per unit (commissioning date, capacity)"
+        description = "Download MaStR solar (PV) units and save the capacity commissioned on each day"
     )
     parser.add_argument(
         "--output", "--out",
@@ -130,10 +146,11 @@ def main():
 
     solar_units = transform(extract())
     check(solar_units)
+    per_day = aggregate(solar_units)
 
     args.output.parent.mkdir(parents = True, exist_ok = True)
-    solar_units.to_csv(args.output, index = False)
-    print(f"saved {len(solar_units):>8} rows -> {os.path.relpath(args.output)}")
+    per_day.to_csv(args.output, index = False)
+    print(f"saved {len(per_day):>8} days ({len(solar_units)} units) -> {os.path.relpath(args.output)}")
 
 
 if __name__ == "__main__":
