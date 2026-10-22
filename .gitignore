@@ -23,5 +23,3 @@ docs/meeting/ideas.md
 
 # bif raw data
 src/data/external_raw/
-# per-unit MaStR solar lookup table (230MB, exceeds GitHub's 100MB limit, rebuild with src/scripts/mastr_etl.py)
-src/data/intermin/mastr_solar.csv

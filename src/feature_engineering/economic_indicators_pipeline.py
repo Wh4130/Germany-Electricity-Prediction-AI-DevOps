@@ -35,7 +35,7 @@ class EconomicIndicatorsBuilder:
     ) -> pd.DataFrame:
         """ return all economic indicator features of `data` """
         return pd.DataFrame({
-            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
             "gas_price_eu_usd": self.gas_price_eu_usd(data),
         })
 

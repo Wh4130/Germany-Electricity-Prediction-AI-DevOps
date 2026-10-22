@@ -50,7 +50,7 @@ class GenerationBuilder:
         utc_time = local.dt.tz_convert("UTC").dt.tz_localize(None)
 
         features = pd.DataFrame({
-            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
             **{f"generation_{source}": utc_time.map(self.generation_utc[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():
@@ -62,7 +62,7 @@ class GenerationBuilder:
         day = data["date_from"].dt.date
 
         features = pd.DataFrame({
-            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
             **{f"generation_{source}": day.map(self.daily[source]) for source in self.SOURCES},
         })
         if features.isna().any().any():

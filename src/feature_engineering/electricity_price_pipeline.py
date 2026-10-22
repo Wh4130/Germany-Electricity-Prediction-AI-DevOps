@@ -52,7 +52,7 @@ class ElectricityPriceBuilder:
         if missing:
             raise ValueError(f"no day-ahead price for {len(missing)} hours, e.g. {missing[:3]}")
         return pd.DataFrame({
-            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
             "day_ahead_price": price,
         })
 
@@ -60,7 +60,7 @@ class ElectricityPriceBuilder:
         """ features of the daily data """
         day = data["date_from"].dt.date
         features = pd.DataFrame({
-            "date_from": data["date_from"],  # only to check the rows, merge_all.py drops it
+            "date_from_utc": data["date_from_utc"],  # the key to merge the features
             "day_ahead_price_mean": day.map(self.daily["mean"]),
             "day_ahead_price_min": day.map(self.daily["min"]),
             "day_ahead_price_max": day.map(self.daily["max"]),

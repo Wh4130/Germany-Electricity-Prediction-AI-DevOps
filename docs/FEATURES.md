@@ -27,13 +27,14 @@
 - **Model**: `x` = model input, or a possible input; `y` = target; empty = not a model input (keys, audit and auxiliary columns, and the columns that leak the target).
 - **Ablation**: the number of the ablation test, see [Ablation](#ablation). Columns with the same number are added or removed together. Empty = not tested.
 - **Notes**: `leakage` = measured at the same time as the target or built from it, do **not** use as a model input as it is. `forecast` = known only as an observation, at prediction time a forecast is needed. `known` = known in advance. `auxiliary` = a detail of another column. `audit column` = there to check the data, not for the model.
-- Every file in `features/` also has `date_from` as its first column, only to read the file. It is not merged (`final/` has one `date_from`).
+- Every file in `features/` has `date_from_utc` as its first column: the time in UTC, the key `merge_all.py` uses to merge the features onto `intermin/`. The local `date_from` and `date_to` are only in `final/`, from `intermin/`.
 
 ## Feature table
 
 | Category | Name | Description | Datatype | Model | Ablation | Source | Produced by | Notes |
 |---|---|---|---|---|---|---|---|---|
-| Raw | [`date_from`](#raw-columns) | Start of the interval (local time, no time zone) | datetime (`str` in CSV) | | | [SMARD download center](https://www.smard.de/home/downloadcenter/download-marktdaten) | [cleansing.py](../src/feature_engineering/cleansing.py) | row key together with the row index |
+| Raw | [`date_from`](#raw-columns) | Start of the interval (local time, no time zone) | datetime (`str` in CSV) | | | [SMARD download center](https://www.smard.de/home/downloadcenter/download-marktdaten) | [cleansing.py](../src/feature_engineering/cleansing.py) | to read the data; the hourly values repeat the 02:00 at the end of DST, so it is not a key |
+| Raw | [`date_from_utc`](#raw-columns) | `date_from` in UTC (no time zone), unique for every row | datetime (`str` in CSV) | | | derived from `date_from` | cleansing.py | **the key to merge the features**, in every file of `features/` |
 | Raw | [`date_to`](#raw-columns) | End of the interval | datetime (`str` in CSV) | | | SMARD download center | cleansing.py | |
 | Raw | [`actual_consumption`](#raw-columns) | Total load incl. network losses, excl. pumped storage, MWh | float | y | | SMARD download center | cleansing.py | **target** |
 | Raw | [`actual_consumption_incl_pumped`](#raw-columns) | `actual_consumption` + `hydro_pumped_storage`, MWh | float | | | SMARD download center | cleansing.py | leakage |
@@ -187,7 +188,7 @@ Produced by [weather_pipeline.py](../src/feature_engineering/weather_pipeline.py
 
 #### `solar_capacity_mw`
 
-Produced by [mastr_pipeline.py](../src/feature_engineering/mastr_pipeline.py) from the per-unit solar data that [mastr_etl.py](../src/scripts/mastr_etl.py) downloads (Marktstammdatenregister bulk export). Cumulative installed solar (PV) capacity in Germany as of that day, in MW. It is capacity, not generation: combine it with a solar radiation variable (e.g. `shortwave_radiation`) for a generation proxy.
+Produced by [mastr_pipeline.py](../src/feature_engineering/mastr_pipeline.py) from the solar data that [mastr_etl.py](../src/scripts/mastr_etl.py) downloads (Marktstammdatenregister bulk export, added up per commissioning date). Cumulative installed solar (PV) capacity in Germany as of that day, in MW. It is capacity, not generation: combine it with a solar radiation variable (e.g. `shortwave_radiation`) for a generation proxy.
 
 - Daily file: the real day-to-day value. Hourly file: the day's value repeated across all 24 hours (capacity does not change within a day), so it carries no intra-day information on its own.
 - Built from `AnlagenEegSolar` (the EEG-subsidy registration table), not the real unit registry `EinheitenSolar`, which currently fails to parse under `open-mastr` against MaStR's schema (a package / schema-version bug, not our data). Revisit once that is fixed.

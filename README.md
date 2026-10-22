@@ -89,14 +89,15 @@ All commands run from the project root. The project uses [uv](https://docs.astra
 Builds `src/data/final/data_daily.csv` and `data_hourly.csv` from the raw SMARD files.
 
 1. Put the SMARD files in `src/data/raw/` (manual download, see [FEATURE_ENGINEERING](docs/FEATURE_ENGINEERING.md#manual-downloads)).
-2. Run the whole flow (downloads, cleansing, feature pipelines, merge):
+2. Run the whole flow (cleansing, feature pipelines, merge):
 
    ```
    uv run python src/feature_engineering/main.py                   # whole data flow
+   uv run python src/feature_engineering/main.py --rebuild         # build the features again
    uv run python src/feature_engineering/main.py --forceDownload   # download the lookup files again
    ```
 
-   Downloads are skipped when their file already exists, a failed step stops the run.
+   A feature group whose files already exist is skipped, a download only runs when there is no other way to get the feature files. A failed step stops the run.
 
 3. Each step is a normal script and can be run alone, use `--help` for its options:
 

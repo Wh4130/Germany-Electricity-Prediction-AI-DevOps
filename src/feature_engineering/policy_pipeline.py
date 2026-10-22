@@ -6,7 +6,8 @@ Merge the outputs of oxcgrt_pipeline.py and production_index_pipeline.py into on
         -> features/policy/data_daily.csv, features/policy/data_hourly.csv
 
 Those two pipelines are not changed. Their files have `date` (daily) or `datetime_from` (hourly, with
-time zone) and `date` instead of `date_from`, so this step writes them in the format of the other features.
+time zone) and `date` instead of `date_from_utc`, so this step makes `date_from_utc` from them and
+writes the files in the format of the other features.
 The production index of the main variant is used (aligned to the release date), not the `refmonth` files:
 they are an ablation that uses figures before they were published.
 
@@ -20,34 +21,37 @@ from pathlib import Path
 import pandas as pd
 
 SOURCES = ("oxcgrt", "ipi_energy_intensive")
+TIMEZONE = "Europe/Berlin"
 
 
 class PolicyFeatureBuilder:
     """
-    Put the policy files into one DataFrame with `date_from` and all their feature columns.
+    Put the policy files into one DataFrame with `date_from_utc` and all their feature columns.
 
     The builder does no file I/O and never changes its input.
     """
 
     @staticmethod
-    def date_from(part: pd.DataFrame) -> pd.Series:
-        """ `date_from` like in intermin/: local time without a time zone """
+    def date_from_utc(part: pd.DataFrame) -> pd.Series:
+        """ `date_from_utc` like in intermin/: UTC, written without a time zone """
         if "datetime_from" in part.columns:
-            # "2019-01-01T00:00:00+01:00" -> "2019-01-01 00:00:00", the repeated 02:00 stays twice
-            return part["datetime_from"].str.slice(0, 19).str.replace("T", " ")
-        return part["date"]
+            # hourly: "2019-01-01T00:00:00+01:00" has the offset, so also the repeated 02:00 is exact
+            return pd.to_datetime(part["datetime_from"], utc = True).dt.tz_localize(None)
+        # daily: the date is the local midnight
+        local = pd.to_datetime(part["date"])
+        return local.dt.tz_localize(TIMEZONE).dt.tz_convert("UTC").dt.tz_localize(None)
 
     def build(self, parts: dict[str, pd.DataFrame]) -> pd.DataFrame:
         """ all columns of `parts` next to each other, an error if the parts do not fit together """
         first_name = next(iter(parts))
         first = parts[first_name]
-        date_from = self.date_from(first)
+        date_from_utc = self.date_from_utc(first)
 
         features = []
         for name, part in parts.items():
             if not part.index.equals(first.index):
                 raise ValueError(f"{name}: the row index differs from {first_name}")
-            if not self.date_from(part).equals(date_from):
+            if not self.date_from_utc(part).equals(date_from_utc):
                 raise ValueError(f"{name}: the dates differ from {first_name}")
             features.append(part.drop(columns = ["date", "datetime_from"], errors = "ignore"))
 
@@ -56,7 +60,7 @@ class PolicyFeatureBuilder:
         if duplicated:
             raise ValueError(f"column names used twice: {duplicated}")
 
-        merged.insert(0, "date_from", date_from)
+        merged.insert(0, "date_from_utc", date_from_utc)
         return merged
 
 
