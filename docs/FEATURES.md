@@ -67,10 +67,11 @@
 | Weather | [`daylight_duration`](#weather-columns) | Length of daylight, seconds | float | x | | Open-Meteo archive | weather_pipeline.py | **D**; forecast |
 | Weather | [`shortwave_radiation_sum`](#weather-columns) | Solar radiation at the surface, MJ/m² | float | x | | Open-Meteo archive | weather_pipeline.py | **D**; forecast |
 | Weather | [`shortwave_radiation`](#weather-columns) | Solar radiation at the surface, W/m² | float | x | | Open-Meteo archive | weather_pipeline.py | **H**; forecast |
-| Weather | [`wind_speed_10m_max`](#weather-columns) | Wind speed 10 m above ground, daily maximum, km/h | float | x | | Open-Meteo archive | weather_pipeline.py | **D**; forecast |
+| Weather | [`wind_speed_10m_mean`](#weather-columns) | Wind speed 10 m above ground, daily mean, km/h | float | x | | Open-Meteo archive | weather_pipeline.py | **D**; forecast |
 | Weather | [`wind_speed_10m`](#weather-columns) | Wind speed 10 m above ground, km/h | float | x | | Open-Meteo archive | weather_pipeline.py | **H**; forecast |
 | Weather | [`precipitation_sum`](#weather-columns) | Precipitation of the day, mm | float | x | | Open-Meteo archive | weather_pipeline.py | **D**; forecast |
 | Weather | [`precipitation`](#weather-columns) | Precipitation of the hour, mm | float | x | | Open-Meteo archive | weather_pipeline.py | **H**; forecast |
+| Weather | [`is_day`](#weather-columns) | Day/night label: 1 if the majority of the population is in daylight that hour, else 0 | int | x | | Open-Meteo archive | weather_pipeline.py | **H**; forecast |
 | Solar capacity | [`solar_capacity_mw`](#mastr-solar-capacity) | Cumulative installed PV capacity in Germany, MW | float | x | 6 | [Marktstammdatenregister](https://www.marktstammdatenregister.de) via [open-mastr](https://github.com/OpenEnergyPlatform/open-MaStR) | [mastr_pipeline.py](../src/feature_engineering/mastr_pipeline.py) | known (slow-moving); overestimates a little, see details |
 | Policy | [`oxcgrt_stringency`](#oxcgrt-columns) | OxCGRT stringency index, 0 - 100 | float | x | 7 | [OxCGRT](https://github.com/OxCGRT/covid-policy-dataset) | [oxcgrt_pipeline.py](../src/feature_engineering/oxcgrt_pipeline.py), then [policy_pipeline.py](../src/feature_engineering/policy_pipeline.py) | 0 outside 2020 - 2022 |
 | Policy | [`oxcgrt_c1_school`](#oxcgrt-columns) | School closing level, 0 - 3 | float | | | OxCGRT | oxcgrt_pipeline.py | auxiliary |
@@ -176,11 +177,12 @@ Produced by [weather_pipeline.py](../src/feature_engineering/weather_pipeline.py
 | `hdd` | °C | Heating degree days: `max(0, 18 - temperature)`. Demand-side driver, higher on cold days |
 | `daylight_duration` | seconds | Length of daylight (sunrise to sunset). **Daily only** |
 | `shortwave_radiation_sum` (daily) / `shortwave_radiation` (hourly) | MJ/m² / W/m² | Solar radiation reaching the surface. Supply-side driver (solar generation) |
-| `wind_speed_10m_max` (daily) / `wind_speed_10m` (hourly) | km/h | Wind speed, 10 m above ground. Supply-side driver (wind generation) |
+| `wind_speed_10m_mean` (daily) / `wind_speed_10m` (hourly) | km/h | Wind speed, 10 m above ground. Supply-side driver (wind generation) |
 | `precipitation_sum` (daily) / `precipitation` (hourly) | mm | Total precipitation (rain + showers + snowfall water equivalent) |
+| `is_day` | 0 / 1 | Day/night label: 1 if the majority of the population is in daylight that hour, else 0 (population-weighted across the 15 cities, then thresholded at 0.5 since their sunrise/sunset times differ slightly by latitude). **Hourly only** |
 
-- Daily columns are aggregated over the day (`_sum` / `_max` suffix), hourly columns are the instantaneous value of that hour.
-- `daylight_duration` is daily only: at hourly resolution it would repeat the same value for all 24 hours of a day, which the `month` column already covers.
+- Daily columns are aggregated over the day (`_sum` / `_max` / `_mean` suffix), hourly columns are the instantaneous value of that hour.
+- `daylight_duration` is daily only: at hourly resolution it would repeat the same value for all 24 hours of a day, which the `month` column already covers. `is_day` is the hourly counterpart instead, a day/night label derived from Open-Meteo's own per-hour, per-city day/night indicator.
 - The hourly data handles the two DST days: 23 rows on the spring one, 25 on the autumn one (`02:00` occurs twice with different weather values, two distinct real hours), matching `intermin/data_hourly.csv` row for row.
 - These are **observed** values. At prediction time use weather **forecasts**, not these.
 
