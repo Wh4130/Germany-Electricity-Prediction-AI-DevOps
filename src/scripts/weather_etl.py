@@ -1,5 +1,5 @@
 """
-ETL: German weather (temperature, radiation, wind, precipitation) ->
+ETL: German weather (temperature, radiation, wind, precipitation, daylight) ->
     src/data/intermin/weather_daily_by_city.csv
     src/data/intermin/weather_hourly_by_city.csv
 
@@ -47,7 +47,7 @@ DAILY_VARS = [
     "temperature_2m_mean",
     "daylight_duration",
     "shortwave_radiation_sum",
-    "wind_speed_10m_max",
+    "wind_speed_10m_mean",
     "precipitation_sum",
 ]
 HOURLY_VARS = [
@@ -55,6 +55,7 @@ HOURLY_VARS = [
     "shortwave_radiation",
     "wind_speed_10m",
     "precipitation",
+    "is_day",
 ]
 
 # top 15 populated German cities (worldpopulationreview.com, 2026 estimate)
