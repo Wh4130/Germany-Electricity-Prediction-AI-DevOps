@@ -52,6 +52,7 @@
 | Calendar | [`is_dst`](#is_dst) | Summer time is in effect | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
 | Calendar | [`is_dst_transition_day`](#is_dst) | Day with 23 or 25 hours | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
 | Economic | [`gas_price_eu_usd`](#gas_price_eu_usd) | European natural gas price of the month, USD per MMBtu | float | x | 3 | [IMF PCPS via DBnomics](https://api.db.nomics.world/v22/series/IMF/PCPS/M.W00.PNGASEU.USD) | [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py) | monthly value on every row |
+| Economic | [`industrial_confidence`](#industrial_confidence) | Industrial confidence indicator of Germany (balance, percentage points) of the month before | float | x | 9 | [Eurostat `ei_bssi_m_r2`](https://ec.europa.eu/eurostat/databrowser/view/ei_bssi_m_r2/default/table), `BS-ICI-BAL` | economic_indicators_pipeline.py | known: the value of the month before, the survey is published at the end of its month |
 | Electricity price | [`day_ahead_price`](#day-ahead-price) | Day-ahead price of the hour, EUR/MWh | float | x | 4 | [SMARD chart data](https://www.smard.de/app/chart_data/4169/DE-LU/index_hour.json) (DE-LU) | [electricity_price_pipeline.py](../src/feature_engineering/electricity_price_pipeline.py) | **H**; known around noon of the day before |
 | Electricity price | [`day_ahead_price_mean`](#day-ahead-price) | Mean of the day-ahead prices of the day | float | x | 4 | SMARD chart data | electricity_price_pipeline.py | **D**; same as above |
 | Electricity price | [`day_ahead_price_min`](#day-ahead-price) | Minimum of the day | float | | | SMARD chart data | electricity_price_pipeline.py | **D**; not used, the daily data uses the mean |
@@ -143,6 +144,14 @@ European natural gas price (IMF PCPS "Natural gas, EU"), US dollars per MMBtu, p
 
 DBnomics is a copy of the IMF data and some months behind (up to 2025-06), enough for our period. Cite as "IMF PCPS via DBnomics".
 
+#### `industrial_confidence`
+
+Industrial confidence indicator of Germany from the business surveys of the European Commission (Eurostat `ei_bssi_m_r2`, `indic = BS-ICI-BAL`, seasonally adjusted), a balance in percentage points. It is the average of the balances of three answers of the industry: order books, stocks of finished products and the expected production. A survey is a leading indicator: it says how the industry sees the next months, before the production follows.
+
+**Which value a day gets.** The survey is made in the first 2 - 3 weeks of the month and the Commission publishes it on the second-last working day of that month (Eurostat updated the data of 2026-09 on 2026-09-29). So a day does not know the value of its own month yet, and **every day gets the value of the month before** (the days of October use September). Using the value of the same month would use a number that is not published yet for most of the days of the month.
+
+It is not the same information as the production index: for 2018 - 2024 its correlation is about 0.6 with `ipi_ei_level`, 0.4 with `ipi_ei_yoy` and about 0 with `ipi_ei_mom` (73 months, so only a rough number). Where it is in the Eurostat navigation tree: Business and consumer surveys > Business and consumer survey - composite indicators > Economic sentiment and confidence indicators by sector - monthly data.
+
 ### Electricity price
 
 #### Day-ahead price
@@ -232,6 +241,7 @@ An ablation trains the model with and without a feature (or a group of features)
 | 6 | `solar_capacity_mw` | Slow-moving and rising, it may only repeat the trend |
 | 7 | `oxcgrt_stringency` | Not zero only in 2020 - 2022, so it can only help in the pandemic period. Check whether it helps there at all. The other `oxcgrt_*` columns are auxiliary |
 | 8 | `ipi_ei_level` | Compare with and without the production index, and with the other leading economic indicators that are being looked for. The other `ipi_ei_*` columns are auxiliary |
+| 9 | `industrial_confidence` | A survey, so a leading indicator, but it is a monthly value and the load changes mostly with the weather and the calendar, so it may add little. Compare with and without it, and with `ipi_ei_level` (they are not the same information, see the details) |
 
 New features that are planned (leading economic indicators, EV data) are tested the same way once they are built, and added to the table above.
 
