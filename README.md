@@ -26,6 +26,7 @@ Every data source we download from, with its API or URL. Details per source (scr
 - ferien-api.de, school holidays of the 16 states: https://ferien-api.de/api/v1/holidays
 - DBnomics, Destatis population by state (12411LJ003): https://api.db.nomics.world/v22/series/DESTATIS/12411LJ003
 - DBnomics, IMF European natural gas price (PCPS): https://api.db.nomics.world/v22/series/IMF/PCPS/M.W00.PNGASEU.USD
+- Eurostat, German industrial confidence indicator (business surveys, `ei_bssi_m_r2`): https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ei_bssi_m_r2
 - Open-Meteo, historical weather archive: https://archive-api.open-meteo.com/v1/archive
 - Marktstammdatenregister (MaStR), solar units, via the `open-mastr` package: https://www.marktstammdatenregister.de and https://github.com/OpenEnergyPlatform/open-MaStR
 - OxCGRT, COVID-19 policy tracker (national file): https://raw.githubusercontent.com/OxCGRT/covid-policy-dataset/main/data/OxCGRT_compact_national_v1.csv

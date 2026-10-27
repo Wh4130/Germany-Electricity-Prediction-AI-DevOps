@@ -55,7 +55,14 @@ FEATURES = [
     (
         "economic_indicators",
         "src/feature_engineering/economic_indicators_pipeline.py",
-        [("gas price", "src/scripts/gas_price_etl.py", "src/data/intermin/gas_price_eu.csv")],
+        [
+            ("gas price", "src/scripts/gas_price_etl.py", "src/data/intermin/gas_price_eu.csv"),
+            (
+                "industrial confidence",
+                "src/scripts/industrial_confidence_etl.py",
+                "src/data/intermin/industrial_confidence.csv",
+            ),
+        ],
     ),
     (
         "electricity_price",
