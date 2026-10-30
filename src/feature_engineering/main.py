@@ -53,6 +53,11 @@ FEATURES = [
         ],
     ),
     (
+        "fourier",
+        "src/feature_engineering/fourier_pipeline.py",
+        [],
+    ),
+    (
         "economic_indicators",
         "src/feature_engineering/economic_indicators_pipeline.py",
         [

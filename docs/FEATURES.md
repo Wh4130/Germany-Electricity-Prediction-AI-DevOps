@@ -9,6 +9,7 @@
 - [Details](#details)
   - [Raw columns](#raw-columns)
   - [Calendar](#calendar)
+  - [Fourier terms](#fourier-terms)
   - [Economic indicators](#economic-indicators)
   - [Electricity price](#electricity-price)
   - [Generation](#generation)
@@ -51,6 +52,8 @@
 | Calendar | [`is_christmas_new_year`](#is_christmas_new_year) | 24 Dec to 1 Jan | bool | x | | fixed window | calendar_pipeline.py | known |
 | Calendar | [`is_dst`](#is_dst) | Summer time is in effect | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
 | Calendar | [`is_dst_transition_day`](#is_dst) | Day with 23 or 25 hours | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
+| Fourier | [`sin_y1`, `cos_y1` ... `sin_y10`, `cos_y10`](#fourier-terms) | Yearly cycle (period 365.25 days): sin and cos for k = 1 ... 10 | float | x | | derived from `date_from` | [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py) | known; 20 columns, a model uses only the first k it needs |
+| Fourier | [`sin_d1`, `cos_d1` ... `sin_d6`, `cos_d6`](#fourier-terms) | Daily cycle (period 24 hours): sin and cos for k = 1 ... 6 | float | x | | derived from `date_from` | fourier_pipeline.py | **H**; known; 12 columns, a model uses only the first k it needs |
 | Economic | [`gas_price_eu_usd`](#gas_price_eu_usd) | European natural gas price of the month, USD per MMBtu | float | x | 3 | [IMF PCPS via DBnomics](https://api.db.nomics.world/v22/series/IMF/PCPS/M.W00.PNGASEU.USD) | [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py) | monthly value on every row |
 | Economic | [`industrial_confidence`](#industrial_confidence) | Industrial confidence indicator of Germany (balance, percentage points) of the month before | float | x | 9 | [Eurostat `ei_bssi_m_r2`](https://ec.europa.eu/eurostat/databrowser/view/ei_bssi_m_r2/default/table), `BS-ICI-BAL` | economic_indicators_pipeline.py | known: the value of the month before, the survey is published at the end of its month |
 | Electricity price | [`day_ahead_price`](#day-ahead-price) | Day-ahead price of the hour, EUR/MWh | float | x | 4 | [SMARD chart data](https://www.smard.de/app/chart_data/4169/DE-LU/index_hour.json) (DE-LU) | [electricity_price_pipeline.py](../src/feature_engineering/electricity_price_pipeline.py) | **H**; known around noon of the day before |
@@ -134,6 +137,24 @@ Fixed window from 24 Dec to 1 Jan. Dec 24 and 31 are not legal holidays but beha
 Summer time is in effect at `date_from`. In the hourly data the repeated 02:00 at the end of DST is True the first time and False the second time. `is_dst_transition_day` marks the two days a year with 23 hours (start of DST) or 25 hours (end of DST).
 
 Low priority: in the daily data `is_dst` is almost the same as the season (`month`), and in the hourly data the shift of the sun against the clock is mostly covered by the hourly sunshine of the weather data. Check it with an ablation before keeping it in a model.
+
+### Fourier terms
+
+Produced by [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py), all from `date_from`. They only depend on the time, so they are known in advance.
+
+A Fourier term is `sin(2 pi k t / P)` or `cos(2 pi k t / P)`: a wave that repeats every `P / k` time units. `P` is the period of the seasonal cycle, `k = 1, 2, 3 ...` is the harmonic. `k = 1` is one wave per period (a smooth rise and fall), a higher `k` adds a finer detail, so a few pairs of sin and cos describe a seasonal shape with few columns.
+
+**What they are for:** a model that does not remove the season by differencing needs the season as an input. The SARIMAX "Model 2" (no differencing, weekday dummies + yearly Fourier terms) uses the yearly terms for the yearly cycle, and the daily terms are for the daily cycle of the hourly data. Any other model can use them too. A model that already has `month` or the hour as a plain input (e.g. a tree model) may gain little from them, this is not tested.
+
+| Columns | Period P | t | K | Data |
+|---|---|---|---|---|
+| `sin_y<k>`, `cos_y<k>` | 365.25 days | days since 2019-01-01 (in the hourly data with the fraction of the day) | 10 | daily and hourly |
+| `sin_d<k>`, `cos_d<k>` | 24 hours | local hour of the day, 0 - 23 | 6 | hourly only |
+
+- **K is an upper bound, not the number of terms a model should use.** The columns of a lower `k` are the same whatever K is (`sin_y1` is always the same column), so a model takes the first `k` it needs and chooses it by AIC / BIC or the validation error. The values 10 and 6 are set in `YEARLY_K` and `DAILY_K` of [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py), they are not tested. With `P = 24` at most `k = 11` is useful: for `k = 12` the sin term is 0 at every full hour.
+- **t starts at a fixed date** (2019-01-01), not at the first row of the data. So a column has the same value whatever period of the data is used, and the values for a later year (e.g. the test year) follow on from the earlier ones.
+- **Local time:** `date_from` is the local time (Europe/Berlin) without a time zone, and the load follows the local clock, so the terms follow the local day and hour. On the day with 25 hours the hour 02 is in the data twice and gets the same terms both times, on the day with 23 hours it is missing. This affects 2 days a year.
+- The weekly cycle has no Fourier terms on purpose, see [Not done / planned](#not-done--planned).
 
 ### Economic indicators
 
@@ -250,5 +271,8 @@ New features that are planned (leading economic indicators, EV data) are tested 
 ## Not done / planned
 
 - **Lags of `actual_consumption`** (e.g. 1 / 7 days, 24 / 168 hours): to derive from the target. Usable if the lag is at least the forecast horizon.
+- **Weekly Fourier terms (P = 7 days in the daily data, P = 168 hours in the hourly data)**: not added.
+  - Daily data: the weekly cycle has 7 values, one for each weekday. With `k = 1, 2, 3` the six sin / cos columns describe exactly the same thing as six weekday dummies (with the intercept), so Fourier terms add no information. The weekday is already in `day_of_week_raw` and `day_of_week`, a model that needs dummies makes them from these. A smaller K would only smooth the weekday shape, but the weekdays do not change smoothly (Friday to Saturday is a jump), so there is nothing to gain from it.
+  - Hourly data: the weekly shape (24 hours x 7 weekdays) has jumps, e.g. at the weekend, and describing it with Fourier terms would need a large K. Use the weekday together with the hour (dummies or an interaction) instead. This is a judgement from the shape, not tested.
 - **Carbon price (EUA)**: no free source found, and the effect on the load is indirect and weak.
 - **Carnival (`is_carnival`)**: not a legal holiday and regional, so there is no data on who is off on which day and a weighted version would need an assumed region x day matrix. Only 6 Rosenmontag days in our data, and a rough check (no weather control) shows about -2% on Rosenmontag against about ±7% normal Monday noise. Add it back (one 0/1 flag per day, no weights) only if the model residuals show these days.

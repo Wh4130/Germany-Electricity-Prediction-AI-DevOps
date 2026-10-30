@@ -24,6 +24,7 @@ src/data/
 │   ├── calendar/
 │   ├── economic_indicators/
 │   ├── electricity_price/
+│   ├── fourier/
 │   ├── generation/
 │   ├── mastr/
 │   ├── policy/
@@ -78,6 +79,7 @@ flowchart LR
 
     subgraph FE["feature engineering"]
         cal(["calendar"])
+        fourier(["fourier"])
         eco(["economic_indicators"])
         price(["electricity_price"])
         gen(["generation"])
@@ -137,6 +139,7 @@ The pipelines in [src/feature_engineering/](../src/feature_engineering/) turn th
 | [cleansing.py](../src/feature_engineering/cleansing.py) | `raw/` | `intermin/data_daily.csv`, `intermin/data_hourly.csv` |
 | [cleansing_generation.py](../src/feature_engineering/cleansing_generation.py) | `raw/Realisierte_Erzeugung_...csv` | `intermin/generation_by_source.csv` |
 | [calendar_pipeline.py](../src/feature_engineering/calendar_pipeline.py) | `intermin/` (incl. `population_by_land.csv`, `school_holidays.csv`) | `features/calendar/` |
+| [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py) | `intermin/data_*.csv` (only `date_from`) | `features/fourier/` (sin / cos terms, see [FEATURES](FEATURES.md#fourier-terms)) |
 | [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py) | `intermin/` (incl. `gas_price_eu.csv`) | `features/economic_indicators/` |
 | [electricity_price_pipeline.py](../src/feature_engineering/electricity_price_pipeline.py) | `intermin/` (incl. `day_ahead_price.csv`) | `features/electricity_price/` |
 | [generation_pipeline.py](../src/feature_engineering/generation_pipeline.py) | `intermin/` (incl. `generation_by_source.csv`) | `features/generation/` |
