@@ -9,6 +9,7 @@
 - [Details](#details)
   - [Raw columns](#raw-columns)
   - [Calendar](#calendar)
+  - [Fourier terms](#fourier-terms)
   - [Economic indicators](#economic-indicators)
   - [Electricity price](#electricity-price)
   - [Generation](#generation)
@@ -51,7 +52,10 @@
 | Calendar | [`is_christmas_new_year`](#is_christmas_new_year) | 24 Dec to 1 Jan | bool | x | | fixed window | calendar_pipeline.py | known |
 | Calendar | [`is_dst`](#is_dst) | Summer time is in effect | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
 | Calendar | [`is_dst_transition_day`](#is_dst) | Day with 23 or 25 hours | bool | x | 2 | derived from `date_from` | calendar_pipeline.py | known |
+| Fourier | [`sin_y1`, `cos_y1` ... `sin_y10`, `cos_y10`](#fourier-terms) | Yearly cycle (period 365.25 days): sin and cos for k = 1 ... 10 | float | x | | derived from `date_from` | [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py) | known; 20 columns, a model uses only the first k it needs |
+| Fourier | [`sin_d1`, `cos_d1` ... `sin_d6`, `cos_d6`](#fourier-terms) | Daily cycle (period 24 hours): sin and cos for k = 1 ... 6 | float | x | | derived from `date_from` | fourier_pipeline.py | **H**; known; 12 columns, a model uses only the first k it needs |
 | Economic | [`gas_price_eu_usd`](#gas_price_eu_usd) | European natural gas price of the month, USD per MMBtu | float | x | 3 | [IMF PCPS via DBnomics](https://api.db.nomics.world/v22/series/IMF/PCPS/M.W00.PNGASEU.USD) | [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py) | monthly value on every row |
+| Economic | [`industrial_confidence`](#industrial_confidence) | Industrial confidence indicator of Germany (balance, percentage points) of the month before | float | x | 9 | [Eurostat `ei_bssi_m_r2`](https://ec.europa.eu/eurostat/databrowser/view/ei_bssi_m_r2/default/table), `BS-ICI-BAL` | economic_indicators_pipeline.py | known: the value of the month before, the survey is published at the end of its month |
 | Electricity price | [`day_ahead_price`](#day-ahead-price) | Day-ahead price of the hour, EUR/MWh | float | x | 4 | [SMARD chart data](https://www.smard.de/app/chart_data/4169/DE-LU/index_hour.json) (DE-LU) | [electricity_price_pipeline.py](../src/feature_engineering/electricity_price_pipeline.py) | **H**; known around noon of the day before |
 | Electricity price | [`day_ahead_price_mean`](#day-ahead-price) | Mean of the day-ahead prices of the day | float | x | 4 | SMARD chart data | electricity_price_pipeline.py | **D**; same as above |
 | Electricity price | [`day_ahead_price_min`](#day-ahead-price) | Minimum of the day | float | | | SMARD chart data | electricity_price_pipeline.py | **D**; not used, the daily data uses the mean |
@@ -134,6 +138,24 @@ Summer time is in effect at `date_from`. In the hourly data the repeated 02:00 a
 
 Low priority: in the daily data `is_dst` is almost the same as the season (`month`), and in the hourly data the shift of the sun against the clock is mostly covered by the hourly sunshine of the weather data. Check it with an ablation before keeping it in a model.
 
+### Fourier terms
+
+Produced by [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py), all from `date_from`. They only depend on the time, so they are known in advance.
+
+A Fourier term is `sin(2 pi k t / P)` or `cos(2 pi k t / P)`: a wave that repeats every `P / k` time units. `P` is the period of the seasonal cycle, `k = 1, 2, 3 ...` is the harmonic. `k = 1` is one wave per period (a smooth rise and fall), a higher `k` adds a finer detail, so a few pairs of sin and cos describe a seasonal shape with few columns.
+
+**What they are for:** a model that does not remove the season by differencing needs the season as an input. The SARIMAX "Model 2" (no differencing, weekday dummies + yearly Fourier terms) uses the yearly terms for the yearly cycle, and the daily terms are for the daily cycle of the hourly data. Any other model can use them too. A model that already has `month` or the hour as a plain input (e.g. a tree model) may gain little from them, this is not tested.
+
+| Columns | Period P | t | K | Data |
+|---|---|---|---|---|
+| `sin_y<k>`, `cos_y<k>` | 365.25 days | days since 2019-01-01 (in the hourly data with the fraction of the day) | 10 | daily and hourly |
+| `sin_d<k>`, `cos_d<k>` | 24 hours | local hour of the day, 0 - 23 | 6 | hourly only |
+
+- **K is an upper bound, not the number of terms a model should use.** The columns of a lower `k` are the same whatever K is (`sin_y1` is always the same column), so a model takes the first `k` it needs and chooses it by AIC / BIC or the validation error. The values 10 and 6 are set in `YEARLY_K` and `DAILY_K` of [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py), they are not tested. With `P = 24` at most `k = 11` is useful: for `k = 12` the sin term is 0 at every full hour.
+- **t starts at a fixed date** (2019-01-01), not at the first row of the data. So a column has the same value whatever period of the data is used, and the values for a later year (e.g. the test year) follow on from the earlier ones.
+- **Local time:** `date_from` is the local time (Europe/Berlin) without a time zone, and the load follows the local clock, so the terms follow the local day and hour. On the day with 25 hours the hour 02 is in the data twice and gets the same terms both times, on the day with 23 hours it is missing. This affects 2 days a year.
+- The weekly cycle has no Fourier terms on purpose, see [Not done / planned](#not-done--planned).
+
 ### Economic indicators
 
 Produced by [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py). Monthly indicators: every day and every hour gets the value of its month.
@@ -143,6 +165,14 @@ Produced by [economic_indicators_pipeline.py](../src/feature_engineering/economi
 European natural gas price (IMF PCPS "Natural gas, EU"), US dollars per MMBtu, price level (not converted to euro, not a percent change). The gas price sets the electricity price when gas plants are the marginal plant, so it affects the load mostly through industry and in the long run.
 
 DBnomics is a copy of the IMF data and some months behind (up to 2025-06), enough for our period. Cite as "IMF PCPS via DBnomics".
+
+#### `industrial_confidence`
+
+Industrial confidence indicator of Germany from the business surveys of the European Commission (Eurostat `ei_bssi_m_r2`, `indic = BS-ICI-BAL`, seasonally adjusted), a balance in percentage points. It is the average of the balances of three answers of the industry: order books, stocks of finished products and the expected production. A survey is a leading indicator: it says how the industry sees the next months, before the production follows.
+
+**Which value a day gets.** The survey is made in the first 2 - 3 weeks of the month and the Commission publishes it on the second-last working day of that month (Eurostat updated the data of 2026-09 on 2026-09-29). So a day does not know the value of its own month yet, and **every day gets the value of the month before** (the days of October use September). Using the value of the same month would use a number that is not published yet for most of the days of the month.
+
+It is not the same information as the production index: for 2018 - 2024 its correlation is about 0.6 with `ipi_ei_level`, 0.4 with `ipi_ei_yoy` and about 0 with `ipi_ei_mom` (73 months, so only a rough number). Where it is in the Eurostat navigation tree: Business and consumer surveys > Business and consumer survey - composite indicators > Economic sentiment and confidence indicators by sector - monthly data.
 
 ### Electricity price
 
@@ -234,11 +264,15 @@ An ablation trains the model with and without a feature (or a group of features)
 | 6 | `solar_capacity_mw` | Slow-moving and rising, it may only repeat the trend |
 | 7 | `oxcgrt_stringency` | Not zero only in 2020 - 2022, so it can only help in the pandemic period. Check whether it helps there at all. The other `oxcgrt_*` columns are auxiliary |
 | 8 | `ipi_ei_level` | Compare with and without the production index, and with the other leading economic indicators that are being looked for. The other `ipi_ei_*` columns are auxiliary |
+| 9 | `industrial_confidence` | A survey, so a leading indicator, but it is a monthly value and the load changes mostly with the weather and the calendar, so it may add little. Compare with and without it, and with `ipi_ei_level` (they are not the same information, see the details) |
 
 New features that are planned (leading economic indicators, EV data) are tested the same way once they are built, and added to the table above.
 
 ## Not done / planned
 
 - **Lags of `actual_consumption`** (e.g. 1 / 7 days, 24 / 168 hours): to derive from the target. Usable if the lag is at least the forecast horizon.
+- **Weekly Fourier terms (P = 7 days in the daily data, P = 168 hours in the hourly data)**: not added.
+  - Daily data: the weekly cycle has 7 values, one for each weekday. With `k = 1, 2, 3` the six sin / cos columns describe exactly the same thing as six weekday dummies (with the intercept), so Fourier terms add no information. The weekday is already in `day_of_week_raw` and `day_of_week`, a model that needs dummies makes them from these. A smaller K would only smooth the weekday shape, but the weekdays do not change smoothly (Friday to Saturday is a jump), so there is nothing to gain from it.
+  - Hourly data: the weekly shape (24 hours x 7 weekdays) has jumps, e.g. at the weekend, and describing it with Fourier terms would need a large K. Use the weekday together with the hour (dummies or an interaction) instead. This is a judgement from the shape, not tested.
 - **Carbon price (EUA)**: no free source found, and the effect on the load is indirect and weak.
 - **Carnival (`is_carnival`)**: not a legal holiday and regional, so there is no data on who is off on which day and a weighted version would need an assumed region x day matrix. Only 6 Rosenmontag days in our data, and a rough check (no weather control) shows about -2% on Rosenmontag against about ±7% normal Monday noise. Add it back (one 0/1 flag per day, no weights) only if the model residuals show these days.

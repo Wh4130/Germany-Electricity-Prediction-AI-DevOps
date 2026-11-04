@@ -24,6 +24,7 @@ src/data/
 │   ├── calendar/
 │   ├── economic_indicators/
 │   ├── electricity_price/
+│   ├── fourier/
 │   ├── generation/
 │   ├── mastr/
 │   ├── policy/
@@ -42,6 +43,7 @@ src/data/
 | `intermin/` | `generation_by_source.csv` | 52992 | Hourly realised generation of the 12 sources in UTC, MWh (lookup table, no row index) |
 | `intermin/` | `day_ahead_price.csv` | 52608 | Hourly day-ahead electricity price Germany / Luxembourg in UTC, EUR/MWh (lookup table, no row index) |
 | `intermin/` | `gas_price_eu.csv` | 78 | European natural gas price per month, US dollars per MMBtu (lookup table, no row index) |
+| `intermin/` | `industrial_confidence.csv` | 94 | German industrial confidence indicator per month, balance in percentage points (lookup table, no row index), from 2018-12 because a day uses the month before |
 | `intermin/` | `school_holidays.csv` | 670 | School holiday periods of the 16 states (lookup table: one row per period, no row index) |
 | `intermin/` | `mastr_solar.csv` | | Solar capacity commissioned per day (one row per commissioning date, lookup table, no row index), made by `src/scripts/mastr_etl.py` |
 | `intermin/` | `weather_*_by_city.csv` | | Not committed to git (size, ~40 MB), made by `src/scripts/weather_etl.py`, see the scripts below |
@@ -77,6 +79,7 @@ flowchart LR
 
     subgraph FE["feature engineering"]
         cal(["calendar"])
+        fourier(["fourier"])
         eco(["economic_indicators"])
         price(["electricity_price"])
         gen(["generation"])
@@ -113,6 +116,7 @@ One-off ETL scripts in [src/scripts/](../src/scripts/) download the data that do
 | [population_etl.py](../src/scripts/population_etl.py) | Destatis 12411LJ003 via [DBnomics](https://db.nomics.world) (one request) | `intermin/population_by_land.csv` | |
 | [day_ahead_price_etl.py](../src/scripts/day_ahead_price_etl.py) | [SMARD](https://www.smard.de) (Bundesnetzagentur, CC BY 4.0), one request per week, about 2 minutes | `intermin/day_ahead_price.csv` | Uses the JSON files of the SMARD website charts, not a documented API, so it can change. SMARD gets the data from ENTSO-E. Cite as "Bundesnetzagentur \| SMARD.de". |
 | [gas_price_etl.py](../src/scripts/gas_price_etl.py) | IMF PCPS `M.W00.PNGASEU.USD` via DBnomics (one request, no registration) | `intermin/gas_price_eu.csv` | DBnomics is a copy of the IMF data and some months behind (up to 2025-06), enough for our data. Cite as "IMF PCPS via DBnomics". |
+| [industrial_confidence_etl.py](../src/scripts/industrial_confidence_etl.py) | Eurostat `ei_bssi_m_r2`, `BS-ICI-BAL`, Germany, seasonally adjusted ([Statistics API](https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ei_bssi_m_r2), one request) | `intermin/industrial_confidence.csv` | The survey of a month is published at the end of that month, so a day uses the value of the month before (see [FEATURES](FEATURES.md#industrial_confidence)). |
 | [weather_etl.py](../src/scripts/weather_etl.py) | [Open-Meteo](https://open-meteo.com) historical weather archive, 15 cities x 2 resolutions (30 requests, about 10 minutes) | `intermin/weather_daily_by_city.csv`, `intermin/weather_hourly_by_city.csv` | Not committed to git (`.gitignore`): `weather_hourly_by_city.csv` alone is ~40 MB. Re-run this script to regenerate it, the source data does not change. |
 | [mastr_etl.py](../src/scripts/mastr_etl.py) | [Marktstammdatenregister](https://www.marktstammdatenregister.de) (MaStR, Bundesnetzagentur) bulk export, via the [`open-mastr`](https://github.com/OpenEnergyPlatform/open-MaStR) package (the full bulk export, one zip of about 3.2 GB, 20 - 60 minutes) | `intermin/mastr_solar.csv` | The capacity commissioned on each day (`commission_date`, `capacity_mw`, `n_units`), added up from the ~6.5 M units. Small (~200 KB), so it is committed and other machines do not need the download. The download can break half way (connection reset), run the script again. See the script docstring for why `AnlagenEegSolar` is used instead of `EinheitenSolar` (currently broken in `open-mastr`) and the limitations that follow. |
 
@@ -135,6 +139,7 @@ The pipelines in [src/feature_engineering/](../src/feature_engineering/) turn th
 | [cleansing.py](../src/feature_engineering/cleansing.py) | `raw/` | `intermin/data_daily.csv`, `intermin/data_hourly.csv` |
 | [cleansing_generation.py](../src/feature_engineering/cleansing_generation.py) | `raw/Realisierte_Erzeugung_...csv` | `intermin/generation_by_source.csv` |
 | [calendar_pipeline.py](../src/feature_engineering/calendar_pipeline.py) | `intermin/` (incl. `population_by_land.csv`, `school_holidays.csv`) | `features/calendar/` |
+| [fourier_pipeline.py](../src/feature_engineering/fourier_pipeline.py) | `intermin/data_*.csv` (only `date_from`) | `features/fourier/` (sin / cos terms, see [FEATURES](FEATURES.md#fourier-terms)) |
 | [economic_indicators_pipeline.py](../src/feature_engineering/economic_indicators_pipeline.py) | `intermin/` (incl. `gas_price_eu.csv`) | `features/economic_indicators/` |
 | [electricity_price_pipeline.py](../src/feature_engineering/electricity_price_pipeline.py) | `intermin/` (incl. `day_ahead_price.csv`) | `features/electricity_price/` |
 | [generation_pipeline.py](../src/feature_engineering/generation_pipeline.py) | `intermin/` (incl. `generation_by_source.csv`) | `features/generation/` |
