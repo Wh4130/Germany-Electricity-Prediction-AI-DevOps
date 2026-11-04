@@ -36,16 +36,23 @@ import pandas as pd
 import evaluate
 import tabicl_forecaster
 import timesfm3_forecast
-from data import DEFAULT_DATA_DIR, DEFAULT_RESULTS_DIR, HORIZONS, covariate_set, load_frame, write_forecasts
+from data import (DEFAULT_DATA_DIR, DEFAULT_RESULTS_DIR, HORIZONS, covariate_set, load_frame, origin_positions,
+                  write_forecasts)
 
-def same_inputs(path: Path, cov) -> bool:
-    """True if the JSON sidecar of an existing run lists the same covariates."""
+
+def same_run(path: Path, cov, n_origins: int) -> bool:
+    """True if the JSON sidecar of an existing run has the same covariates and origin count.
+
+    The origin count catches files of a --max-origins test run, so a full run
+    never reuses them.
+    """
     meta_path = path.with_suffix(".json")
     if not meta_path.exists():
         return False
     meta = json.loads(meta_path.read_text())
     past = meta.get("covariates_past_only", meta.get("covariates_past_only_ffill"))
-    return meta.get("covariates_known") == cov.known and past == cov.past_only
+    return (meta.get("covariates_known") == cov.known and past == cov.past_only
+            and meta.get("n_origins") == n_origins)
 
 
 ALL_EXPERIMENTS = ["F1", "F2", "F4", "F5", "F6"]
@@ -99,13 +106,15 @@ def main() -> None:
     produced: list[Path] = []
     candidates: dict[tuple[str, int], list[tuple[dict, Path]]] = {}
 
-    def run(path: Path, make, cov):
-        """Run one forecast unless its file exists with the same inputs (resumable)."""
-        if path.exists() and not args.overwrite and same_inputs(path, cov):
+    def run(path: Path, make, cov, res, split, h):
+        """Run one forecast unless the same run exists already (resumable)."""
+        n = len(origin_positions(frame(res), split, h))
+        n = n if args.max_origins is None else min(n, args.max_origins)
+        if path.exists() and not args.overwrite and same_run(path, cov, n):
             print(f"[run] exists, skipped: {path.name}")
         else:
             if path.exists() and not args.overwrite:
-                print(f"[run] inputs changed since {path.name} was written, running it again")
+                print(f"[run] inputs or origins changed since {path.name} was written, running it again")
             out, meta = make()
             write_forecasts(out, path, meta)
         produced.append(path)
@@ -116,13 +125,13 @@ def main() -> None:
         name = timesfm3_forecast.run_name(res, h, split, cov, ctx)
         return run(forecast_dir / f"{name}.csv", lambda: timesfm3_forecast.forecast(
             timesfm(), frame(res), split, h, cov, ctx, max_origins=args.max_origins),
-            covariate_set(res, h, include_covariates=cov))
+            covariate_set(res, h, include_covariates=cov), res, split, h)
 
     def tabicl_run(h, split, feats, ctx):
         name = tabicl_forecaster.run_name(h, split, feats, ctx)
         return run(forecast_dir / f"{name}.csv", lambda: tabicl_forecaster.forecast(
             frame("daily"), split, h, feats, ctx, tabicl_config, max_origins=args.max_origins),
-            covariate_set("daily", h, calendar=tabicl_forecaster.FEATURE_SETS[feats][0]))
+            covariate_set("daily", h, calendar=tabicl_forecaster.FEATURE_SETS[feats][0]), "daily", split, h)
 
     # ---------------------------------------------------------------- 1. validation
     for exp in [e for e in args.experiments if e in TIMESFM_EXPERIMENTS]:
