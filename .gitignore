@@ -23,3 +23,6 @@ docs/meeting/ideas.md
 
 # bif raw data
 src/data/external_raw/
+
+# user_defined
+src/results/forecasts/
