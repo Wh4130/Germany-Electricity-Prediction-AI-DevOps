@@ -69,11 +69,28 @@ def run_name(resolution: str, horizon: int, split: str, covariates: bool, contex
     return f"timesfm3_zs_{cov}_{resolution}_{horizon_label(resolution, horizon)}_ctx{ctx}{zn}_{split}"
 
 
-def _predict_chunk(model, contexts, po, pf, horizon, use_znorm):
-    """One predict_batch call; halves the batch size and retries on CUDA OOM."""
+def _is_cuda_oom(err: BaseException) -> bool:
+    """CUDA out of memory, in either of the two forms PyTorch raises it.
+
+    - ``torch.OutOfMemoryError``: the caching allocator could not get memory.
+    - ``torch.AcceleratorError`` ("CUDA error: out of memory"): a kernel could
+      not allocate its workspace (seen on the RTX 3070 inside a relu).
+    """
     import torch
 
-    oom = getattr(torch, "OutOfMemoryError", torch.cuda.OutOfMemoryError)
+    oom_types = tuple(t for t in (getattr(torch, "OutOfMemoryError", None), torch.cuda.OutOfMemoryError) if t)
+    if isinstance(err, oom_types):
+        return True
+    accel = getattr(torch, "AcceleratorError", None)
+    return accel is not None and isinstance(err, accel) and "out of memory" in str(err).lower()
+
+
+def _predict_chunk(model, contexts, po, pf, horizon, use_znorm):
+    """One predict_batch call; halves the batch size and retries on CUDA OOM."""
+    import gc
+
+    import torch
+
     while True:
         try:
             outs = list(
@@ -87,11 +104,20 @@ def _predict_chunk(model, contexts, po, pf, horizon, use_znorm):
                 )
             )
             return outs
-        except oom:
+        except Exception as err:  # noqa: BLE001 - only CUDA OOM is handled, everything else is re-raised
+            if not _is_cuda_oom(err):
+                raise
             bs = model.config.per_core_batch_size
             if bs <= 1:
-                raise
-            torch.cuda.empty_cache()
+                raise RuntimeError(
+                    "CUDA out of memory even with batch size 1: use a shorter --context-length "
+                    "(or --hourly-contexts without 8192)"
+                ) from err
+            del err
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+                torch.cuda.empty_cache()
             model.config.per_core_batch_size = max(1, bs // 2)
             print(f"[timesfm3] CUDA out of memory, batch size {bs} -> {model.config.per_core_batch_size}")
 
