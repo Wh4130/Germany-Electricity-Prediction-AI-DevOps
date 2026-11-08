@@ -17,11 +17,14 @@ dependencies = [
     "pandas>=3.0.6",
     "plotly>=7.1.0",
     "requests>=2.34.2",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
     "statsmodels>=0.15.0",
 ]
 
 [dependency-groups]
 dev = [
     "ipykernel>=7.4.0",
+    "jupyterlab>=4.6.4",
     "pytest>=9.1.1",
 ]
