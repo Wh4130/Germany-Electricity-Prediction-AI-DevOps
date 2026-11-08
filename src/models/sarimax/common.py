@@ -2,7 +2,7 @@
 Shared helpers of the SARIMAX notebooks (daily data), so that Model 1 and Model 2 use the same code.
 
 The notebooks import this file (they run in this folder):
-    from common import make_features, evaluate, fit_eval, summarize, save_result, save_results, load_results
+    from common import make_features, evaluate, fit_eval, forecast_frame, summarize, save_result, save_results, load_results
 
 Nothing here changes a global variable: `fit_eval` returns its result and the notebook stores it
 (e.g. `results["A"] = fit_eval(...)`), so a cell only depends on what it passes in.
@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
@@ -96,12 +97,14 @@ def fit_eval(
     close to -1) and the default start values do not reach the optimum. The simpler model has to be fitted with
     the same X and `y_scale`, otherwise its estimates are on another scale.
 
-    `horizon`: forecasts for h = 1 .. horizon days (only without refits). Every day from the day before
-    `val_start` to the second last day is a forecast origin: the actual y up to the origin, the actual X of the
-    forecast days (ex-post), and from the second step on the model's own forecasts of y. Forecasts after the last
-    day of `y` are left out, so horizon h is evaluated on the days from val_start + (h - 1) days to the last day.
-    Returns `y_hat_h` (index: the forecast day, columns "h1" .. "hH") and per horizon `rmse_hH`, `mape_hH` and
-    `bias_hH` (mean of actual - forecast: negative = the model overestimates). `rmse`, `mape` and `y_hat` are h = 1.
+    `horizon`: forecasts for h = 1 .. horizon days (only without refits). A forecast uses the actual y up to the
+    day before its first step, the actual X of the forecast days (ex-post), and from the second step on the model's
+    own forecasts of y. As in the shared setup (MODELS.md), only origins whose whole horizon lies inside the
+    evaluation period are used: first steps from val_start to the last day - (horizon - 1) days.
+    Returns `y_hat_h` (index: the forecast day, columns "h1" .. "hH"), its standard errors `y_hat_h_se`, and per
+    horizon `rmse_hH`, `mape_hH` and `bias_hH` (mean of actual - forecast: negative = the model overestimates),
+    all over these origins. `rmse`, `mape`, `y_hat` and `y_hat_se` are h = 1 for every day of the period.
+    The standard errors give normal prediction intervals (see `forecast_frame`).
     """
     if horizon > 1 and refit_freq is not None:
         raise ValueError("horizon > 1 is only supported without refits (refit_freq = None): with refits, a forecast "
@@ -121,7 +124,7 @@ def fit_eval(
             block_starts = block_starts.insert(0, pd.Timestamp(val_start))
     block_ends = list(block_starts[1:] - pd.Timedelta(days = 1)) + [y.index[-1]]
 
-    first_res, prev_res, parts, not_converged = None, None, [], 0
+    first_res, prev_res, parts, se_parts, not_converged = None, None, [], [], 0
     t0 = time.perf_counter()
 
     for i, (start, end) in enumerate(zip(block_starts, block_ends), start = 1):
@@ -153,7 +156,9 @@ def fit_eval(
             first_res = res         # the first fit = the data before val_start
 
         res_block = res.apply(y_model[:end], exog = None if X is None else X[:end])
-        parts.append(res_block.get_prediction(start = start, dynamic = False).predicted_mean)
+        pred_block = res_block.get_prediction(start = start, dynamic = False)
+        parts.append(pred_block.predicted_mean)
+        se_parts.append(pred_block.se_mean)
 
         if i % 10 == 1:
             elapsed = time.perf_counter() - t0
@@ -162,14 +167,16 @@ def fit_eval(
                   f"{remaining} left, elapsed {elapsed:.0f}s, ETA {elapsed / i * remaining:.0f}s")
 
     y_hat = pd.concat(parts) * y_scale
+    y_hat_se = pd.concat(se_parts) * y_scale
     score = evaluate(y[val_start:], y_hat, verbose = False)
 
     # forecasts for h = 1 .. horizon (without refits there is one block, so res_block holds all the data)
     if horizon == 1:
-        y_hat_h = y_hat.to_frame("h1")
+        y_hat_h, y_hat_h_se = y_hat.to_frame("h1"), y_hat_se.to_frame("h1")
     else:
         t1 = time.perf_counter()
-        y_hat_h = _forecast_horizons(res_block, val_start, y.index[-1], horizon) * y_scale
+        y_hat_h, y_hat_h_se = _forecast_horizons(res_block, val_start, y.index[-1], horizon)
+        y_hat_h, y_hat_h_se = y_hat_h * y_scale, y_hat_h_se * y_scale
         print(f"[{name}] forecasts for h = 1..{horizon}: {time.perf_counter() - t1:.0f}s")
     by_horizon = {}
     for column in y_hat_h.columns:
@@ -201,20 +208,63 @@ def fit_eval(
         "start_params": None if start_params is None else start_params.to_dict(),
         **_config_from_res(first_res),
         "horizon": horizon, **by_horizon,
-        "y_hat": y_hat, "y_hat_h": y_hat_h, "res": first_res, "resid": first_res.resid * y_scale,
+        "y_hat": y_hat, "y_hat_se": y_hat_se, "y_hat_h": y_hat_h, "y_hat_h_se": y_hat_h_se,
+        "res": first_res, "resid": first_res.resid * y_scale,
     }
 
 
-def _forecast_horizons(res, val_start: str, last: pd.Timestamp, horizon: int) -> pd.DataFrame:
-    """ forecasts for h = 1 .. horizon from every origin (the day before val_start to the second last day), in the scale of `res` """
-    columns = {f"h{k}": {} for k in range(1, horizon + 1)}
-    for origin in pd.date_range(pd.Timestamp(val_start) - pd.Timedelta(days = 1), last - pd.Timedelta(days = 1), freq = "D"):
-        end = min(origin + pd.Timedelta(days = horizon), last)
-        # dynamic: the actual y up to the origin, then the model's own forecasts
-        pred = res.get_prediction(start = origin + pd.Timedelta(days = 1), end = end, dynamic = True).predicted_mean
-        for k, (day, value) in enumerate(pred.items(), start = 1):
-            columns[f"h{k}"][day] = value
-    return pd.DataFrame(columns).sort_index()
+def _forecast_horizons(res, val_start: str, last: pd.Timestamp, horizon: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Forecasts and their standard errors for h = 1 .. horizon, in the scale of `res`. Only origins whose whole
+    horizon lies inside the period: first steps from val_start to last - (horizon - 1) days.
+    """
+    means = {f"h{k}": {} for k in range(1, horizon + 1)}
+    ses = {f"h{k}": {} for k in range(1, horizon + 1)}
+    for first in pd.date_range(val_start, last - pd.Timedelta(days = horizon - 1), freq = "D"):
+        # dynamic: the actual y up to the day before the first step, then the model's own forecasts
+        pred = res.get_prediction(start = first, end = first + pd.Timedelta(days = horizon - 1), dynamic = True)
+        for k, (day, value, se) in enumerate(zip(pred.predicted_mean.index, pred.predicted_mean, pred.se_mean), start = 1):
+            means[f"h{k}"][day] = value
+            ses[f"h{k}"][day] = se
+    return pd.DataFrame(means).sort_index(), pd.DataFrame(ses).sort_index()
+
+
+QUANTILES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+
+def forecast_frame(result: dict, y: pd.Series, horizon: int) -> pd.DataFrame:
+    """
+    The forecasts of a `fit_eval` result in the shared format of MODELS.md (Forecast files): one row per origin and
+    step, columns origin, target_time, step, y_true, y_pred, q0.1 .. q0.9. `origin` is the day of the first forecast
+    step, dates as YYYY-MM-DD. horizon = 1: every day of the period; horizon > 1: the origins whose whole horizon
+    lies inside the period (the result needs `fit_eval(..., horizon = horizon)` or larger).
+    The quantiles come from a normal distribution with the forecast standard error; they ignore the uncertainty of
+    the parameters and of the X. The residuals are heavy-tailed, so check the coverage before trusting quantiles
+    further out than 0.1 / 0.9.
+    """
+    if horizon == 1:
+        means, ses = result["y_hat"].to_frame("h1"), result["y_hat_se"].to_frame("h1")
+    else:
+        if result["horizon"] < horizon:
+            raise ValueError(f"the result has forecasts up to h = {result['horizon']}, not {horizon}")
+        means, ses = result["y_hat_h"], result["y_hat_h_se"]
+        # the result may have a larger horizon: keep the origins whose first `horizon` steps are all there
+        last_first = means.index[-1] - pd.Timedelta(days = horizon - 1)
+    rows = []
+    for k in range(1, horizon + 1):
+        mean, se = means[f"h{k}"].dropna(), ses[f"h{k}"].dropna()
+        origin = mean.index - pd.Timedelta(days = k - 1)
+        part = pd.DataFrame({"origin": origin, "target_time": mean.index, "step": k,
+                             "y_true": y.reindex(mean.index).to_numpy(), "y_pred": mean.to_numpy()})
+        for q in QUANTILES:
+            part[f"q{q}"] = mean.to_numpy() + norm.ppf(q) * se.reindex(mean.index).to_numpy()
+        if horizon > 1:
+            part = part[part["origin"] <= last_first]
+        rows.append(part)
+    out = pd.concat(rows).sort_values(["origin", "step"]).reset_index(drop = True)
+    out["origin"] = out["origin"].dt.strftime("%Y-%m-%d")
+    out["target_time"] = out["target_time"].dt.strftime("%Y-%m-%d")
+    return out
 
 
 def _config_from_res(res) -> dict:
@@ -284,11 +334,12 @@ def load_results(directory: str | Path) -> dict:
     for path in sorted(Path(directory).glob("*.json")):
         with open(path) as file:
             data = json.load(file)
-        for key in ("y_hat", "resid"):
+        for key in ("y_hat", "y_hat_se", "resid"):
             if isinstance(data.get(key), dict):
                 data[key] = pd.Series(data[key]["values"], index = pd.to_datetime(data[key]["dates"]))
-        if isinstance(data.get("y_hat_h"), dict):
-            data["y_hat_h"] = pd.DataFrame(data["y_hat_h"]["columns"], index = pd.to_datetime(data["y_hat_h"]["dates"]))
+        for key in ("y_hat_h", "y_hat_h_se"):
+            if isinstance(data.get(key), dict):
+                data[key] = pd.DataFrame(data[key]["columns"], index = pd.to_datetime(data[key]["dates"]))
         for key in ("order", "seasonal_order"):
             if key in data:
                 data[key] = tuple(data[key])

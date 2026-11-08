@@ -51,7 +51,8 @@ Files in `src/models/sarimax/`:
 | `common.py` | Shared helpers: `make_features` (features made in the notebook), `fit_eval` (fit, forecast and metrics), `summarize`, saving and loading of the experiments as JSON |
 | `daily.ipynb` | The whole daily analysis: target, features, Model 1, Model 2, comparison, validation and test of the final model |
 | `results/daily/model1/`, `model2/` | One JSON per experiment on the validation year (settings, metrics, forecasts, residuals) |
-| `results/daily/test/` | The test run of the final model (JSON) and the forecasts for the dashboard (`sarimax_daily_test_predictions.csv`: index `date_from`, columns `y_h1` to `y_h7` in MWh) |
+| `results/daily/test/` | The test run of the final model (JSON) |
+| `results/daily/model1/sarimax_daily_{1d,7d}_val.csv`, `results/daily/test/sarimax_daily_{1d,7d}_test.csv` | Forecasts of the final model in the shared format of [MODELS - Forecast files](../MODELS.md#forecast-files): `origin` (day of the first step), `target_time`, `step`, `y_true`, `y_pred`, `q0.1` to `q0.9` |
 
 ## How to run
 
@@ -116,7 +117,8 @@ The VIF values are computed without the Fourier terms and dummies.
 ### Forecast protocol
 
 - **Fit once, no refit.** Validation: fit on 2019 - 2022, forecast 2023. Test: fit once more on 2019 - 2023 with the chosen specification, forecast 2024. The parameters stay fixed during the forecast year.
-- **Rolling origin, h = 1 to 7 days.** Every day is a forecast origin. From an origin the model forecasts the next 7 days with the actual load up to the origin and the actual X of the forecast days (ex-post). From the second step on, the lagged load is the model's own forecast (recursive). Horizon h is evaluated on the days from the h-th day of the year to its end (validation: 2023-01-0h to 2023-12-31).
+- **Rolling origin, h = 1 to 7 days.** Every day is a forecast origin. From an origin the model forecasts the next 7 days with the actual load up to the day before and the actual X of the forecast days (ex-post). From the second step on, the lagged load is the model's own forecast (recursive). As in the shared setup, the 7-day forecasts are only evaluated for origins whose whole horizon lies inside the year (359 origins in 2023, 360 in 2024); the 1-day forecasts for every day.
+- **Quantiles.** Normal quantiles from the forecast standard error of the state space model (given the parameters and the X).
 - **Model choice by the RMSE at h = 1 on the validation year.** The specification with the lowest RMSE is chosen, without a tie rule. AIC and BIC are reported, but only compared between specifications with the same differencing.
 - **Optimizer.** L-BFGS with up to 1,000 iterations and 50,000 likelihood evaluations. The default limit of 15,000 evaluations is used up after about 280 iterations with 45 parameters (the gradient is numerical). A larger specification starts from the estimates of the simpler one that it contains (new terms at 0), so its likelihood cannot end below it.
 
@@ -154,21 +156,32 @@ Model 1 is chosen by the rule (lower RMSE). The two models are very close at h =
 
 ### Final model: validation and test
 
-RMSE and MAPE by horizon; bias = mean of actual − forecast (negative: the model overestimates).
+1-day forecasts, every day of the year:
 
-| h | Validation 2023 RMSE | MAPE | Bias | Test 2024 RMSE | MAPE | Bias |
+| | RMSE | MAPE | 80% interval coverage |
+|---|---:|---:|---:|
+| Validation 2023 | 24,680 | 1.53% | 85.8% |
+| Test 2024 | 29,860 | 1.74% | 80.6% |
+
+7-day forecasts by step, over the origins whose whole horizon lies inside the year (359 in 2023, 360 in 2024); bias = mean of actual − forecast (negative: the model overestimates):
+
+| Step | Validation 2023 RMSE | MAPE | Bias | Test 2024 RMSE | MAPE | Bias |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1 | 24,680 | 1.53% | −693 | 29,860 | 1.74% | +1,149 |
-| 2 | 32,742 | 2.05% | −1,117 | 37,923 | 2.17% | +2,599 |
-| 3 | 35,671 | 2.26% | −1,383 | 38,734 | 2.33% | +4,322 |
-| 4 | 36,551 | 2.32% | −1,659 | 40,387 | 2.42% | +5,430 |
-| 5 | 37,354 | 2.38% | −1,983 | 42,518 | 2.55% | +6,253 |
-| 6 | 38,302 | 2.43% | −2,027 | 43,501 | 2.64% | +6,910 |
+| 1 | 23,871 | 1.50% | −791 | 28,716 | 1.69% | +1,265 |
+| 2 | 31,786 | 2.00% | −1,262 | 36,350 | 2.11% | +2,686 |
+| 3 | 34,930 | 2.21% | −1,632 | 37,880 | 2.29% | +4,134 |
+| 4 | 36,121 | 2.29% | −1,944 | 39,718 | 2.39% | +5,293 |
+| 5 | 37,251 | 2.37% | −2,288 | 42,448 | 2.55% | +6,481 |
+| 6 | 38,247 | 2.42% | −2,186 | 43,412 | 2.63% | +7,119 |
 | 7 | 39,910 | 2.52% | −2,167 | 44,482 | 2.73% | +7,304 |
 
-- The largest step is from h = 1 to h = 2, when the model has to use its own forecast instead of the actual load of the day before.
+80% interval coverage of the 7-day forecasts (all steps): 86.2% (validation), 82.1% (test).
+
+- The largest step is from step 1 to step 2 (+33% validation, +27% test), when the model has to use its own forecast instead of the actual load of the day before.
 - The test errors are higher than the validation errors; the validation year was used to choose the model.
-- On the test year the model underestimates the load, increasingly with the horizon (at h = 7 the bias is about 16% of the RMSE).
+- On the test year the model underestimates the load, increasingly with the horizon (at step 7 the bias is about 16% of the RMSE).
+- The normal 80% intervals are not too narrow despite the heavy-tailed residuals: the extreme residuals (Christmas, holidays) enlarge the estimated variance, so the intervals are wide enough on ordinary days (on the validation year even somewhat too wide).
+- MAE, the skill against the seasonal naive forecast and the pinball loss are computed by the shared evaluation script from the forecast files.
 
 ## Deviations from the shared setup
 
@@ -177,7 +190,7 @@ The [shared setup](../MODELS.md#shared-setup) is a proposal of 2026-10-27. The S
 | Shared setup | SARIMAX | Effect |
 |---|---|---|
 | Daily horizons 7 d and 30 d | h = 1 to 7 days, each reported | The 7 d horizon is covered; 30 d is not |
-| Main metric MAE; skill vs. seasonal naive; pinball loss and coverage | RMSE and MAPE (and bias); no MAE, skill or quantile forecasts | MAE and skill can be computed from the saved forecasts; quantiles are not produced |
+| Main metric MAE; skill vs. seasonal naive; pinball loss and coverage | Model choice by RMSE (and MAPE, bias) | The forecast files have the shared format with normal quantiles, so the shared evaluation script computes MAE, skill, pinball loss and coverage as for the other models |
 | Weather variant B (realistic) for the main results | Observed weather for all horizons (variant A, ex-post) | Optimistic, more so at longer horizons |
 | `day_ahead_price_mean` only for the next day | Used at all horizons (ex-post) | Optimistic for h ≥ 2 |
 | Policy and economy columns: last value known at the origin | Value of the forecast day | Small effect: they change at most a few times per month |
@@ -186,7 +199,7 @@ The [shared setup](../MODELS.md#shared-setup) is a proposal of 2026-10-27. The S
 
 - **Hourly data** is not done yet.
 - **Holiday periods.** The largest errors fall between Christmas and New Year and on regional holidays; the remaining autocorrelation at lags 8 to 11 probably comes from there as well.
-- **Prediction intervals.** The residuals are heavy-tailed, so normal prediction intervals would be too narrow.
+- **Prediction intervals.** Normal intervals from the model; the 80% interval covers 80 - 86% of the actual values, but the residuals are heavy-tailed, so more extreme quantiles (e.g. 1% / 99%) would likely be too narrow. The intervals ignore the uncertainty of the parameters and of the X.
 - **Level shifts.** COVID 2020 and the 2022 energy crisis are not fully described by the X; the test-year underestimation may come from the recovery of the demand in 2024 (not checked).
 - **Ex-post X.** See the deviations above; a realistic comparison needs the weather and price inputs as known at the origin.
 
