@@ -20,6 +20,9 @@ dependencies = [
     "scikit-learn>=1.9.1",
     "seaborn>=0.13.2",
     "statsmodels>=0.15.0",
+    "tabicl[forecast]==2.2.0",
+    "timesfm[torch]==3.0.2",
+    "torch>=2.15.0",
 ]
 
 [dependency-groups]

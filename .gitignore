@@ -27,3 +27,6 @@ src/data/external_raw/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# user_defined
+src/results/forecasts/
