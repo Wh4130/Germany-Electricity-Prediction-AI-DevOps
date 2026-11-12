@@ -1,8 +1,9 @@
 """
-Shared helpers of the SARIMAX notebooks (daily data), so that Model 1 and Model 2 use the same code.
+Shared helpers of the SARIMAX notebooks (daily and hourly data), so that the models use the same code.
 
 The notebooks import this file (they run in this folder):
     from common import make_features, evaluate, fit_eval, forecast_frame, summarize, save_result, save_results, load_results
+    from common import save_model, load_model      # the fitted model (parameters), to forecast again without a new fit
 
 Nothing here changes a global variable: `fit_eval` returns its result and the notebook stores it
 (e.g. `results["A"] = fit_eval(...)`), so a cell only depends on what it passes in.
@@ -31,8 +32,9 @@ def make_features(df: pd.DataFrame) -> pd.DataFrame:
     # * interaction term for is_holiday and is_weekday
     out["is_holiday_weekday"] = (out["is_holiday"] & out["is_weekday"]).astype(float)
 
-    # * computed solar generation proxy: capacity * radiation
-    out["solar_generation_proxy"] = out["solar_capacity_mw"] * out["shortwave_radiation_sum"]
+    # * computed solar generation proxy: capacity * radiation (daily: daily sum, hourly: hourly value)
+    radiation = "shortwave_radiation_sum" if "shortwave_radiation_sum" in out else "shortwave_radiation"
+    out["solar_generation_proxy"] = out["solar_capacity_mw"] * out[radiation]
     return out
 
 
@@ -60,6 +62,11 @@ def fit_eval(
     maxfun: int = 50000,
     start_params: pd.Series | None = None,
     horizon: int = 1,
+    freq: str = "D",
+    origins: pd.DatetimeIndex | None = None,
+    frozen_cols: list | None = None,
+    exog_fit: str = "mle",
+    lb_lags: tuple = (7, 14, 28),
     name: str = "",
 ) -> dict:
     """
@@ -104,16 +111,42 @@ def fit_eval(
     Returns `y_hat_h` (index: the forecast day, columns "h1" .. "hH"), its standard errors `y_hat_h_se`, and per
     horizon `rmse_hH`, `mape_hH` and `bias_hH` (mean of actual - forecast: negative = the model overestimates),
     all over these origins. `rmse`, `mape`, `y_hat` and `y_hat_se` are h = 1 for every day of the period.
-    The standard errors give normal prediction intervals (see `forecast_frame`).
+    The standard errors give normal prediction intervals (see `forecast_frame`). `rmse_all`, `mape_all` and
+    `bias_all` pool all steps of all these origins.
+
+    `freq`: the frequency of the data, "D" (daily) or "h" (hourly); "day" above means one step of this frequency.
+    `origins`: the first forecast steps for horizon > 1 (e.g. hourly: the UTC times of every local midnight);
+    default: every step. Origins whose horizon leaves the period are dropped.
+    `frozen_cols`: X columns that are only known up to the origin (past-only in the shared setup, e.g. monthly
+    indicators). All forecasts from an origin (h = 1 included) use their value of the step before the first
+    forecast step instead of the actual value of the forecast step; the other X stay ex-post. The X enter the
+    model as a regression (y = X beta + SARIMA errors), so this only shifts the forecast by
+    (X frozen - X actual) @ beta; the standard errors stay the same. Default None: all X ex-post.
+    `exog_fit`: how the coefficients of X are estimated. "mle" (default): together with the ARMA parameters by
+    maximum likelihood. "ols": two steps, for many X on long data (hourly): the X coefficients by OLS of y on X
+    over the fit data, then the ARMA parameters (and sigma2, trend) by maximum likelihood with the X coefficients
+    fixed (`fit_constrained`). The optimizer then has only a few parameters instead of all X coefficients, which
+    is much faster with a numerical gradient. OLS is consistent but not efficient under autocorrelated errors, the
+    X coefficients have no standard errors (p-values NaN), and the prediction intervals ignore their uncertainty.
+    AIC and BIC count only the free parameters, so compare them only between fits with the same `exog_fit`.
+    `lb_lags`: the lags of the Ljung-Box test on the residuals of the first fit (hourly e.g. (24, 48, 168)); the
+    first 4 weeks of residuals are left out (start-up of the filter).
     """
     if horizon > 1 and refit_freq is not None:
         raise ValueError("horizon > 1 is only supported without refits (refit_freq = None): with refits, a forecast "
                          "from an origin before a refit would use parameters estimated on data after the origin")
 
-    y = y.asfreq("D")
+    one = pd.Timedelta(1, freq)         # one step
+    y = y.asfreq(freq)
     y_model = y / y_scale
     if X is not None:
-        X = X.astype(float).asfreq("D")
+        X = X.astype(float).asfreq(freq)
+    frozen_cols = list(frozen_cols or [])
+    missing = [c for c in frozen_cols if X is None or c not in X.columns]
+    if missing:
+        raise ValueError(f"frozen_cols not in X: {missing}")
+    if exog_fit not in ("mle", "ols"):
+        raise ValueError(f"exog_fit has to be 'mle' or 'ols', not {exog_fit!r}")
 
     # the refit dates: val_start, then every refit_freq (none without refits); a block ends the day before the next refit
     if refit_freq is None:
@@ -122,13 +155,13 @@ def fit_eval(
         block_starts = pd.date_range(val_start, y.index[-1], freq = refit_freq)
         if len(block_starts) == 0 or block_starts[0] != pd.Timestamp(val_start):
             block_starts = block_starts.insert(0, pd.Timestamp(val_start))
-    block_ends = list(block_starts[1:] - pd.Timedelta(days = 1)) + [y.index[-1]]
+    block_ends = list(block_starts[1:] - one) + [y.index[-1]]
 
     first_res, prev_res, parts, se_parts, not_converged = None, None, [], [], 0
     t0 = time.perf_counter()
 
     for i, (start, end) in enumerate(zip(block_starts, block_ends), start = 1):
-        y_train = y_model[:start - pd.Timedelta(days = 1)]
+        y_train = y_model[:start - one]
         exog_train = None if X is None else X.loc[y_train.index]
 
         model = SARIMAX(
@@ -144,12 +177,15 @@ def fit_eval(
             init = start_params.reindex(model.param_names).fillna(0.0)     # new terms start at 0
         else:
             init = None
-        res = model.fit(
-            disp = False,
-            maxiter = maxiter if prev_res is None else refit_maxiter,
-            maxfun = maxfun,
-            start_params = init,
-        )
+        fit_kwargs = dict(disp = False, maxiter = maxiter if prev_res is None else refit_maxiter, maxfun = maxfun)
+        if exog_fit == "ols" and exog_train is not None:
+            # step 1: the X coefficients by OLS; step 2: the other parameters by MLE with these fixed
+            beta = np.linalg.lstsq(exog_train.to_numpy(), y_train.to_numpy(), rcond = None)[0]
+            fixed = dict(zip(model.exog_names, beta))
+            free_init = None if init is None else pd.Series(init, index = model.param_names).drop(list(fixed)).to_numpy()
+            res = model.fit_constrained(fixed, start_params = free_init, **fit_kwargs)
+        else:
+            res = model.fit(start_params = init, **fit_kwargs)
         prev_res = res
         not_converged += not res.mle_retvals["converged"]
         if first_res is None:
@@ -157,7 +193,7 @@ def fit_eval(
 
         res_block = res.apply(y_model[:end], exog = None if X is None else X[:end])
         pred_block = res_block.get_prediction(start = start, dynamic = False)
-        parts.append(pred_block.predicted_mean)
+        parts.append(pred_block.predicted_mean + _frozen_shift(X, frozen_cols, res.params, pred_block.predicted_mean.index, 1, one))
         se_parts.append(pred_block.se_mean)
 
         if i % 10 == 1:
@@ -175,7 +211,9 @@ def fit_eval(
         y_hat_h, y_hat_h_se = y_hat.to_frame("h1"), y_hat_se.to_frame("h1")
     else:
         t1 = time.perf_counter()
-        y_hat_h, y_hat_h_se = _forecast_horizons(res_block, val_start, y.index[-1], horizon)
+        y_hat_h, y_hat_h_se = _forecast_horizons(res_block, val_start, y.index[-1], horizon, one, origins)
+        for k in range(1, horizon + 1):
+            y_hat_h[f"h{k}"] += _frozen_shift(X, frozen_cols, res_block.params, y_hat_h.index, k, one)
         y_hat_h, y_hat_h_se = y_hat_h * y_scale, y_hat_h_se * y_scale
         print(f"[{name}] forecasts for h = 1..{horizon}: {time.perf_counter() - t1:.0f}s")
     by_horizon = {}
@@ -185,8 +223,15 @@ def fit_eval(
         by_horizon[f"rmse_{column}"] = score_h["rmse"]
         by_horizon[f"mape_{column}"] = score_h["mape"]
         by_horizon[f"bias_{column}"] = (y[pred.index] - pred).mean()
+    # all steps together (a target time can belong to several steps, so stack the columns)
+    pred_all = y_hat_h.stack().dropna()
+    actual_all = y.reindex(pred_all.index.get_level_values(0)).to_numpy()
+    by_horizon["rmse_all"] = np.sqrt(((actual_all - pred_all.to_numpy()) ** 2).mean())
+    by_horizon["mape_all"] = (np.abs(actual_all - pred_all.to_numpy()) / actual_all).mean() * 100
+    by_horizon["bias_all"] = (actual_all - pred_all.to_numpy()).mean()
 
-    lb =acorr_ljungbox(first_res.resid.iloc[28:], lags = [7, 14, 28])
+    burn = int(pd.Timedelta(weeks = 4) / one)          # the first 4 weeks: start-up of the filter
+    lb = acorr_ljungbox(first_res.resid.iloc[burn:], lags = list(lb_lags))
     first_converged = bool(first_res.mle_retvals["converged"])
     first_stuck = first_res.mle_retvals.get("iterations", 1) == 0
     if not first_converged:
@@ -200,29 +245,49 @@ def fit_eval(
         "order": order, "seasonal_order": seasonal_order,
         "aic": first_res.aic, "bic": first_res.bic,
         "rmse": score["rmse"], "mape": score["mape"],
-        "lb_p7": lb.loc[7, "lb_pvalue"], "lb_p14": lb.loc[14, "lb_pvalue"], "lb_p28": lb.loc[28, "lb_pvalue"],
+        **{f"lb_p{lag}": lb.loc[lag, "lb_pvalue"] for lag in lb_lags},
         "first_converged": first_converged, "first_stuck": first_stuck,
         "n_not_converged": not_converged, "n_refits": len(block_starts), "val_start": val_start,
         "refit_freq": refit_freq,
         "y_scale": y_scale, "maxiter": maxiter, "refit_maxiter": refit_maxiter, "maxfun": maxfun,
         "start_params": None if start_params is None else start_params.to_dict(),
         **_config_from_res(first_res),
-        "horizon": horizon, **by_horizon,
+        "freq": freq, "horizon": horizon, "frozen_cols": frozen_cols, "exog_fit": exog_fit, **by_horizon,
         "y_hat": y_hat, "y_hat_se": y_hat_se, "y_hat_h": y_hat_h, "y_hat_h_se": y_hat_h_se,
         "res": first_res, "resid": first_res.resid * y_scale,
     }
 
 
-def _forecast_horizons(res, val_start: str, last: pd.Timestamp, horizon: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _frozen_shift(X: pd.DataFrame | None, cols: list, params: pd.Series, index: pd.DatetimeIndex, k: int,
+                  one: pd.Timedelta) -> pd.Series | float:
     """
-    Forecasts and their standard errors for h = 1 .. horizon, in the scale of `res`. Only origins whose whole
-    horizon lies inside the period: first steps from val_start to last - (horizon - 1) days.
+    Change of the step-k forecasts at the target times `index` (in the scale of `params`) when the columns `cols`
+    keep their value of the step before the origin (origin = target - (k - 1) steps, so the value at target - k
+    steps) instead of the actual value at the target: (X before - X target) @ beta. 0 without `cols`.
     """
+    if not cols:
+        return 0.0
+    beta = params[cols].to_numpy()
+    before = X[cols].reindex(index - k * one).to_numpy()
+    target = X[cols].reindex(index).to_numpy()
+    return pd.Series((before - target) @ beta, index = index)
+
+
+def _forecast_horizons(res, val_start: str, last: pd.Timestamp, horizon: int, one: pd.Timedelta,
+                       origins: pd.DatetimeIndex | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Forecasts and their standard errors for h = 1 .. horizon, in the scale of `res`. `origins` are the first steps
+    (default: every step); only those whose whole horizon lies inside the period (val_start to last) are used.
+    """
+    if origins is None:
+        origins = pd.date_range(val_start, last, freq = one)
+    origins = pd.DatetimeIndex(origins)
+    origins = origins[(origins >= pd.Timestamp(val_start)) & (origins + (horizon - 1) * one <= last)]
     means = {f"h{k}": {} for k in range(1, horizon + 1)}
     ses = {f"h{k}": {} for k in range(1, horizon + 1)}
-    for first in pd.date_range(val_start, last - pd.Timedelta(days = horizon - 1), freq = "D"):
-        # dynamic: the actual y up to the day before the first step, then the model's own forecasts
-        pred = res.get_prediction(start = first, end = first + pd.Timedelta(days = horizon - 1), dynamic = True)
+    for first in origins:
+        # dynamic: the actual y up to the step before the first step, then the model's own forecasts
+        pred = res.get_prediction(start = first, end = first + (horizon - 1) * one, dynamic = True)
         for k, (day, value, se) in enumerate(zip(pred.predicted_mean.index, pred.predicted_mean, pred.se_mean), start = 1):
             means[f"h{k}"][day] = value
             ses[f"h{k}"][day] = se
@@ -236,34 +301,35 @@ def forecast_frame(result: dict, y: pd.Series, horizon: int) -> pd.DataFrame:
     """
     The forecasts of a `fit_eval` result in the shared format of MODELS.md (Forecast files): one row per origin and
     step, columns origin, target_time, step, y_true, y_pred, q0.1 .. q0.9. `origin` is the day of the first forecast
-    step, dates as YYYY-MM-DD. horizon = 1: every day of the period; horizon > 1: the origins whose whole horizon
-    lies inside the period (the result needs `fit_eval(..., horizon = horizon)` or larger).
+    step; daily as YYYY-MM-DD, hourly as YYYY-MM-DD HH:MM:SS (the UTC time of `date_from_utc`). horizon = 1: every
+    step of the period; horizon > 1: the origins of `fit_eval` whose whole horizon lies inside the period (the
+    result needs `fit_eval(..., horizon = horizon)` or larger).
     The quantiles come from a normal distribution with the forecast standard error; they ignore the uncertainty of
     the parameters and of the X. The residuals are heavy-tailed, so check the coverage before trusting quantiles
     further out than 0.1 / 0.9.
     """
+    freq = result.get("freq", "D")      # results saved before hourly support are daily
+    one = pd.Timedelta(1, freq)
     if horizon == 1:
         means, ses = result["y_hat"].to_frame("h1"), result["y_hat_se"].to_frame("h1")
     else:
         if result["horizon"] < horizon:
             raise ValueError(f"the result has forecasts up to h = {result['horizon']}, not {horizon}")
         means, ses = result["y_hat_h"], result["y_hat_h_se"]
-        # the result may have a larger horizon: keep the origins whose first `horizon` steps are all there
-        last_first = means.index[-1] - pd.Timedelta(days = horizon - 1)
+    first_steps = means["h1"].dropna().index      # the origins of the result
     rows = []
     for k in range(1, horizon + 1):
         mean, se = means[f"h{k}"].dropna(), ses[f"h{k}"].dropna()
-        origin = mean.index - pd.Timedelta(days = k - 1)
+        origin = mean.index - (k - 1) * one
         part = pd.DataFrame({"origin": origin, "target_time": mean.index, "step": k,
                              "y_true": y.reindex(mean.index).to_numpy(), "y_pred": mean.to_numpy()})
         for q in QUANTILES:
             part[f"q{q}"] = mean.to_numpy() + norm.ppf(q) * se.reindex(mean.index).to_numpy()
-        if horizon > 1:
-            part = part[part["origin"] <= last_first]
-        rows.append(part)
+        rows.append(part[part["origin"].isin(first_steps)])
     out = pd.concat(rows).sort_values(["origin", "step"]).reset_index(drop = True)
-    out["origin"] = out["origin"].dt.strftime("%Y-%m-%d")
-    out["target_time"] = out["target_time"].dt.strftime("%Y-%m-%d")
+    date_format = "%Y-%m-%d" if freq == "D" else "%Y-%m-%d %H:%M:%S"
+    out["origin"] = out["origin"].dt.strftime(date_format)
+    out["target_time"] = out["target_time"].dt.strftime(date_format)
     return out
 
 
@@ -297,6 +363,8 @@ def _to_json(value):
         return {k: _to_json(v) for k, v in value.items()}
     if isinstance(value, (tuple, list)):
         return [_to_json(v) for v in value]
+    if isinstance(value, pd.Timestamp):      # e.g. val_start of the hourly data (a UTC time)
+        return value.isoformat()
     if isinstance(value, np.generic):
         return value.item()
     return value
@@ -326,6 +394,73 @@ def save_results(results: dict, directory: str | Path) -> None:
     """ save every experiment of `results` to its own file; files of experiments that are not in `results` stay """
     for name, result in results.items():
         save_result(name, result, directory)
+
+
+def save_model(result: dict, path: str | Path, x_mean: pd.Series | None = None, x_std: pd.Series | None = None) -> Path:
+    """
+    Write the fitted model of a `fit_eval` result to a JSON file, so that it can forecast again without a new fit
+    (`load_model`): the specification, the estimated parameters, the X columns, `frozen_cols`, and the mean and
+    standard deviation that standardized the raw X before the fit (`x_mean`, `x_std`, e.g. from the notebook's
+    `standardize`; the columns that are not in them, the dummies, stay unscaled). Not the data: `load_model` takes
+    y and the raw X again. The result needs the fitted model (`res`), so a result loaded with `load_results` does
+    not work.
+    """
+    import statsmodels
+    res = result["res"]
+    model = res.model
+    x_columns = [] if model.exog is None else list(model.exog_names)
+    scaled = [] if x_mean is None else [c for c in x_columns if c in x_mean.index]
+    missing = [c for c in scaled if x_std is None or c not in x_std.index]
+    if missing:
+        raise ValueError(f"x_std is missing columns of x_mean: {missing}")
+    fitted = res.fittedvalues.index
+    data = {
+        "saved_at": datetime.now().isoformat(timespec = "seconds"),
+        "statsmodels_version": statsmodels.__version__,
+        "order": list(result["order"]), "seasonal_order": list(result["seasonal_order"]),
+        "trend": model.trend, "y_scale": result["y_scale"], "freq": result.get("freq", "D"),
+        "fit_start": fitted[0].isoformat(), "fit_end": fitted[-1].isoformat(),
+        "converged": bool(res.mle_retvals["converged"]),
+        "params": {k: float(v) for k, v in res.params.items()},
+        "x_columns": x_columns,
+        "frozen_cols": list(result.get("frozen_cols", [])),
+        "x_mean": {c: float(x_mean[c]) for c in scaled},
+        "x_std": {c: float(x_std[c]) for c in scaled},
+    }
+    path = Path(path)
+    path.parent.mkdir(parents = True, exist_ok = True)
+    with open(path, "w") as file:
+        json.dump(data, file, indent = 1)
+    return path
+
+
+def load_model(path: str | Path, y: pd.Series | None = None, X: pd.DataFrame | None = None) -> dict:
+    """
+    Read a model written by `save_model`. With y (in its original unit) and the raw X (unscaled, at least the saved
+    X columns), the dict also holds `res`: the model on these data with the saved parameters (no new estimation),
+    in the unit y / y_scale, e.g. `res.get_forecast(steps, exog = ...)` (multiply by `y_scale`), and `X`: the X
+    standardized as in the fit. Past-only X (`frozen_cols`) have to be frozen by the caller when it forecasts.
+    """
+    with open(path) as file:
+        spec = json.load(file)
+    spec["order"], spec["seasonal_order"] = tuple(spec["order"]), tuple(spec["seasonal_order"])
+    if y is None:
+        return spec
+
+    freq = spec["freq"]
+    y = y.asfreq(freq)
+    exog = None
+    if spec["x_columns"]:
+        missing = [c for c in spec["x_columns"] if X is None or c not in X.columns]
+        if missing:
+            raise ValueError(f"X is missing columns of the model: {missing}")
+        exog = X[spec["x_columns"]].astype(float).asfreq(freq).copy()
+        for c, mean in spec["x_mean"].items():
+            exog[c] = (exog[c] - mean) / spec["x_std"][c]
+    model = SARIMAX(y / spec["y_scale"], order = spec["order"], seasonal_order = spec["seasonal_order"],
+                    exog = exog, trend = spec["trend"])
+    params = pd.Series(spec["params"])[model.param_names]
+    return {**spec, "res": model.filter(params), "X": exog}
 
 
 def load_results(directory: str | Path) -> dict:
