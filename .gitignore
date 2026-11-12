@@ -29,4 +29,8 @@ src/data/external_raw/
 .ipynb_checkpoints/
 
 # user_defined
-src/results/forecasts/
+src/results/foundation/extra_features
+src/results/foundation/forecasts
+src/results/foundation/metrics
+src/results/foundation/report/*.csv
+!src/results/foundation/report/*.md

@@ -9,10 +9,14 @@ What this module does (see docs/models/FOUNDATION.md, "Preprocessing"):
    - daily: the local date of ``date_from`` (one row per local day).
 3. Encodes the model inputs as numbers (booleans 0 / 1, ``month`` and
    ``day_of_week_raw`` as sine / cosine pairs) and stops if an input has NaN.
-4. Defines the covariate roles of the shared setup (known / forecast / past only).
-5. Finds the forecast origins of the validation (2023) or test (2024) year and
+4. Adds three engineered covariates (``hdd_delta_7d``, ``pv_proxy``,
+   ``holiday_week``, see ``ENGINEERED``). They are always computed, but a model
+   gets them only when they are switched on (``EXTRA_FEATURES`` or
+   ``covariate_set(..., extra=True)``), so the existing runs are unchanged.
+5. Defines the covariate roles of the shared setup (known / forecast / past only).
+6. Finds the forecast origins of the validation (2023) or test (2024) year and
    cuts the context and the future part for every origin.
-6. Writes forecasts in the shared forecast file format (MODELS.md, "Forecast files").
+7. Writes forecasts in the shared forecast file format (MODELS.md, "Forecast files").
 
 Only the columns of the input table of the shared setup are ever selected, so
 leakage, audit and auxiliary columns never reach a model.
@@ -109,6 +113,24 @@ DAY_AHEAD_PRICE = {"hourly": "day_ahead_price", "daily": "day_ahead_price_mean"}
 # past only here, not known.
 PAST_ONLY = ["gas_price_eu_usd", "oxcgrt_stringency", "ipi_ei_level", "industrial_confidence"]
 
+# Engineered covariates (added 2026-11-11 after the weather and day-type error
+# analysis). All three are known for the horizon: they use only the calendar and
+# the weather inputs, which are known covariates already (weather variant A).
+# - hdd_delta_7d: HDD minus HDD one week before (168 h / 7 d). All models
+#   under-reacted to weather changes against the previous week.
+# - pv_proxy: solar_capacity_mw x radiation, a proxy of rooftop PV output.
+#   Hourly: MW at 1 kW/m2 (radiation W/m2 / 1000); daily: MWh (MJ/m2 / 3.6).
+#   TimesFM-3 fits covariates linearly, so it cannot form this product itself.
+# - holiday_week: 1 on a Mon - Fri that is not itself a holiday, bridge day or
+#   Christmas window day, but lies in a week (Mon - Sun) with a public holiday on
+#   a weekday, or is 18 - 23 December. The load on these days was over-forecast.
+#   Uses the national is_holiday only (regional holidays: weighted_regional_holiday).
+ENGINEERED = ["hdd_delta_7d", "pv_proxy", "holiday_week"]
+PRE_CHRISTMAS_DAYS = range(18, 24)
+# Default of covariate_set(extra=None). False keeps the inputs of the existing
+# runs; run_extra_features.py sets it to True.
+EXTRA_FEATURES = False
+
 # Columns used to split the error by day type (evaluation only, not inputs).
 DAY_TYPE_COLUMNS = ["is_holiday", "is_weekday", "is_bridge_day", "is_christmas_new_year"]
 
@@ -135,6 +157,7 @@ def covariate_set(
     horizon: int,
     calendar: str = "full",
     include_covariates: bool = True,
+    extra: bool | None = None,
 ) -> CovariateSet:
     """Inputs of the shared setup for one resolution and horizon.
 
@@ -145,6 +168,8 @@ def covariate_set(
     calendar : "full" (all calendar columns) or "holidays" (only the holiday
         columns, for TabICL's default time features, experiment F6).
     include_covariates : False gives the target history only (F1, F4).
+    extra : add the engineered covariates (``ENGINEERED``). None uses the
+        module default ``EXTRA_FEATURES``.
     """
     if not include_covariates:
         return CovariateSet()
@@ -160,6 +185,8 @@ def covariate_set(
     # daily 1 d may use it, daily 7 d may not.
     if (resolution == "hourly" and horizon <= 24) or (resolution == "daily" and horizon == 1):
         known.append(DAY_AHEAD_PRICE[resolution])
+    if EXTRA_FEATURES if extra is None else extra:
+        known += ENGINEERED
     return CovariateSet(known=known, past_only=list(PAST_ONLY))
 
 
@@ -211,6 +238,45 @@ def _encode(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _engineer(df: pd.DataFrame, resolution: str) -> pd.DataFrame:
+    """The engineered covariates of ``ENGINEERED`` (after ``_encode``, rows sorted)."""
+    out = df.copy()
+
+    # HDD change against one week before; the first week has no earlier week (0).
+    period = SEASONAL_PERIOD[resolution]
+    hdd = out["hdd"].to_numpy(dtype=np.float64)
+    delta = np.zeros(len(out))
+    delta[period:] = hdd[period:] - hdd[:-period]
+    out["hdd_delta_7d"] = delta
+
+    # Potential PV output of the installed capacity.
+    if resolution == "hourly":
+        out["pv_proxy"] = out["solar_capacity_mw"] * out["shortwave_radiation"] / 1000.0
+    else:
+        out["pv_proxy"] = out["solar_capacity_mw"] * out["shortwave_radiation_sum"] / 3.6
+
+    # Holiday week, decided per local date and mapped back to the rows.
+    date = out["date_from"].dt.normalize()
+    flags = pd.DataFrame(
+        {
+            "date": date.to_numpy(),
+            "hol": out["is_holiday"].to_numpy() > 0.5,
+            "bridge": out["is_bridge_day"].to_numpy() > 0.5,
+            "xmas": out["is_christmas_new_year"].to_numpy() > 0.5,
+        }
+    )
+    day = flags.groupby("date")[["hol", "bridge", "xmas"]].any()
+    d = pd.DatetimeIndex(day.index)
+    dow = d.dayofweek.to_numpy()
+    week_start = (d - pd.to_timedelta(dow, unit="D")).to_numpy()
+    hol = day["hol"].to_numpy()
+    week_has_hol = pd.Series(hol & (dow < 5)).groupby(week_start).transform("any").to_numpy()
+    pre_xmas = (d.month.to_numpy() == 12) & np.isin(d.day.to_numpy(), list(PRE_CHRISTMAS_DAYS))
+    hw = (dow < 5) & ~hol & ~day["bridge"].to_numpy() & ~day["xmas"].to_numpy() & (week_has_hol | pre_xmas)
+    out["holiday_week"] = pd.Series(hw.astype(float), index=d).reindex(date.to_numpy()).to_numpy()
+    return out
+
+
 def load_frame(resolution: str, data_dir: Path | str = DEFAULT_DATA_DIR) -> SeriesFrame:
     """Read, sort, check and encode one file of ``final/``."""
     if resolution not in HORIZONS:
@@ -245,11 +311,12 @@ def load_frame(resolution: str, data_dir: Path | str = DEFAULT_DATA_DIR) -> Seri
         print(f"[data] note: {path.name} has {len(df)} rows, the docs expect {EXPECTED_ROWS[resolution]}")
 
     df = _encode(df)
+    df = _engineer(df, resolution)
 
     # Stop on missing values in any column a model could get (FOUNDATION.md, step 6).
     candidates = set([TARGET, *DAY_TYPE_COLUMNS])
     for h in HORIZONS[resolution]:
-        candidates |= set(covariate_set(resolution, h).all)
+        candidates |= set(covariate_set(resolution, h, extra=True).all)
     missing_cols = sorted(c for c in candidates if c not in df.columns)
     if missing_cols:
         raise KeyError(f"{path}: columns missing from final/: {missing_cols}")
