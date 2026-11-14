@@ -20,7 +20,7 @@ src/documentation/
 !docs/**/*.md
 docs/meeting/ideas.md
 *.json
-!src/models/sarimax/results/**/*.json
+!src/results/sarimax/**/*.json
 
 # bif raw data
 src/data/external_raw/

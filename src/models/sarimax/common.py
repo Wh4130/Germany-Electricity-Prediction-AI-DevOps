@@ -1,5 +1,6 @@
 """
-Shared helpers of the SARIMAX notebooks (daily and hourly data), so that the models use the same code.
+Shared helpers of the SARIMAX notebooks (daily and hourly data) and of `run_sarimax.py`, so that the models use the
+same code. The X of the final models are built in `features.py`.
 
 The notebooks import this file (they run in this folder):
     from common import make_features, evaluate, fit_eval, forecast_frame, summarize, save_result, save_results, load_results
@@ -109,7 +110,8 @@ def fit_eval(
     own forecasts of y. As in the shared setup (MODELS.md), only origins whose whole horizon lies inside the
     evaluation period are used: first steps from val_start to the last day - (horizon - 1) days.
     Returns `y_hat_h` (index: the forecast day, columns "h1" .. "hH"), its standard errors `y_hat_h_se`, and per
-    horizon `rmse_hH`, `mape_hH` and `bias_hH` (mean of actual - forecast: negative = the model overestimates),
+    horizon `rmse_hH`, `mape_hH` and `bias_hH` (mean of forecast - actual, as in the shared evaluation: positive =
+    the model overestimates),
     all over these origins. `rmse`, `mape`, `y_hat` and `y_hat_se` are h = 1 for every day of the period.
     The standard errors give normal prediction intervals (see `forecast_frame`). `rmse_all`, `mape_all` and
     `bias_all` pool all steps of all these origins.
@@ -222,13 +224,13 @@ def fit_eval(
         score_h = evaluate(y[pred.index], pred, verbose = False)
         by_horizon[f"rmse_{column}"] = score_h["rmse"]
         by_horizon[f"mape_{column}"] = score_h["mape"]
-        by_horizon[f"bias_{column}"] = (y[pred.index] - pred).mean()
+        by_horizon[f"bias_{column}"] = (pred - y[pred.index]).mean()
     # all steps together (a target time can belong to several steps, so stack the columns)
     pred_all = y_hat_h.stack().dropna()
     actual_all = y.reindex(pred_all.index.get_level_values(0)).to_numpy()
     by_horizon["rmse_all"] = np.sqrt(((actual_all - pred_all.to_numpy()) ** 2).mean())
     by_horizon["mape_all"] = (np.abs(actual_all - pred_all.to_numpy()) / actual_all).mean() * 100
-    by_horizon["bias_all"] = (actual_all - pred_all.to_numpy()).mean()
+    by_horizon["bias_all"] = (pred_all.to_numpy() - actual_all).mean()
 
     burn = int(pd.Timedelta(weeks = 4) / one)          # the first 4 weeks: start-up of the filter
     lb = acorr_ljungbox(first_res.resid.iloc[burn:], lags = list(lb_lags))

@@ -48,26 +48,39 @@ SARIMAX is a linear regression on the exogenous variables X with seasonal ARIMA 
 | Chosen orders | (2,0,0)(1,1,1,7) | (1,0,0)(1,0,0,7) |
 | Validation RMSE, h = 1 (MWh) | **24,680** | 24,710 |
 
-Model 1 has the lower validation RMSE and is the final SARIMAX model. For the final forecasts it is fitted twice with the information of the shared setup: with the day-ahead price for the 1-day forecasts, without it for the 7-day forecasts. On the test year 2024 it reaches an RMSE of 29,738 MWh (MAPE 1.74%) at h = 1 and 44,302 MWh (MAPE 2.71%) at h = 7.
+Model 1 has the lower validation RMSE and is the final SARIMAX model. For the final forecasts it is fitted twice with the information of the shared setup: with the day-ahead price for the 1-day forecasts, without it for the 7-day forecasts. On the test year 2024 it reaches an RMSE of 29,852 MWh (MAPE 1.74%) at h = 1 and 44,277 MWh (MAPE 2.71%) at h = 7.
 
 The hourly model uses the form of Model 2 only (a seasonal term with s = 168 is too slow on hourly data): SARIMAX (2,0,0)(1,0,1,24) in levels, with daily and yearly Fourier terms, day-of-week dummies and separate daily profiles for Saturdays and for Sundays and holidays, estimated in two steps (X coefficients by OLS, ARMA parameters by maximum likelihood). On the test year 2024 it reaches an RMSE of 706 MWh (MAPE 0.97%) for the 1-hour forecasts and 1,798 MWh (MAPE 2.63%) over all steps of the 24-hour forecasts, 56% below the seasonal naive forecast. See [Hourly model](#hourly-model).
 
-Files in `src/models/sarimax/`:
+Code in `src/models/sarimax/`:
 
 | File | Content |
 |---|---|
-| `common.py` | Shared helpers: `make_features` (features made in the notebook), `fit_eval` (fit, forecast and metrics; `frozen_cols` for past-only X, `exog_fit` for the two-step estimation), `forecast_frame` (shared forecast format), `summarize`, saving and loading of the experiments as JSON, `save_model` / `load_model` (the fitted models) |
-| `daily.ipynb` | The whole daily analysis: target, features, Model 1, Model 2, comparison, validation and test of the final model |
-| `hourly.ipynb` | The whole hourly analysis: target, features, two-step estimation, order selection, validation and test of the final model |
-| `results/hourly/model/`, `results/hourly/test/` | The hourly experiments (JSON), the forecasts `sarimax_hourly_{1h,24h}_{val,test}.csv` and the saved model `model_24h.json` |
-| `results/daily/model1/`, `model2/` | One JSON per experiment on the validation year (settings, metrics, forecasts, residuals) |
-| `results/daily/model1/SARIMAX_2001117_{1d,7d}.json` | The final model on the validation year: 1-day fit (with the day-ahead price) and 7-day fit (without it) |
-| `results/daily/test/SARIMAX_2001117_{1d,7d}.json` | The same two fits on the test year (JSON) |
-| `results/daily/model1/sarimax_daily_{1d,7d}_val.csv`, `results/daily/test/sarimax_daily_{1d,7d}_test.csv` | Forecasts of the final model in the shared format of [MODELS - Forecast files](../MODELS.md#forecast-files): `origin` (day of the first step), `target_time`, `step`, `y_true`, `y_pred`, `q0.1` to `q0.9` |
+| `run_sarimax.py` | The final models: fits the chosen specifications (validation fit 2019–2022, test fit 2019–2023), writes the forecasts of 2023 and 2024 in the shared format and saves the test fits |
+| `features.py` | The X of the final models (`build_daily_X`, `build_hourly_X`, `standardize`, `PAST_ONLY`), shared by the notebooks and `run_sarimax.py` |
+| `common.py` | Shared helpers: `make_features` (features that are not in `final/`), `fit_eval` (fit, forecast and metrics; `frozen_cols` for past-only X, `exog_fit` for the two-step estimation), `forecast_frame` (shared forecast format), `summarize`, saving and loading of the experiments as JSON, `save_model` / `load_model` (the fitted models) |
+| `daily.ipynb` | Model selection on the daily data: target, features, Model 1, Model 2, comparison, validation of the final model |
+| `hourly.ipynb` | Model selection on the hourly data: target, features, two-step estimation, order selection, validation of the final model |
+
+Results in `src/results/sarimax/`:
+
+| Folder | Content |
+|---|---|
+| `forecasts/` | `sarimax_{daily_1d,daily_7d,hourly_1h,hourly_24h}_{val,test}.csv` in the shared format of [MODELS - Forecast files](../MODELS.md#forecast-files) (`origin` = time of the first step, `target_time`, `step`, `y_true`, `y_pred`, `q0.1` to `q0.9`), each with a JSON sidecar (specification, fit period, X, convergence, AIC / BIC) |
+| `metrics/` | The output of the shared evaluation script on these files |
+| `models/` | The test fits (2019–2023), see [Saved models](#saved-models) |
+| `selection/daily/model1/`, `model2/`, `selection/hourly/` | One JSON per notebook experiment on the validation year (settings, metrics, forecasts, residuals) |
 
 ## How to run
 
-Open `src/models/sarimax/daily.ipynb` or `hourly.ipynb` with the project environment (`uv sync`) and run all cells; the notebooks import `common.py` from their own folder. A daily fit takes from a few seconds to a few minutes, an hourly fit (two steps) about 30 to 40 seconds; each notebook runs in a few minutes to about half an hour on a laptop CPU.
+Final forecasts and evaluation, from the project root (about 20 to 30 minutes on a laptop CPU):
+
+```bash
+uv run python src/models/sarimax/run_sarimax.py                     # --resolution daily / hourly for one only
+uv run python src/models/foundation/evaluate.py src/results/sarimax/forecasts/*.csv --metrics-dir src/results/sarimax/metrics
+```
+
+Model selection: open `src/models/sarimax/daily.ipynb` or `hourly.ipynb` with the project environment (`uv sync`) and run all cells; the notebooks import `common.py` and `features.py` from their own folder. A daily fit takes from a few seconds to a few minutes, an hourly fit (two steps) about 30 to 40 seconds.
 
 Every call of `fit_eval` returns a dict with the metrics, the forecasts (`y_hat`, and `y_hat_h` for h = 1 to 7), the residuals and the settings of the run. `save_results` writes one JSON per experiment, so running a cell again replaces only its own experiments.
 
@@ -132,7 +145,7 @@ The VIF values are computed without the Fourier terms and dummies.
 - **Information at the origin (final model).** As in the shared setup, the past-only X (`industrial_confidence`, `ipi_ei_level`, `oxcgrt_stringency`) keep their value of the day before the origin for all steps (`fit_eval(..., frozen_cols = ...)`), and the day-ahead price is only used for the 1-day forecasts: the 7-day forecasts come from a separate fit of the same specification without `day_ahead_price_mean`. The other X (calendar, weather, solar) are the actual values of the forecast days (ex-post). The model comparison (Model 1 vs. Model 2, orders, K) used the actual values of all X at h = 1 and was not repeated.
 - **Quantiles.** Normal quantiles from the forecast standard error of the state space model (given the parameters and the X).
 - **Model choice by the RMSE at h = 1 on the validation year.** The specification with the lowest RMSE is chosen, without a tie rule. AIC and BIC are reported, but only compared between specifications with the same differencing.
-- **Optimizer.** L-BFGS with up to 1,000 iterations and 50,000 likelihood evaluations. The default limit of 15,000 evaluations is used up after about 280 iterations with 45 parameters (the gradient is numerical). A larger specification starts from the estimates of the simpler one that it contains (new terms at 0), so its likelihood cannot end below it. The two test fits reached the limit of 1,000 iterations and were continued from their estimates (limit 5,000) until they converged; this changed the RMSE by less than 5 MWh.
+- **Optimizer.** L-BFGS with up to 1,000 iterations and 50,000 likelihood evaluations. The default limit of 15,000 evaluations is used up after about 280 iterations with 45 parameters (the gradient is numerical). A larger specification starts from the estimates of the simpler one that it contains (new terms at 0), so its likelihood cannot end below it. The final fits in `run_sarimax.py` use a limit of 5,000 iterations (the daily test fits did not converge within 1,000) and start from the same chain of smaller specifications as the notebook.
 
 ### Model 1: seasonal difference
 
@@ -173,21 +186,21 @@ With the information of the shared setup (see [Forecast protocol](#forecast-prot
 | | RMSE | MAPE | 80% interval coverage |
 |---|---:|---:|---:|
 | Validation 2023 | 24,641 | 1.53% | 85.8% |
-| Test 2024 | 29,738 | 1.74% | 80.6% |
+| Test 2024 | 29,852 | 1.74% | 80.6% |
 
-7-day forecasts (fit without the day-ahead price) by step, over the origins whose whole horizon lies inside the year (359 in 2023, 360 in 2024); bias = mean of actual − forecast (negative: the model overestimates):
+7-day forecasts (fit without the day-ahead price) by step, over the origins whose whole horizon lies inside the year (359 in 2023, 360 in 2024); bias = mean of forecast − actual, as in the shared evaluation (positive: the model overestimates):
 
 | Step | Validation 2023 RMSE | MAPE | Bias | Test 2024 RMSE | MAPE | Bias |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1 | 23,821 | 1.50% | −445 | 28,588 | 1.69% | +1,395 |
-| 2 | 31,553 | 1.98% | −649 | 36,151 | 2.11% | +2,884 |
-| 3 | 34,519 | 2.18% | −805 | 37,814 | 2.29% | +4,382 |
-| 4 | 35,575 | 2.25% | −954 | 39,619 | 2.38% | +5,569 |
-| 5 | 36,573 | 2.32% | −1,176 | 42,352 | 2.53% | +6,771 |
-| 6 | 37,479 | 2.37% | −984 | 43,302 | 2.62% | +7,414 |
-| 7 | 39,072 | 2.47% | −902 | 44,302 | 2.71% | +7,602 |
+| 1 | 23,821 | 1.50% | +445 | 28,583 | 1.69% | −1,397 |
+| 2 | 31,553 | 1.98% | +649 | 36,142 | 2.11% | −2,886 |
+| 3 | 34,519 | 2.18% | +805 | 37,800 | 2.29% | −4,384 |
+| 4 | 35,575 | 2.25% | +954 | 39,603 | 2.37% | −5,571 |
+| 5 | 36,573 | 2.32% | +1,176 | 42,332 | 2.53% | −6,772 |
+| 6 | 37,479 | 2.37% | +984 | 43,280 | 2.62% | −7,414 |
+| 7 | 39,072 | 2.47% | +902 | 44,277 | 2.71% | −7,602 |
 
-80% interval coverage of the 7-day forecasts (all steps): 86.9% (validation), 82.2% (test).
+80% interval coverage of the 7-day forecasts (all steps): 86.9% (validation), 82.3% (test).
 
 - The largest step is from step 1 to step 2 (+32% validation, +26% test), when the model has to use its own forecast instead of the actual load of the day before.
 - The test errors are higher than the validation errors; the validation year was used to choose the model.
@@ -249,18 +262,18 @@ The seasonal AR of the chosen specification is 0.984 and the seasonal MA −0.84
 - **The error follows the hour of the day more than the horizon.** Every origin is at local midnight, so step k is the local hour k − 1. The RMSE is highest at step 1 (local midnight: 1,984 MWh on 2023, 2,004 MWh on 2024) and in the early afternoon, lowest around 06:00 and at step 24.
 - **Midnight around holidays.** All 15 largest residuals of the fit fall at local midnight at the start or the end of a holiday (2 January, 2 November, 24 December, Corpus Christi). Most likely the day-level X (holiday indicators, regional-holiday share, day-of-week dummies) shift all 24 hours of a day by the same amount and switch at midnight, while the effect of a holiday is concentrated in the daytime. Interactions of the holiday indicators with the daily Fourier terms could reduce this; not tried.
 - **Weekly dependence.** The largest remaining autocorrelation of the residuals is at lag 168 (about 0.44).
-- **Bias** is small (−74 MWh on 2023, +104 MWh on 2024).
+- **Bias** (forecast − actual) is small (+74 MWh on 2023, −104 MWh on 2024).
 - **Intervals.** The 1-hour intervals are too wide (one error variance for all hours, enlarged by the midnight errors); the 24-hour intervals are about right on 2023 and slightly too narrow on 2024. The residuals are strongly heavy-tailed.
 
 ## Saved models
 
-The test fits (2019–2023) are saved with `save_model` as JSON: specification, estimated parameters, `frozen_cols`, and the mean and standard deviation of the raw X used for the standardization. `load_model(path, y, X_raw)` rebuilds the model with these parameters, without a new fit. The notebooks check that the loaded models have the same parameters and standardized X as the fits; for the daily 1-day and 7-day models the forecasts of the loaded model were also checked against the forecast files (equal up to 1e-9 MWh).
+`run_sarimax.py` saves the test fits (2019–2023) with `save_model` as JSON: specification, estimated parameters, `frozen_cols`, and the mean and standard deviation of the raw X used for the standardization. `load_model(path, y, X_raw)` rebuilds the model with these parameters, without a new fit (`X_raw` from `features.build_daily_X` / `build_hourly_X`).
 
-| File | Model | Used for |
+| File in `src/results/sarimax/models/` | Model | Used for |
 |---|---|---|
-| `results/daily/test/model_1d.json` | Daily Model 1 with the day-ahead price | 1-day forecasts |
-| `results/daily/test/model_7d.json` | Daily Model 1 without the day-ahead price | 7-day forecasts |
-| `results/hourly/test/model_24h.json` | Hourly (2,0,0)(1,0,1,24), two steps | 1-hour and 24-hour forecasts |
+| `sarimax_daily_1d.json` | Daily Model 1 with the day-ahead price | 1-day forecasts |
+| `sarimax_daily_7d.json` | Daily Model 1 without the day-ahead price | 7-day forecasts |
+| `sarimax_hourly.json` | Hourly (2,0,0)(1,0,1,24), two steps | 1-hour and 24-hour forecasts |
 
 ## Deviations from the shared setup
 
