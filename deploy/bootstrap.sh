@@ -153,16 +153,29 @@ bootstrap_github() {
   # only when issuer, subject and audience match exactly. The subject names the repository and the environment,
   # so only jobs in this repo's "production" environment (which needs an approval, master only) can log in;
   # other repos, forks and branches cannot.
+  # The start of the subject depends on the repository's OIDC setting: "repo:owner/name", or with immutable
+  # subjects "repo:owner@<owner id>/name@<repo id>" (survives a rename or transfer). GitHub tells us which one,
+  # so we never guess: a subject that differs by one character is rejected at login (AADSTS700213).
   log "2.2 federated credential"
-  local subject="repo:$GITHUB_REPO:environment:$GITHUB_ENV"
-  if [[ -z "$(az ad app federated-credential list --id "$app_id" --query "[?subject=='$subject'].name" -o tsv)" ]]; then
+  local prefix subject cred_name="github-$GITHUB_ENV" current
+  prefix=$(gh api "repos/$GITHUB_REPO/actions/oidc/customization/sub" -q '.sub_claim_prefix // empty')
+  subject="${prefix:-repo:$GITHUB_REPO}:environment:$GITHUB_ENV"
+  current=$(az ad app federated-credential list --id "$app_id" --query "[?name=='$cred_name'].subject | [0]" -o tsv)
+  if [[ -z "$current" ]]; then
     az ad app federated-credential create --id "$app_id" -o none --parameters "{
-      \"name\": \"github-$GITHUB_ENV\",
+      \"name\": \"$cred_name\",
       \"issuer\": \"https://token.actions.githubusercontent.com\",
       \"subject\": \"$subject\",
       \"audiences\": [\"api://AzureADTokenExchange\"],
       \"description\": \"GitHub Actions jobs of $GITHUB_REPO in the $GITHUB_ENV environment\"
     }"
+  elif [[ "$current" != "$subject" ]]; then
+    # an existing credential with another subject (older script, repository setting changed): correct it
+    az ad app federated-credential update --id "$app_id" --federated-credential-id "$cred_name" -o none --parameters "{
+      \"subject\": \"$subject\",
+      \"description\": \"GitHub Actions jobs of $GITHUB_REPO in the $GITHUB_ENV environment\"
+    }"
+    ok "corrected subject (was $current)"
   fi
   ok "trusts $subject"
 
