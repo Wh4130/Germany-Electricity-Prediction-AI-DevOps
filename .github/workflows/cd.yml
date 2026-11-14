@@ -6,7 +6,8 @@
 # That principal may only change rg-loadforecast (Contributor; role assignments limited to AcrPull) and the
 # Terraform state in rg-loadforecast-tfstate.
 #
-# Same steps as deploy/deploy.sh: registry -> API image -> dashboard build -> terraform apply.
+# The deployment itself is deploy/deploy.sh (registry -> API image -> dashboard build -> terraform apply), the same
+# script as on a laptop; this workflow only logs in, installs the tools, runs it and checks the result.
 name: CD
 
 on:
@@ -66,38 +67,15 @@ jobs:
           cache: npm
           cache-dependency-path: deploy/dashboard/package-lock.json
 
-      - name: Image tag (the commit)
-        run: echo "TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
-
-      - name: Terraform init (state in Azure Storage)
-        run: terraform init -input=false
-
-      - name: 1/4 Container registry
-        run: |
-          terraform apply -input=false -auto-approve -var "image_tag=$TAG" -target=azurerm_container_registry.main
-          echo "ACR_NAME=$(terraform output -raw acr_name)" >> "$GITHUB_ENV"
-          echo "ACR=$(terraform output -raw acr_login_server)" >> "$GITHUB_ENV"
-
-      - name: 2/4 Build and push the SARIMAX API image
+      # the same script as on a laptop; no questions here, the approval happened in the production environment
+      - name: Deploy (registry -> API image -> dashboard -> terraform apply)
         working-directory: .
-        run: |
-          deploy/sarimax_api/stage.sh
-          az acr login --name "$ACR_NAME"
-          docker build -t "$ACR/sarimax-api:$TAG" deploy/sarimax_api
-          docker push "$ACR/sarimax-api:$TAG"
-
-      - name: 3/4 Build the dashboard
-        working-directory: deploy/dashboard
-        run: |
-          npm ci
-          npm run build
-
-      - name: 4/4 Terraform apply
-        run: terraform apply -input=false -auto-approve -var "image_tag=$TAG"
+        run: deploy/deploy.sh --auto-approve
 
       - name: URLs
         id: urls
         run: |
+          TAG=$(git rev-parse --short HEAD)
           DASHBOARD=$(terraform output -raw dashboard_url)
           API=$(terraform output -json api_urls | jq -r '."sarimax-api"')
           echo "dashboard_url=$DASHBOARD" >> "$GITHUB_OUTPUT"
