@@ -1,6 +1,7 @@
 """
 Test-year (2024) RMSE and MAPE of the final daily SARIMAX model against the seasonal naive forecast,
-for h = 1 and h = 7 (step 7 of the 7-day forecasts), as in the forecast figure.
+for the 1-day forecasts (h = 1, every day) and the 7-day forecasts (h = 7: all seven steps, from every origin
+whose whole horizon lies inside the year), as in the hourly table (all 24 steps).
 
 Seasonal naive = same weekday one week before, evaluated on the same target days as SARIMAX.
 
@@ -16,16 +17,16 @@ import pandas as pd
 from sarimax_report_common import SARIMAX_DIR, load_daily_y, mape, rmse, save_tabular, seasonal_naive
 
 
-def load(name: str, step: int) -> pd.DataFrame:
-    df = pd.read_csv(SARIMAX_DIR / "forecasts" / name, parse_dates=["target_time"])
-    return df[df["step"] == step]
+def load(name: str) -> pd.DataFrame:
+    """All steps of the forecast file (for the 1-day file there is only step 1)."""
+    return pd.read_csv(SARIMAX_DIR / "forecasts" / name, parse_dates=["target_time"])
 
 
 def main() -> None:
     y = load_daily_y()
     result = {}
     for h, file in [(1, "sarimax_daily_1d_test.csv"), (7, "sarimax_daily_7d_test.csv")]:
-        df = load(file, h)
+        df = load(file)
         naive = seasonal_naive(y, df["target_time"])
         result[h] = {
             "Seasonal naive": (rmse(df["y_true"], naive), mape(df["y_true"], naive)),

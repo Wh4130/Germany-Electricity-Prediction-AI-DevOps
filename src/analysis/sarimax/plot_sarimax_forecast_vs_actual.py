@@ -42,8 +42,9 @@ def main() -> None:
         ax.fill_between(t, df["q0.1"] / 1e6, df["q0.9"] / 1e6, color=BLUE, alpha=0.2, lw=0, label="80% interval")
         ax.plot(t, df["y_true"] / 1e6, color=BLACK, lw=0.8, label="Actual")
         ax.plot(t, df["y_pred"] / 1e6, color=BLUE, lw=0.8, label="Forecast")
+        label = "1-day forecast" if h == 1 else "day 7 of the 7-day forecast"
         ax.set_title(
-            f"h = {h}: RMSE {rmse(df['y_true'], df['y_pred']):,.0f} MWh, MAPE {mape(df['y_true'], df['y_pred']):.2f}%",
+            f"{label}: RMSE {rmse(df['y_true'], df['y_pred']):,.0f} MWh, MAPE {mape(df['y_true'], df['y_pred']):.2f}%",
             loc="left",
         )
         ax.set_ylabel("Consumption (million MWh/day)")
