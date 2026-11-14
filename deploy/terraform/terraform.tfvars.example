@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (not committed) and fill in your subscription:
+#   az account show --query id -o tsv
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# optional
+# location     = "swedencentral"
+# min_replicas = 1   # always on: no cold start, but ~15-20 USD / month

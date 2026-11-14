@@ -1,0 +1,86 @@
+# CI: test the model API, build its image and the dashboard on every push / pull request that touches them.
+# No Azure access needed (deployment is deploy/deploy.sh, later a separate CD workflow).
+name: CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "deploy/**"
+      - "src/models/sarimax/common.py"
+      - "src/models/sarimax/features.py"
+      - "src/results/sarimax/models/**"
+      - "src/data/final/data_daily.csv"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "deploy/**"
+      - "src/models/sarimax/common.py"
+      - "src/models/sarimax/features.py"
+      - "src/results/sarimax/models/**"
+      - "src/data/final/data_daily.csv"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+jobs:
+  sarimax-api:
+    name: SARIMAX API tests and image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      # --no-project: only the API's requirements, not the whole project (torch, timesfm, ...)
+      - name: Tests
+        run: >
+          uv run --no-project --python 3.13
+          --with-requirements deploy/sarimax_api/requirements.txt --with httpx --with pytest
+          pytest deploy/sarimax_api -v
+
+      - name: Build the image (not pushed)
+        run: |
+          deploy/sarimax_api/stage.sh
+          docker build -t sarimax-api:ci deploy/sarimax_api
+
+      - name: Smoke test the container
+        run: |
+          docker run -d --name api -p 8000:8000 sarimax-api:ci
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+          curl -sf "localhost:8000/features?date=2024-03-15" > /dev/null
+          curl -sf -X POST localhost:8000/predict -H "Content-Type: application/json" \
+            -d '{"date": "2024-03-15", "x": {"hdd": 10}}'
+          docker rm -f api
+
+  dashboard:
+    name: Dashboard build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: deploy/dashboard/package-lock.json
+
+      - run: npm ci
+      - run: npm run build # type check (tsc) and bundle
+
+  terraform:
+    name: Terraform format and validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate

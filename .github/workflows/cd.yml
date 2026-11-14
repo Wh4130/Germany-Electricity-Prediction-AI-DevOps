@@ -1,0 +1,117 @@
+# CD: deploy to Azure after CI passed on master (or by hand: Actions -> CD -> Run workflow).
+# The job runs in the "production" environment, which waits for a reviewer's approval in GitHub.
+#
+# Login: OpenID Connect. GitHub issues a short-lived token for this repo's production environment; Azure trusts
+# it through a federated credential of the service principal "github-loadforecast-cd". No secret is stored.
+# That principal may only change rg-loadforecast (Contributor; role assignments limited to AcrPull) and the
+# Terraform state in rg-loadforecast-tfstate.
+#
+# Same steps as deploy/deploy.sh: registry -> API image -> dashboard build -> terraform apply.
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # request the OIDC token
+  contents: read
+
+concurrency:
+  group: deploy-production # one deployment at a time, never two applies on the same state
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Azure
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.urls.outputs.dashboard_url }}
+    env:
+      # Terraform's azurerm provider and backend log in with the OIDC token
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+      TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_IN_AUTOMATION: "true"
+    defaults:
+      run:
+        working-directory: deploy/terraform
+    steps:
+      # the commit that CI tested (workflow_run) or the branch head (manual run)
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      # the Azure CLI (az acr login) with the same OIDC login
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false # plain output, so `terraform output -raw` works
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: deploy/dashboard/package-lock.json
+
+      - name: Image tag (the commit)
+        run: echo "TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Terraform init (state in Azure Storage)
+        run: terraform init -input=false
+
+      - name: 1/4 Container registry
+        run: |
+          terraform apply -input=false -auto-approve -var "image_tag=$TAG" -target=azurerm_container_registry.main
+          echo "ACR_NAME=$(terraform output -raw acr_name)" >> "$GITHUB_ENV"
+          echo "ACR=$(terraform output -raw acr_login_server)" >> "$GITHUB_ENV"
+
+      - name: 2/4 Build and push the SARIMAX API image
+        working-directory: .
+        run: |
+          deploy/sarimax_api/stage.sh
+          az acr login --name "$ACR_NAME"
+          docker build -t "$ACR/sarimax-api:$TAG" deploy/sarimax_api
+          docker push "$ACR/sarimax-api:$TAG"
+
+      - name: 3/4 Build the dashboard
+        working-directory: deploy/dashboard
+        run: |
+          npm ci
+          npm run build
+
+      - name: 4/4 Terraform apply
+        run: terraform apply -input=false -auto-approve -var "image_tag=$TAG"
+
+      - name: URLs
+        id: urls
+        run: |
+          DASHBOARD=$(terraform output -raw dashboard_url)
+          API=$(terraform output -json api_urls | jq -r '."sarimax-api"')
+          echo "dashboard_url=$DASHBOARD" >> "$GITHUB_OUTPUT"
+          echo "api_url=$API" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Deployed \`$TAG\`"
+            echo "- Dashboard: $DASHBOARD"
+            echo "- SARIMAX API: $API (docs: $API/docs)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test
+        run: |
+          API="${{ steps.urls.outputs.api_url }}"
+          # the API may scale up from zero first
+          for i in $(seq 1 12); do curl -sf --max-time 20 "$API/health" && break; sleep 5; done
+          curl -sf "$API/features?date=2024-03-15" > /dev/null
+          curl -sf "${{ steps.urls.outputs.dashboard_url }}config.json"
