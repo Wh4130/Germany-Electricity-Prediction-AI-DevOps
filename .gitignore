@@ -20,13 +20,26 @@ src/documentation/
 !docs/**/*.md
 docs/meeting/ideas.md
 *.json
-!src/models/sarimax/results/**/*.json
+!src/results/sarimax/**/*.json
 
 # bif raw data
 src/data/external_raw/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# deployment: copied by deploy/sarimax_api/stage.sh
+deploy/sarimax_api/artifacts/
+!deploy/dashboard/*.json
+!deploy/dashboard/public/*.json
+deploy/dashboard/node_modules/
+deploy/dashboard/dist/
+# terraform: state and local settings (the lock file .terraform.lock.hcl is committed)
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.*
+deploy/terraform/terraform.tfvars
+deploy/terraform/*.tfplan
 
 # user_defined
 src/results/foundation/extra_features

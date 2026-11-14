@@ -1,0 +1,6 @@
+{
+  "models": [
+    { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" }
+  ],
+  "featureSource": "sarimax"
+}
