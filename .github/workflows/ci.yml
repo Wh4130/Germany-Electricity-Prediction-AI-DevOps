@@ -1,5 +1,5 @@
 # CI: test the model API, build its image and the dashboard on every push / pull request that touches them.
-# No Azure access needed (deployment is deploy/deploy.sh, later a separate CD workflow).
+# No Azure access needed. Deployment is cd.yml, which starts after this workflow succeeds on master.
 name: CI
 
 on:
