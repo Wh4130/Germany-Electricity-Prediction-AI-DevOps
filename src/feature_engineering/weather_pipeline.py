@@ -3,7 +3,10 @@ Create weather features for the daily and hourly data, from the per-city weather
 by src/scripts/weather_etl.py.
 
 What this pipeline does
-    1. Population-weight the 15 cities into a single national value per date/time.
+    1. Population-weight the 15 cities into a single national value per date/time. For `is_day`
+       (hourly, 0/1 per city) this is then turned back into a 0/1 label: day if the majority of
+       the population is in daylight that hour, night otherwise (Germany spans several degrees
+       of latitude, so the cities' sunrise/sunset times do not all coincide).
     2. Convert temperature to HDD (Heating Degree Days).
     3. Output `date_from_utc` (the key merge_all.py uses to join the features onto intermin/) and
        the new columns, row index reset to 0, 1, 2, ... in the row order of intermin/.
@@ -30,7 +33,7 @@ DAILY_VARS = [
     "temperature_2m_mean",
     "daylight_duration",
     "shortwave_radiation_sum",
-    "wind_speed_10m_max",
+    "wind_speed_10m_mean",
     "precipitation_sum",
 ]
 HOURLY_VARS = [
@@ -38,6 +41,7 @@ HOURLY_VARS = [
     "shortwave_radiation",
     "wind_speed_10m",
     "precipitation",
+    "is_day",
 ]
 
 
@@ -111,6 +115,8 @@ class WeatherFeatureBuilder:
         features = self.weighted_average(weather_by_city, HOURLY_VARS)
         features = features.rename(columns = {"temperature_2m": "hdd"})
         features["hdd"] = self.heating_degree_days(features["hdd"])
+        # back to a 0/1 label: day if the majority of the population is in daylight that hour
+        features["is_day"] = (features["is_day"] >= 0.5).astype(int)
         return self.with_key(features)
 
 
