@@ -9,7 +9,9 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "astral>=3.2",
+    "catboost>=1.2.10",
     "holidays>=0.105",
+    "lightgbm>=4.7.0",
     "matplotlib>=3.11.2",
     "nbformat>=5.11.1",
     "open-mastr>=1.0.0",
@@ -19,10 +21,12 @@ dependencies = [
     "requests>=2.34.2",
     "scikit-learn>=1.9.1",
     "seaborn>=0.13.2",
+    "shap>=0.54.1",
     "statsmodels>=0.15.0",
     "tabicl[forecast]==2.2.0",
     "timesfm[torch]==3.0.2",
     "torch>=2.15.0",
+    "xgboost>=3.4.1",
 ]
 
 [dependency-groups]

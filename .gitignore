@@ -14,6 +14,12 @@ wheels/
 src/data/intermin/weather_daily_by_city.csv
 src/data/intermin/weather_hourly_by_city.csv
 
+# MaStR solar capacity intermediate table (large, rebuild with src/scripts/mastr_etl.py)
+src/data/intermin/mastr_solar.csv
+
+# CatBoost training logs (auto-created wherever CatBoostRegressor.fit() runs)
+catboost_info/
+
 # documentation
 src/documentation/
 *.md
@@ -27,6 +33,7 @@ src/data/external_raw/
 
 # Jupyter
 .ipynb_checkpoints/
+*.ipynb.bak*
 
 # deployment: copied by deploy/sarimax_api/stage.sh
 deploy/sarimax_api/artifacts/
