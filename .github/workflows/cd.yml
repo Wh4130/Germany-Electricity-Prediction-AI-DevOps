@@ -78,18 +78,22 @@ jobs:
           TAG=$(git rev-parse --short HEAD)
           DASHBOARD=$(terraform output -raw dashboard_url)
           API=$(terraform output -json api_urls | jq -r '."sarimax-api"')
+          TREE=$(terraform output -json api_urls | jq -r '."tree-api"')
           echo "dashboard_url=$DASHBOARD" >> "$GITHUB_OUTPUT"
           echo "api_url=$API" >> "$GITHUB_OUTPUT"
+          echo "tree_url=$TREE" >> "$GITHUB_OUTPUT"
           {
             echo "### Deployed \`$TAG\`"
             echo "- Dashboard: $DASHBOARD"
             echo "- SARIMAX API: $API (docs: $API/docs)"
+            echo "- Tree API: $TREE (docs: $TREE/docs)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Smoke test
         run: |
-          API="${{ steps.urls.outputs.api_url }}"
-          # the API may scale up from zero first
-          for i in $(seq 1 12); do curl -sf --max-time 20 "$API/health" && break; sleep 5; done
-          curl -sf "$API/features?date=2024-03-15" > /dev/null
+          # the APIs may scale up from zero first
+          for API in "${{ steps.urls.outputs.api_url }}" "${{ steps.urls.outputs.tree_url }}"; do
+            for i in $(seq 1 12); do curl -sf --max-time 20 "$API/health" && break; sleep 5; done
+            curl -sf "$API/features?date=2024-03-15" > /dev/null
+          done
           curl -sf "${{ steps.urls.outputs.dashboard_url }}config.json"

@@ -10,6 +10,9 @@ on:
       - "src/models/sarimax/common.py"
       - "src/models/sarimax/features.py"
       - "src/results/sarimax/models/**"
+      - "src/models/trees/run_tree_based.py"
+      - "src/results/tree-based/Models/daily/final_model_h1.joblib"
+      - "src/results/tree-based/Forecasts/tree_daily_test.csv"
       - "src/data/final/data_daily.csv"
       - ".github/workflows/ci.yml"
   pull_request:
@@ -18,6 +21,9 @@ on:
       - "src/models/sarimax/common.py"
       - "src/models/sarimax/features.py"
       - "src/results/sarimax/models/**"
+      - "src/models/trees/run_tree_based.py"
+      - "src/results/tree-based/Models/daily/final_model_h1.joblib"
+      - "src/results/tree-based/Forecasts/tree_daily_test.csv"
       - "src/data/final/data_daily.csv"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
@@ -46,6 +52,36 @@ jobs:
       - name: Smoke test the container
         run: |
           docker run -d --name api -p 8000:8000 sarimax-api:ci
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+          curl -sf "localhost:8000/features?date=2024-03-15" > /dev/null
+          curl -sf -X POST localhost:8000/predict -H "Content-Type: application/json" \
+            -d '{"date": "2024-03-15", "x": {"hdd": 10}}'
+          docker rm -f api
+
+  tree-api:
+    name: Tree API tests and image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      # the forecast test compares the API with tree_daily_test.csv: it fails when the features of the API and of
+      # run_tree_based.py drift apart
+      - name: Tests
+        run: >
+          uv run --no-project --python 3.13
+          --with-requirements deploy/tree_api/requirements.txt --with httpx --with pytest
+          pytest deploy/tree_api -v
+
+      - name: Build the image (not pushed)
+        run: |
+          deploy/tree_api/stage.sh
+          docker build -t tree-api:ci deploy/tree_api
+
+      - name: Smoke test the container
+        run: |
+          docker run -d --name api -p 8000:8000 tree-api:ci
           for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
           curl -sf "localhost:8000/features?date=2024-03-15" > /dev/null
           curl -sf -X POST localhost:8000/predict -H "Content-Type: application/json" \
