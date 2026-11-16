@@ -6,7 +6,7 @@
 # That principal may only change rg-loadforecast (Contributor; role assignments limited to AcrPull) and the
 # Terraform state in rg-loadforecast-tfstate.
 #
-# The deployment itself is deploy/deploy.sh (registry -> API image -> dashboard build -> terraform apply), the same
+# The deployment itself is deploy/deploy.sh (registry -> API images -> dashboard build -> terraform apply), the same
 # script as on a laptop; this workflow only logs in, installs the tools, runs it and checks the result.
 name: CD
 
@@ -68,7 +68,7 @@ jobs:
           cache-dependency-path: deploy/dashboard/package-lock.json
 
       # the same script as on a laptop; no questions here, the approval happened in the production environment
-      - name: Deploy (registry -> API image -> dashboard -> terraform apply)
+      - name: Deploy (registry -> API images -> dashboard -> terraform apply)
         working-directory: .
         run: deploy/deploy.sh --auto-approve
 
