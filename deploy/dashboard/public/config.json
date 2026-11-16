@@ -1,6 +1,7 @@
 {
   "models": [
-    { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" }
+    { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" },
+    { "id": "tree", "label": "Tree", "url": "http://localhost:8001" }
   ],
   "featureSource": "sarimax"
 }

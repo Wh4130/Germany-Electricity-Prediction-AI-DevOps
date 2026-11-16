@@ -90,7 +90,7 @@ export function Sidebar({ date, minDate, maxDate, features, x, error, onDate, on
                   <div className="slider-head">
                     <span>
                       {s.label}
-                      {s.past_only && <span className="tag" title="known only up to the day before">past-only</span>}
+                      {s.past_only && <span className="tag" title="Monthly indicator. SARIMAX uses its value of the day before; the tree model uses the value of the day.">past-only</span>}
                     </span>
                     <span className={`value${isChanged ? " changed" : ""}`}>
                       {formatValue(value)} {s.unit}
