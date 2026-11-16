@@ -49,6 +49,15 @@ export interface Prediction extends Quantiles {
   y_true: number;
 }
 
+// An error answer of a service; the status tells whether waiting can help (see `withRetry`)
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   if (!response.ok) {
@@ -58,9 +67,33 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     } catch {
       // not JSON
     }
-    throw new Error(`${response.status}: ${detail}`);
+    throw new HttpError(response.status, `${response.status}: ${detail}`);
   }
   return response.json() as Promise<T>;
+}
+
+// A service that is still starting, or scaling up from zero, refuses or drops the first requests. Those errors
+// (the browser cannot connect, or 502-504) go away by themselves, so the call is repeated; others (404, 422) do not.
+const RETRY_DELAY_MS = 3000;
+const RETRY_TRIES = 40; // about two minutes
+
+const isTemporary = (e: unknown) =>
+  e instanceof TypeError || (e instanceof HttpError && [502, 503, 504].includes(e.status));
+
+// `onRetry` is called with each temporary error; `cancelled` stops the retries (the result is no longer wanted)
+export async function withRetry<T>(
+  call: () => Promise<T>,
+  opts: { onRetry?: (e: Error) => void; cancelled?: () => boolean } = {},
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await call();
+    } catch (e) {
+      if (!isTemporary(e) || attempt >= RETRY_TRIES || opts.cancelled?.()) throw e;
+      opts.onRetry?.(e as Error);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+  }
 }
 
 export const loadConfig = () => request<AppConfig>(`${import.meta.env.BASE_URL}config.json`);

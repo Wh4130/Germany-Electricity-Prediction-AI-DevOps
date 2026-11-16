@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type AppConfig, type Features, type ForecastRow, type Prediction,
-  getFeatures, getForecast, isLive, loadConfig, predict,
+  getFeatures, getForecast, isLive, loadConfig, predict, withRetry,
 } from "./api";
 import { Chart, type ChartModel } from "./Chart";
 import { Sidebar } from "./Sidebar";
@@ -35,21 +35,31 @@ export function App() {
       return next;
     });
 
-  // config, then the 2024 forecasts of every model
+  // config, then the 2024 forecasts of every model (a service that is still starting is asked again, see withRetry)
   useEffect(() => {
+    let cancelled = false;
     loadConfig()
       .then((c) => {
+        if (cancelled) return;
         setConfig(c);
         for (const model of c.models) {
-          getForecast(model)
+          const fail = (e: Error, note = "") => {
+            if (!cancelled) setError(model.id, `${model.label}: ${e.message}${note}`);
+          };
+          withRetry(() => getForecast(model), { onRetry: (e) => fail(e, " (retrying)"), cancelled: () => cancelled })
             .then((rows) => {
+              if (cancelled) return;
+              setError(model.id);
               setForecasts((f) => ({ ...f, [model.id]: rows }));
               if (model.id === c.featureSource && rows.length) setDate((d) => d ?? rows[0].date);
             })
-            .catch((e) => setError(model.id, `${model.label}: ${e.message}`));
+            .catch((e) => fail(e));
         }
       })
-      .catch((e) => setError("config", `config.json: ${e.message}`));
+      .catch((e) => !cancelled && setError("config", `config.json: ${e.message}`));
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const models: ChartModel[] = useMemo(
@@ -65,13 +75,21 @@ export function App() {
   // the X of the selected day
   useEffect(() => {
     if (!liveSource || !date) return;
-    getFeatures(liveSource, date)
+    let cancelled = false; // another day was selected meanwhile
+    withRetry(() => getFeatures(liveSource, date), {
+      onRetry: (e) => !cancelled && setError("features", `${e.message} (retrying)`),
+      cancelled: () => cancelled,
+    })
       .then((f) => {
+        if (cancelled) return;
         setFeatures(f);
         setX(Object.fromEntries(Object.entries(f.sliders).map(([k, s]) => [k, s.value])));
         setError("features");
       })
-      .catch((e) => setError("features", e.message));
+      .catch((e) => !cancelled && setError("features", e.message));
+    return () => {
+      cancelled = true;
+    };
   }, [liveSource, date]); // liveSource is the object of `config`, so it only changes with the config
 
   // what-if forecasts of the live models (only the changed X are sent; the others keep the actual value)
@@ -84,13 +102,17 @@ export function App() {
     const timer = setTimeout(() => {
       for (const model of config.models) {
         if (!isLive(model)) continue;
-        predict(model, features.date, changed)
+        const older = () => id !== requestId.current; // a newer request has replaced this one
+        withRetry(() => predict(model, features.date, changed), {
+          onRetry: (e) => !older() && setError(`predict-${model.id}`, `${model.label}: ${e.message} (retrying)`),
+          cancelled: older,
+        })
           .then((p) => {
-            if (id !== requestId.current) return; // an older request
+            if (older()) return;
             setPredictions((all) => ({ ...all, [model.id]: p }));
             setError(`predict-${model.id}`);
           })
-          .catch((e) => setError(`predict-${model.id}`, `${model.label}: ${e.message}`));
+          .catch((e) => !older() && setError(`predict-${model.id}`, `${model.label}: ${e.message}`));
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
