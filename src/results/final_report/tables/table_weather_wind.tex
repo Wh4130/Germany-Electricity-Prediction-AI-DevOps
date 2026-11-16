@@ -1,0 +1,42 @@
+\begin{tabular}{lllrrrrrr}
+\toprule
+Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
+\midrule
+hourly 1 h & calm & SARIMAX & 234 & 463 & -40 & 79.5 & 86.7 & 31.7 \\
+hourly 1 h & moderate & SARIMAX & 289 & 470 & -3 & 77.4 & 86.0 & 33.1 \\
+hourly 1 h & windy & SARIMAX & 214 & 494 & 22 & 82.1 & 83.9 & 35.2 \\
+hourly 24 h & calm & TimesFM-3, no covariates & 234 & 1,020 & 297 & 54.8 & 81.4 & 30.3 \\
+hourly 24 h & calm & TimesFM-3, covariates & 234 & 936 & 86 & 58.5 & 81.8 & 31.1 \\
+hourly 24 h & calm & SARIMAX & 234 & 1,226 & -157 & 45.7 & 77.6 & 32.1 \\
+hourly 24 h & moderate & TimesFM-3, no covariates & 289 & 1,031 & -26 & 50.5 & 82.9 & 31.5 \\
+hourly 24 h & moderate & TimesFM-3, covariates & 289 & 914 & 31 & 56.1 & 84.2 & 31.3 \\
+hourly 24 h & moderate & SARIMAX & 289 & 1,159 & -156 & 44.3 & 81.0 & 31.2 \\
+hourly 24 h & windy & TimesFM-3, no covariates & 214 & 1,240 & -428 & 55.1 & 75.9 & 38.2 \\
+hourly 24 h & windy & TimesFM-3, covariates & 214 & 1,088 & -60 & 60.6 & 79.7 & 37.6 \\
+hourly 24 h & windy & SARIMAX & 214 & 1,348 & 122 & 51.2 & 76.5 & 36.7 \\
+daily 1 d & calm & TimesFM-3, no covariates & 114 & 24,506 & 3,489 & 52.3 & 82.5 & 33.4 \\
+daily 1 d & calm & TimesFM-3, covariates & 114 & 20,472 & -3,516 & 60.2 & 82.5 & 34.8 \\
+daily 1 d & calm & TabICL & 114 & 20,332 & -1,582 & 60.5 & 72.8 & 36.1 \\
+daily 1 d & calm & SARIMAX & 114 & 20,278 & -3,893 & 60.6 & 78.9 & 33.4 \\
+daily 1 d & moderate & TimesFM-3, no covariates & 117 & 21,108 & -443 & 47.2 & 85.5 & 29.5 \\
+daily 1 d & moderate & TimesFM-3, covariates & 117 & 17,134 & 500 & 57.1 & 91.5 & 29.9 \\
+daily 1 d & moderate & TabICL & 117 & 15,920 & 929 & 60.2 & 79.5 & 29.0 \\
+daily 1 d & moderate & SARIMAX & 117 & 18,735 & -1,448 & 53.1 & 86.3 & 31.7 \\
+daily 1 d & windy & TimesFM-3, no covariates & 118 & 26,284 & -14,569 & 56.6 & 79.7 & 37.1 \\
+daily 1 d & windy & TimesFM-3, covariates & 118 & 20,011 & 3,082 & 66.9 & 84.7 & 35.2 \\
+daily 1 d & windy & TabICL & 118 & 18,938 & 35 & 68.7 & 78.8 & 34.8 \\
+daily 1 d & windy & SARIMAX & 118 & 20,504 & 515 & 66.1 & 81.4 & 34.9 \\
+daily 7 d & calm & TimesFM-3, no covariates & 114 & 29,521 & 876 & 42.6 & 80.6 & 32.6 \\
+daily 7 d & calm & TimesFM-3, covariates & 114 & 23,950 & -5,954 & 53.4 & 74.7 & 33.6 \\
+daily 7 d & calm & TabICL & 114 & 23,642 & -3,519 & 54.0 & 68.8 & 34.4 \\
+daily 7 d & calm & SARIMAX & 114 & 29,304 & -10,877 & 43.0 & 82.6 & 34.6 \\
+daily 7 d & moderate & TimesFM-3, no covariates & 117 & 26,400 & -1,260 & 33.7 & 85.3 & 29.9 \\
+daily 7 d & moderate & TimesFM-3, covariates & 117 & 20,361 & 372 & 48.9 & 83.7 & 29.3 \\
+daily 7 d & moderate & TabICL & 117 & 20,615 & 2,518 & 48.3 & 77.3 & 30.7 \\
+daily 7 d & moderate & SARIMAX & 117 & 25,028 & -3,837 & 37.2 & 88.1 & 30.3 \\
+daily 7 d & windy & TimesFM-3, no covariates & 118 & 33,289 & -18,187 & 42.9 & 76.0 & 37.4 \\
+daily 7 d & windy & TimesFM-3, covariates & 118 & 26,011 & 3,017 & 55.4 & 78.8 & 37.1 \\
+daily 7 d & windy & TabICL & 118 & 23,577 & 2,444 & 59.6 & 78.3 & 34.9 \\
+daily 7 d & windy & SARIMAX & 118 & 29,223 & -2,507 & 49.9 & 80.9 & 35.1 \\
+\bottomrule
+\end{tabular}
