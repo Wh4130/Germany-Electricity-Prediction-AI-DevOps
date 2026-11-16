@@ -1,0 +1,8 @@
+{
+  "model": "seasonal naive",
+  "resolution": "hourly",
+  "horizon": 24,
+  "split": "val",
+  "n_origins": 365,
+  "period": 168
+}

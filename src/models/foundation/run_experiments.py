@@ -12,17 +12,19 @@ Protocol (MODELS.md, "Shared setup"; FOUNDATION.md, "Experiments"):
 2. **Selection**: per experiment and horizon, the setting with the lowest
    validation MAE (``--select-metric pinball`` for the mean pinball loss).
 3. **Test year (2024)**: one run with the selected setting, used once.
-4. Seasonal naive files for every resolution, horizon and split, then all
-   metrics, a summary table and ``selection.json``.
+4. Seasonal naive files for every resolution, horizon and split (in
+   ``src/results/seasonal_naive/``), then all metrics, ``summary_foundation.csv``
+   and ``selection_foundation.json`` in ``<results-dir>/metrics``.
 
 The weather inputs are the observed values (weather variant A, oracle), so
 the results are an upper bound and marked as such in every JSON sidecar.
 
 Examples (from the project root):
 
-    uv run python src/models/foundation/run_experiments.py                     # all five experiments
-    uv run python src/models/foundation/run_experiments.py --experiments F4 F5 F6
-    uv run python src/models/foundation/run_experiments.py --hourly-contexts 2048 4096   # smaller F1 / F2 grid
+    uv run python -m src.models.foundation.run_experiments                     # all five experiments
+    uv run python -m src.models.foundation.run_experiments --experiments F4 F5 F6
+    uv run python -m src.models.foundation.run_experiments --hourly-contexts 2048 4096   # smaller F1 / F2 grid
+    uv run python -m src.models.foundation.run_experiments --extra-features    # = run_extra_features.py
 """
 
 from __future__ import annotations
@@ -33,11 +35,14 @@ from pathlib import Path
 
 import pandas as pd
 
-import evaluate
-import tabicl_forecaster
-import timesfm3_forecast
-from data import (DEFAULT_DATA_DIR, DEFAULT_RESULTS_DIR, HORIZONS, covariate_set, load_frame, origin_positions,
-                  write_forecasts)
+from src.common import evaluation
+from src.common.paths import NAIVE_MODEL, forecast_dir
+from src.models.foundation import data, tabicl_forecaster, timesfm3_forecast
+from src.models.foundation.data import HORIZONS, covariate_set, load_frame, origin_positions, write_forecasts
+
+ALL_EXPERIMENTS = ["F1", "F2", "F4", "F5", "F6"]
+COVARIATE_EXPERIMENTS = ["F2", "F5", "F6"]
+TIMESFM_EXPERIMENTS = {"F1": ("hourly", False), "F2": ("hourly", True), "F4": ("daily", False), "F5": ("daily", True)}
 
 
 def same_run(path: Path, cov, n_origins: int) -> bool:
@@ -55,13 +60,13 @@ def same_run(path: Path, cov, n_origins: int) -> bool:
             and meta.get("n_origins") == n_origins)
 
 
-ALL_EXPERIMENTS = ["F1", "F2", "F4", "F5", "F6"]
-TIMESFM_EXPERIMENTS = {"F1": ("hourly", False), "F2": ("hourly", True), "F4": ("daily", False), "F5": ("daily", True)}
-
-
-def main() -> None:
+def build_parser(extra_features: bool = False) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--experiments", nargs="+", choices=ALL_EXPERIMENTS, default=ALL_EXPERIMENTS)
+    p.add_argument("--experiments", nargs="+", choices=ALL_EXPERIMENTS,
+                   default=COVARIATE_EXPERIMENTS if extra_features else ALL_EXPERIMENTS)
+    p.add_argument("--extra-features", action="store_true", default=extra_features,
+                   help="give the covariate models the engineered covariates (data.ENGINEERED); "
+                        f"results go to src/results/{data.EXTRA_FEATURES_NAME}/ unless --results-dir is given")
     p.add_argument("--hourly-contexts", type=int, nargs="+", default=[2048, 4096, 8192])
     p.add_argument("--tabicl-contexts", nargs="+", default=["all", "730"])
     p.add_argument("--tabicl-features", nargs="+", default=["ours", "default"])
@@ -74,11 +79,24 @@ def main() -> None:
     p.add_argument("--tabicl-n-estimators", type=int, default=None)
     p.add_argument("--max-origins", type=int, default=None, help="only the first N origins (smoke test)")
     p.add_argument("--overwrite", action="store_true", help="rerun runs whose forecast file exists")
-    p.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
-    p.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
-    args = p.parse_args()
+    p.add_argument("--data-dir", type=Path, default=data.DEFAULT_DATA_DIR)
+    p.add_argument("--results-dir", type=Path, default=None,
+                   help=f"default: src/results/{data.MODEL_NAME} "
+                        f"(--extra-features: src/results/{data.EXTRA_FEATURES_NAME})")
+    p.add_argument("--naive-dir", type=Path, default=forecast_dir(NAIVE_MODEL),
+                   help="where the seasonal naive forecast files go")
+    return p
 
-    forecast_dir = args.results_dir / "forecasts"
+
+def main(argv: list[str] | None = None, extra_features: bool = False) -> None:
+    args = build_parser(extra_features).parse_args(argv)
+    if args.extra_features:
+        data.EXTRA_FEATURES = True  # read by covariate_set() at call time
+        print(f"[run] engineered covariates switched on: {data.ENGINEERED}")
+    if args.results_dir is None:
+        args.results_dir = data.model_dir(data.EXTRA_FEATURES_NAME if args.extra_features else data.MODEL_NAME)
+
+    forecast_dir_ = args.results_dir / "forecasts"
     metrics_dir = args.results_dir / "metrics"
     frames = {}
 
@@ -123,13 +141,13 @@ def main() -> None:
     def timesfm_run(exp, h, split, ctx):
         res, cov = TIMESFM_EXPERIMENTS[exp]
         name = timesfm3_forecast.run_name(res, h, split, cov, ctx)
-        return run(forecast_dir / f"{name}.csv", lambda: timesfm3_forecast.forecast(
+        return run(forecast_dir_ / f"{name}.csv", lambda: timesfm3_forecast.forecast(
             timesfm(), frame(res), split, h, cov, ctx, max_origins=args.max_origins),
             covariate_set(res, h, include_covariates=cov), res, split, h)
 
     def tabicl_run(h, split, feats, ctx):
         name = tabicl_forecaster.run_name(h, split, feats, ctx)
-        return run(forecast_dir / f"{name}.csv", lambda: tabicl_forecaster.forecast(
+        return run(forecast_dir_ / f"{name}.csv", lambda: tabicl_forecaster.forecast(
             frame("daily"), split, h, feats, ctx, tabicl_config, max_origins=args.max_origins),
             covariate_set("daily", h, calendar=tabicl_forecaster.FEATURE_SETS[feats][0]), "daily", split, h)
 
@@ -152,7 +170,8 @@ def main() -> None:
     # ---------------------------------------------------------------- 2. selection
     selection = {}
     for (exp, h), cands in candidates.items():
-        scores = evaluate.evaluate_files([pth for _, pth in cands], metrics_dir, data_dir=args.data_dir, frames=frames)
+        scores = evaluation.evaluate_files([pth for _, pth in cands], metrics_dir, data_dir=args.data_dir,
+                                           frames=frames)
         metric = scores[args.select_metric].to_numpy()
         best = int(metric.argmin())
         selection[f"{exp}_{h}"] = {
@@ -164,7 +183,7 @@ def main() -> None:
 
     # ---------------------------------------------------------------- 3. test
     if not args.skip_test:
-        for key, sel in selection.items():
+        for sel in selection.values():
             exp, h, chosen = sel["experiment"], sel["horizon"], sel["chosen"]
             if exp == "F6":
                 tabicl_run(h, "test", chosen["features"], chosen["context_days"])
@@ -175,18 +194,19 @@ def main() -> None:
     resolutions = sorted({TIMESFM_EXPERIMENTS[e][0] for e in args.experiments if e in TIMESFM_EXPERIMENTS}
                          | ({"daily"} if "F6" in args.experiments else set()))
     splits = ["val"] if args.skip_test else ["val", "test"]
-    for res in resolutions:
-        for h in HORIZONS[res]:
-            for split in splits:
-                produced.append(evaluate.naive_forecast_file(frame(res), split, h, forecast_dir))
+    naive_files = [evaluation.naive_forecast_file(frame(res), split, h, args.naive_dir)
+                   for res in resolutions for h in HORIZONS[res] for split in splits]
 
-    summary = evaluate.evaluate_files(sorted(set(produced)), metrics_dir, "summary_foundation.csv",
-                                      data_dir=args.data_dir, frames=frames)
+    model_summary = evaluation.evaluate_files(sorted(set(produced)), metrics_dir, data_dir=args.data_dir,
+                                              frames=frames)
+    naive_summary = evaluation.evaluate_files(naive_files, data_dir=args.data_dir, frames=frames)  # own folder
+    summary = pd.concat([model_summary, naive_summary], ignore_index=True)
     metrics_dir.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(metrics_dir / "summary_foundation.csv", index=False)
     (metrics_dir / "selection_foundation.json").write_text(json.dumps(selection, indent=2, default=str))
 
     with pd.option_context("display.width", 220, "display.max_columns", 20, "display.float_format", "{:,.3f}".format):
-        print(summary.drop(columns=["file", "model"])
+        print(summary.drop(columns=["file", "model", "model_dir"])
               .sort_values(["resolution", "horizon", "split", "experiment", "setting"]).to_string(index=False))
     print(f"\n[run] summary -> {metrics_dir / 'summary_foundation.csv'}")
 

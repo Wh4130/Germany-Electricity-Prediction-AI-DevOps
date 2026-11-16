@@ -24,8 +24,8 @@ TabICL handles a chunk of origins in one go (one in-context fit per origin).
 
 Examples (from the project root):
 
-    uv run python src/models/foundation/tabicl_forecaster.py --split val --features ours --context all
-    uv run python src/models/foundation/tabicl_forecaster.py --split test --features default --context 730
+    uv run python -m src.models.foundation.tabicl_forecaster --split val --features ours --context all
+    uv run python -m src.models.foundation.tabicl_forecaster --split test --features default --context 730
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from data import (
+from src.models.foundation.data import (
     DEFAULT_DATA_DIR,
     DEFAULT_FORECAST_DIR,
     HORIZONS,

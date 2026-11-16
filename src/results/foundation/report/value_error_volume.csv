@@ -1,0 +1,9 @@
+Model,Horizon,MAE (MWh),Yearly error (TWh),Naive yearly error (TWh),Reduction vs naive (TWh),Reference,Reduction vs reference (TWh)
+"TimesFM-3, covariates",hourly 24 h,1044.71,9.176,23.338,14.162,"TimesFM-3, no covariates",1.893
+"TimesFM-3, no covariates",hourly 24 h,1260.192,11.068,23.338,12.27,,
+TabICL,daily 1 d,19090.849,6.987,21.124,14.137,"TimesFM-3, no covariates",3.552
+"TimesFM-3, covariates",daily 1 d,20690.88,7.573,21.124,13.551,"TimesFM-3, no covariates",2.966
+"TimesFM-3, no covariates",daily 1 d,28795.755,10.539,21.124,10.585,,
+TabICL,daily 7 d,22911.12,8.385,20.804,12.419,"TimesFM-3, no covariates",4.264
+"TimesFM-3, covariates",daily 7 d,24330.909,8.905,20.804,11.899,"TimesFM-3, no covariates",3.744
+"TimesFM-3, no covariates",daily 7 d,34561.517,12.65,20.804,8.155,,

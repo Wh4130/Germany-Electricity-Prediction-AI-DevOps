@@ -1,0 +1,8 @@
+{
+  "model": "seasonal naive",
+  "resolution": "daily",
+  "horizon": 7,
+  "split": "val",
+  "n_origins": 359,
+  "period": 7
+}

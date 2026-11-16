@@ -1,0 +1,73 @@
+{
+  "file": "seasonal_naive_daily_1d_test.csv",
+  "model": "seasonal naive",
+  "experiment": null,
+  "split": "test",
+  "setting": "",
+  "resolution": "daily",
+  "horizon": 1,
+  "n_origins": 366,
+  "weather_variant": null,
+  "overall": {
+    "n": 366,
+    "MAE": 57715.698087431694,
+    "RMSE": 89643.62529974518,
+    "MAPE_%": 4.668380448455159,
+    "MAE_naive": 57715.698087431694,
+    "MAE_skill": 0.0,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 247,
+      "MAE": 52564.48712550607,
+      "RMSE": 80425.53275273644,
+      "MAPE_%": 3.8949053476113127,
+      "MAE_naive": 52564.48712550607,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 102,
+      "MAE": 46037.13901960784,
+      "RMSE": 64583.7924556553,
+      "MAPE_%": 4.163531691563583,
+      "MAE_naive": 46037.13901960784,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 9,
+      "MAE": 259973.66666666666,
+      "RMSE": 275991.34944625833,
+      "MAPE_%": 25.011170593782683,
+      "MAE_naive": 259973.66666666666,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 3,
+      "MAE": 198661.91666666666,
+      "RMSE": 199613.56761090705,
+      "MAPE_%": 17.476211009391594,
+      "MAE_naive": 198661.91666666666,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 9,
+      "MAE": 155158.86111111112,
+      "RMSE": 199956.95589205707,
+      "MAPE_%": 13.930232355046341,
+      "MAE_naive": 155158.86111111112,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

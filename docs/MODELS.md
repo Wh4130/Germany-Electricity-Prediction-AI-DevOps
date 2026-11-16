@@ -20,12 +20,9 @@ Each model has its own document (preprocessing, normalization, training and eval
 |---|---|---|---|
 | SARIMAX | [models/SARIMAX.md](models/SARIMAX.md) | [src/models/sarimax/](../src/models/sarimax/) | placeholder |
 | Tree based | [models/TREES.md](models/TREES.md) | [src/models/trees/](../src/models/trees/) | placeholder |
-| Neural (N-HiTS, NBEATSx) | [models/NEURAL.md](models/NEURAL.md) | [src/models/neural/](../src/models/neural/) | planned |
 | Foundation model | [models/FOUNDATION.md](models/FOUNDATION.md) | [src/models/foundation/](../src/models/foundation/) | placeholder |
 
 ## Shared setup
-
-> Proposal of 2026-10-27, to be confirmed by the team. Every model (SARIMAX, trees, N-HiTS / NBEATSx, foundation models) uses this setup, so the results in [Comparison](#comparison) can be compared.
 
 ### Time index
 

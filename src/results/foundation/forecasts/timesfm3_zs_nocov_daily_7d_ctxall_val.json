@@ -1,0 +1,20 @@
+{
+  "model": "TimesFM-3",
+  "experiment": "F4",
+  "variant": "zero-shot",
+  "checkpoint": "google/timesfm-3.0-pytorch",
+  "resolution": "daily",
+  "horizon": 7,
+  "split": "val",
+  "n_origins": 359,
+  "context_length": "all",
+  "covariates_known": [],
+  "covariates_past_only": [],
+  "n_variates": 1,
+  "weather_variant": "n/a",
+  "use_znorm": false,
+  "predict_batch_defaults": "TimesFM3Evaluator: symmetric averaging, make_positive, sorted quantiles",
+  "y_pred": "median (q0.5)",
+  "runtime_seconds": 24.5,
+  "batch_size_end": 4
+}

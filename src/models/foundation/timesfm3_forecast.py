@@ -15,8 +15,8 @@ normalises every variate by itself, so raw MWh values go in and come out
 
 Examples (from the project root):
 
-    uv run python src/models/foundation/timesfm3_forecast.py --resolution hourly --split val --covariates --context-length 2048
-    uv run python src/models/foundation/timesfm3_forecast.py --resolution daily --split test --no-covariates
+    uv run python -m src.models.foundation.timesfm3_forecast --resolution hourly --split val --covariates --context-length 2048
+    uv run python -m src.models.foundation.timesfm3_forecast --resolution daily --split test --no-covariates
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import numpy as np
 
-from data import (
+from src.models.foundation.data import (
     DEFAULT_DATA_DIR,
     DEFAULT_FORECAST_DIR,
     HORIZONS,

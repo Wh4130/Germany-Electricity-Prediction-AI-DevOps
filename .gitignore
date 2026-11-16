@@ -49,9 +49,6 @@ deploy/terraform/*.tfstate.*
 deploy/terraform/terraform.tfvars
 deploy/terraform/*.tfplan
 
-# user_defined
-src/results/foundation/extra_features
-src/results/foundation/forecasts
-src/results/foundation/metrics
-src/results/foundation/report/*.csv
-!src/results/foundation/report/*.md
+# results
+!src/results/**/*.md
+!src/results/**/*.json
