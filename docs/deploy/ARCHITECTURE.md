@@ -1,15 +1,16 @@
 # Deployment architecture
 
-How the SARIMAX API and the what-if dashboard get from this repository to Azure, and what every deployment file
-does. Links point to the file and the lines that a section describes (written against commit `2058f96`; if a file
-has changed since, the lines may have moved, the section names stay).
+How the model APIs (SARIMAX and tree) and the what-if dashboard get from this repository to Azure, and what every
+deployment file does. Links point to the file and the lines that a section describes (written against commit
+`3040f03`; if a file has changed since, the lines may have moved, the section names stay).
 
 The API contract that every model service has to follow is in [API.md](API.md).
 
-**Status (2026-11-14).** The deployment was run once by hand with `deploy.sh`; the dashboard and the API are
-live. The CD workflow and `bootstrap.sh` are written but have **not run yet**: CD only starts once `cd.yml` is on
-`master`, and `bootstrap.sh` repeats the commands that were first run by hand (against the existing resources it
-should change nothing).
+**Status (2026-11-16).** The dashboard and the SARIMAX API are live. The first deployment was run by hand with
+`deploy.sh`; since then CD has deployed from `master` (runs on 2026-11-14 and 2026-11-15, each approved in the
+`production` environment). The first CD login failed because the federated credential held a wrong subject;
+`bootstrap.sh github` corrected it, and now reads the subject from GitHub (see [4.1](#41-deploybootstrapsh), step
+2.2). The tree API is new on the branch `wally/tree-api`: CD deploys it after the merge.
 
 ## Contents
 
@@ -26,12 +27,14 @@ should change nothing).
 | Part | Azure service | Notes |
 |---|---|---|
 | SARIMAX API (daily, 1 day ahead) | Container Apps (serverless, scales to zero) | https://sarimax-api.whitefield-d7f6fd7f.swedencentral.azurecontainerapps.io |
-| Docker images | Container Registry (Basic) | the only fixed cost, about 5 USD per month |
+| Tree API (LightGBM, daily, 1 day ahead) | Container Apps (same environment) | URL: `terraform output api_urls` |
+| Docker images (one per API) | Container Registry (Basic) | the only fixed cost, about 5 USD per month |
 | Dashboard (React + TypeScript) | Storage account, static website | https://loadforecastvllqbweb.z1.web.core.windows.net/ |
 | Terraform state | Storage account in its own resource group | shared by laptops and GitHub Actions |
 | All of the above in one region | `swedencentral` | Azure for Students only allows five regions |
 
-The tree model and the foundation model are not deployed yet (see [Add another model API](#add-another-model-api)).
+The foundation model has no API: it can be shown from its forecast CSV, and a hybrid model would be one more API
+(see [Add another model API](#add-another-model-api)).
 
 ## 2. Overview
 
@@ -48,7 +51,7 @@ flowchart TB
 
     subgraph GH["GitHub"]
         pr["Pull request / push"]
-        ci["CI: ci.yml<br/>API tests + image smoke test<br/>dashboard build<br/>terraform fmt + validate"]
+        ci["CI: ci.yml<br/>API tests + image smoke test<br/>(SARIMAX, tree)<br/>dashboard build<br/>terraform fmt + validate"]
         gate{{"Approval<br/>environment: production<br/>master only"}}
         cd["CD: cd.yml<br/>1 OIDC login<br/>2 deploy.sh --auto-approve<br/>3 smoke test"]
         pr --> ci
@@ -62,8 +65,8 @@ flowchart TB
     end
 
     subgraph TF["Azure: rg-loadforecast, managed by Terraform"]
-        acr["Container Registry<br/>image sarimax-api:commit"]
-        app["Container App sarimax-api<br/>0 to 1 replicas"]
+        acr["Container Registry<br/>images sarimax-api:commit<br/>and tree-api:commit"]
+        app["Container Apps sarimax-api, tree-api<br/>0 to 1 replicas each"]
         web["Storage static website<br/>dashboard + config.json"]
     end
 
@@ -77,18 +80,18 @@ flowchart TB
     cd -->|"4 terraform apply"| web
     app -->|"pulls the image<br/>(identity with role AcrPull)"| acr
     users -->|"opens"| web
-    web -->|"config.json holds the API URL<br/>then /forecast, /features, /predict"| app
+    web -->|"config.json holds the API URLs<br/>then /forecast, /features, /predict"| app
 ```
 
 Three questions, three tools:
 
 | Question | Answered by | Files |
 |---|---|---|
-| **What** runs? | Docker: one image with the code, the model and the data | [Dockerfile](../../deploy/sarimax_api/Dockerfile), [stage.sh](../../deploy/sarimax_api/stage.sh) |
+| **What** runs? | Docker: one image per API with the code, the model and the data | Dockerfile and stage.sh of [sarimax_api](../../deploy/sarimax_api/) and [tree_api](../../deploy/tree_api/) |
 | **Where** does it run, and what else exists? | Terraform: declares the cloud resources | [deploy/terraform/](../../deploy/terraform/) |
 | **When** and **by whom**? | `deploy.sh` (the steps), CI/CD (automatic trigger, checks, approval) | [deploy.sh](../../deploy/deploy.sh), [.github/workflows/](../../.github/workflows/) |
 
-Terraform does not build the image. `deploy.sh` builds and pushes it, then tells Terraform which tag to run.
+Terraform does not build the images. `deploy.sh` builds and pushes them, then tells Terraform which tag to run.
 
 ## 3. Order of use
 
@@ -119,12 +122,12 @@ already exists, so running it again changes nothing.
 | [89–120](../../deploy/bootstrap.sh#L89-L120) | **1.2** State storage | Own resource group (so destroying the app cannot delete its state); storage account with public blob access off; **blob versioning** (a broken state can be rolled back); a data role for you (Terraform logs in with Azure AD, not with a storage key); the `tfstate` container, retried because a new role takes a minute to apply |
 | [129–133](../../deploy/bootstrap.sh#L129-L133) | Phase 2 checks | Stops if `rg-loadforecast` does not exist: run `deploy.sh` first |
 | [135–149](../../deploy/bootstrap.sh#L135-L149) | **2.1** Identity | An app registration and its service principal (`github-loadforecast-cd`). No password or secret |
-| [151–167](../../deploy/bootstrap.sh#L151-L167) | **2.2** Federated credential | Tells Azure which GitHub token to accept: issuer GitHub, subject `repo:<repo>:environment:production`, audience `api://AzureADTokenExchange` (see [OIDC](#oidc-login-without-a-password)) |
-| [169–178](../../deploy/bootstrap.sh#L169-L178) | **2.3** Roles | The three roles below. Nothing on the whole subscription |
-| [180–201](../../deploy/bootstrap.sh#L180-L201) | **2.4** GitHub | The `production` environment with you as required reviewer ([L184–190](../../deploy/bootstrap.sh#L184-L190)), deployments only from `master` ([L191–195](../../deploy/bootstrap.sh#L191-L195)), and three variables ([L197–201](../../deploy/bootstrap.sh#L197-L201)) that name the identity to log in as. They are IDs, not secrets |
-| [206–213](../../deploy/bootstrap.sh#L206-L213) | Dispatcher | `state` or `github`, otherwise the usage message |
+| [151–180](../../deploy/bootstrap.sh#L151-L180) | **2.2** Federated credential | Tells Azure which GitHub token to accept: issuer GitHub, audience `api://AzureADTokenExchange`, and the subject `<repository>:environment:production`. The repository part is **asked from GitHub** ([L161–162](../../deploy/bootstrap.sh#L161-L162)): a repository with immutable subjects sends numeric IDs in it, and a subject that differs by one character is rejected at login. A credential that already exists with another subject is corrected, not skipped ([L172–178](../../deploy/bootstrap.sh#L172-L178)). See [OIDC](#oidc-login-without-a-password) |
+| [182–191](../../deploy/bootstrap.sh#L182-L191) | **2.3** Roles | The three roles below. Nothing on the whole subscription |
+| [193–214](../../deploy/bootstrap.sh#L193-L214) | **2.4** GitHub | The `production` environment with you as required reviewer ([L197–203](../../deploy/bootstrap.sh#L197-L203)), deployments only from `master` ([L204–208](../../deploy/bootstrap.sh#L204-L208)), and three variables ([L210–214](../../deploy/bootstrap.sh#L210-L214)) that name the identity to log in as. They are IDs, not secrets |
+| [219–226](../../deploy/bootstrap.sh#L219-L226) | Dispatcher | `state` or `github`, otherwise the usage message |
 
-Roles of the GitHub identity ([L169–178](../../deploy/bootstrap.sh#L169-L178)):
+Roles of the GitHub identity ([L182–191](../../deploy/bootstrap.sh#L182-L191)):
 
 | Role | Scope | Why |
 |---|---|---|
@@ -144,10 +147,10 @@ Roles of the GitHub identity ([L169–178](../../deploy/bootstrap.sh#L169-L178))
 | [38–39](../../deploy/deploy.sh#L38-L39) | `terraform init` | Connect to the state in Azure Storage, download the providers |
 | [41–45](../../deploy/deploy.sh#L41-L45) | Image tag | The short commit hash; with uncommitted changes a timestamp is added, so a local test build never overwrites the image of a commit |
 | [47–50](../../deploy/deploy.sh#L47-L50) | **Step 1** Registry | `terraform apply -target=...container_registry.main`: only the registry (and what it needs). The Container App needs an image to exist, the image needs a registry to go to, so the registry comes first. `-target` is used on purpose here, for ordering |
-| [52–56](../../deploy/deploy.sh#L52-L56) | **Step 2** Image | [stage.sh](../../deploy/sarimax_api/stage.sh) copies model, data and code into the build context; `az acr login`; `docker buildx build --platform linux/amd64 --push` (Container Apps run on amd64, also when you build on an Apple-silicon Mac) |
-| [58–59](../../deploy/deploy.sh#L58-L59) | **Step 3** Dashboard | `npm ci` and `npm run build` into `deploy/dashboard/dist` (includes the TypeScript check) |
-| [61–62](../../deploy/deploy.sh#L61-L62) | **Step 4** Everything else | `terraform apply` with the new tag: the Container App runs the new image, the changed dashboard files are uploaded, `config.json` is written |
-| [64–65](../../deploy/deploy.sh#L64-L65) | Outputs | The URLs |
+| [52–61](../../deploy/deploy.sh#L52-L61) | **Step 2** Images | `az acr login`, then a loop over the API folders ([L56](../../deploy/deploy.sh#L56): `sarimax_api`, `tree_api`). For each: its `stage.sh` copies model, data and code into the build context, and `docker buildx build --platform linux/amd64 --push` builds and pushes `<registry>/<folder name with "-">:<tag>` (Container Apps run on amd64, also when you build on an Apple-silicon Mac). That image name must equal `image` of the app in [variables.tf](../../deploy/terraform/variables.tf#L30-L33) |
+| [63–64](../../deploy/deploy.sh#L63-L64) | **Step 3** Dashboard | `npm ci` and `npm run build` into `deploy/dashboard/dist` (includes the TypeScript check) |
+| [66–67](../../deploy/deploy.sh#L66-L67) | **Step 4** Everything else | `terraform apply` with the new tag: the Container Apps run the new images, the changed dashboard files are uploaded, `config.json` is written |
+| [69–70](../../deploy/deploy.sh#L69-L70) | Outputs | The URLs |
 
 ### 4.3 `deploy/terraform/variables.tf`
 
@@ -160,10 +163,10 @@ the command line.
 | [3–6](../../deploy/terraform/variables.tf#L3-L6) | `subscription_id` | none (required) | laptop: `terraform.tfvars`; CD: `TF_VAR_subscription_id` | Which Azure subscription |
 | [8–12](../../deploy/terraform/variables.tf#L8-L12) | `location` | `swedencentral` | default | Region (limited by the student policy) |
 | [14–18](../../deploy/terraform/variables.tf#L14-L18) | `project` | `loadforecast` | default | Prefix of all resource names |
-| [20–32](../../deploy/terraform/variables.tf#L20-L32) | `apps` | one entry, `sarimax-api` | default | A map of **one entry per model API**: image name, port, CPU, memory. [main.tf](../../deploy/terraform/main.tf#L83) creates one Container App per entry with `for_each` |
-| [34–37](../../deploy/terraform/variables.tf#L34-L37) | `image_tag` | none (required) | `deploy.sh` with `-var` | Which image version runs. No default on purpose: forgetting it is an error, not a silent deployment of an unknown version |
-| [39–43](../../deploy/terraform/variables.tf#L39-L43) | `min_replicas` | `0` | default | 0: scales to zero when idle (free, but the first request waits for the container to start). 1: always on, about 15–20 USD more per month |
-| [45–49](../../deploy/terraform/variables.tf#L45-L49) | `dashboard_dist` | `../dashboard/dist` | default | Folder of the built dashboard |
+| [20–34](../../deploy/terraform/variables.tf#L20-L34) | `apps` | two entries, `sarimax-api` and `tree-api` | default | A map of **one entry per model API**: image name, port, CPU, memory. [main.tf](../../deploy/terraform/main.tf#L83) creates one Container App per entry with `for_each` |
+| [36–39](../../deploy/terraform/variables.tf#L36-L39) | `image_tag` | none (required) | `deploy.sh` with `-var` | Which image version runs. No default on purpose: forgetting it is an error, not a silent deployment of an unknown version |
+| [41–45](../../deploy/terraform/variables.tf#L41-L45) | `min_replicas` | `0` | default | 0: scales to zero when idle (free, but the first request waits for the container to start). 1: always on, about 15–20 USD more per month |
+| [47–51](../../deploy/terraform/variables.tf#L47-L51) | `dashboard_dist` | `../dashboard/dist` | default | Folder of the built dashboard |
 
 ### 4.4 `deploy/terraform/versions.tf`
 
@@ -217,7 +220,7 @@ and East Asia, none of which the student policy allows.
 | [14–18](../../deploy/terraform/dashboard.tf#L14-L18) | Static website | Turns the feature on, which creates the `$web` container. Unknown pages return `index.html` |
 | [20–40](../../deploy/terraform/dashboard.tf#L20-L40) | `locals` | `dashboard_origin` ([L21](../../deploy/terraform/dashboard.tf#L21), used for the API's CORS), `web_container_id` ([L22–23](../../deploy/terraform/dashboard.tf#L22-L23), built by hand because Azure creates the container), `dashboard_files` ([L25–26](../../deploy/terraform/dashboard.tf#L25-L26), every built file except `config.json`), `content_types` ([L28–39](../../deploy/terraform/dashboard.tf#L28-L39), so that browsers treat `.js` as JavaScript and `.css` as styles) |
 | [42–53](../../deploy/terraform/dashboard.tf#L42-L53) | Dashboard files | One blob per built file (`for_each`). `content_md5` ([L49](../../deploy/terraform/dashboard.tf#L49)) is the file's hash: a changed file is uploaded again, an unchanged one is left alone |
-| [55–69](../../deploy/terraform/dashboard.tf#L55-L69) | `config.json` | **Written by Terraform, not copied from `dist/`**: the model list with the URL of the deployed API (`fqdn` of the Container App). That is why `config.json` is excluded in L26: the one in `dist/` points to `localhost:8000` for local development |
+| [55–70](../../deploy/terraform/dashboard.tf#L55-L70) | `config.json` | **Written by Terraform, not copied from `dist/`**: the model list with the URL of each deployed API (`fqdn` of its Container App, one line per API: [L63–64](../../deploy/terraform/dashboard.tf#L63-L64)). That is why `config.json` is excluded in L26: the one in `dist/` points to `localhost:8000` and `localhost:8001` for local development |
 
 The two directions of dependency do not form a loop: the Container App needs only the storage account's URL
 (for CORS), and `config.json` needs the Container App's URL: storage account → Container App → `config.json`.
@@ -229,7 +232,7 @@ The two directions of dependency do not form a loop: the Container App needs onl
 
 | Lines | Output | Used by |
 |---|---|---|
-| [3–5](../../deploy/terraform/outputs.tf#L3-L5) | `dashboard_url` | people; [cd.yml](../../.github/workflows/cd.yml#L75-L87) |
+| [3–5](../../deploy/terraform/outputs.tf#L3-L5) | `dashboard_url` | people; [cd.yml](../../.github/workflows/cd.yml#L75-L90) |
 | [7–9](../../deploy/terraform/outputs.tf#L7-L9) | `api_urls` | one URL per app, built with a `for` expression; cd.yml |
 | [11–17](../../deploy/terraform/outputs.tf#L11-L17) | `acr_login_server`, `acr_name` | [deploy.sh](../../deploy/deploy.sh#L49-L50): where to push the image |
 | [19–21](../../deploy/terraform/outputs.tf#L19-L21) | `resource_group` | reference |
@@ -242,10 +245,11 @@ trigger) and `jobs` (run in parallel, each on a fresh virtual machine); a job ha
 
 | Lines | Section | What it does |
 |---|---|---|
-| [5–23](../../.github/workflows/ci.yml#L5-L23) | Trigger | Push to `master`, pull requests, or by hand. A `paths` filter: only changes in `deploy/`, `common.py`, `features.py`, the **model JSON** and `data_daily.csv` start it. A new model file therefore starts CI, and after it CD |
-| [26–53](../../.github/workflows/ci.yml#L26-L53) | Job `sarimax-api` | pytest ([L35–39](../../.github/workflows/ci.yml#L35-L39), only the API's requirements, `--no-project`); build the image without pushing ([L41–44](../../.github/workflows/ci.yml#L41-L44)); start the container and call `/health`, `/features`, `/predict` ([L46–53](../../.github/workflows/ci.yml#L46-L53)): tests show the Python code is right, the smoke test shows the packaged image is |
-| [55–71](../../.github/workflows/ci.yml#L55-L71) | Job `dashboard` | `npm ci` (exactly the versions of `package-lock.json`) and `npm run build` (includes the TypeScript check) |
-| [73–86](../../.github/workflows/ci.yml#L73-L86) | Job `terraform` | `fmt -check`, `init -backend=false` (does not connect to Azure), `validate` |
+| [5–29](../../.github/workflows/ci.yml#L5-L29) | Trigger | Push to `master`, pull requests, or by hand. A `paths` filter: only changes in `deploy/`, the SARIMAX `common.py` and `features.py`, the **SARIMAX model JSON**, `data_daily.csv`, and for the tree model its training script, **model file** and forecast file start it. A new model file therefore starts CI, and after it CD |
+| [32–59](../../.github/workflows/ci.yml#L32-L59) | Job `sarimax-api` | pytest ([L40–45](../../.github/workflows/ci.yml#L40-L45), only the API's requirements, `--no-project`); build the image without pushing ([L47–50](../../.github/workflows/ci.yml#L47-L50)); start the container and call `/health`, `/features`, `/predict` ([L52–59](../../.github/workflows/ci.yml#L52-L59)): tests show the Python code is right, the smoke test shows the packaged image is |
+| [61–89](../../.github/workflows/ci.yml#L61-L89) | Job `tree-api` | The same three steps for the tree API ([tests L69–75](../../.github/workflows/ci.yml#L69-L75), [image L77–80](../../.github/workflows/ci.yml#L77-L80), [smoke test L82–89](../../.github/workflows/ci.yml#L82-L89)). Its tests include a comparison of `/forecast` with `tree_daily_test.csv`: if the feature code of the API and of the training script drift apart, CI fails |
+| [91–107](../../.github/workflows/ci.yml#L91-L107) | Job `dashboard` | `npm ci` (exactly the versions of `package-lock.json`) and `npm run build` (includes the TypeScript check) |
+| [109–122](../../.github/workflows/ci.yml#L109-L122) | Job `terraform` | `fmt -check`, `init -backend=false` (does not connect to Azure), `validate` |
 
 ### 4.9 `.github/workflows/cd.yml`
 
@@ -264,8 +268,8 @@ succeeded, and then it waits for the approval of the `production` environment.
 | [53–58](../../.github/workflows/cd.yml#L53-L58) | `azure/login` | OIDC login for the `az` CLI (`az acr login` needs it) |
 | [60–68](../../.github/workflows/cd.yml#L60-L68) | Tools | Terraform (without the wrapper, so `terraform output -raw` is plain text) and Node |
 | [70–73](../../.github/workflows/cd.yml#L70-L73) | **Deploy** | `deploy/deploy.sh --auto-approve`: the same script as on a laptop |
-| [75–87](../../.github/workflows/cd.yml#L75-L87) | URLs | Reads the Terraform outputs, writes them to the run summary and to the environment URL |
-| [89–95](../../.github/workflows/cd.yml#L89-L95) | Smoke test | Calls the live API and `config.json`, with retries because the API may start from zero |
+| [75–90](../../.github/workflows/cd.yml#L75-L90) | URLs | Reads the Terraform outputs (the URL of each API), writes them to the run summary and to the environment URL |
+| [92–99](../../.github/workflows/cd.yml#L92-L99) | Smoke test | Calls `/health` and `/features` of both live APIs, with retries because an API may start from zero, then `config.json` |
 
 ### 4.10 Other files of the pipeline
 
@@ -274,7 +278,11 @@ succeeded, and then it waits for the approval of the `production` environment.
 | [sarimax_api/Dockerfile](../../deploy/sarimax_api/Dockerfile) | `python:3.13-slim`, installs [requirements.txt](../../deploy/sarimax_api/requirements.txt), copies the app and `artifacts/`, starts uvicorn on `$PORT` |
 | [sarimax_api/stage.sh](../../deploy/sarimax_api/stage.sh) | Copies `common.py`, `features.py`, the model JSON and `data_daily.csv` into `artifacts/` (git-ignored): the Docker build context must be inside the folder |
 | [sarimax_api/app.py](../../deploy/sarimax_api/app.py), [service.py](../../deploy/sarimax_api/service.py) | The FastAPI endpoints and the model logic; the contract is in [API.md](API.md) |
-| [dashboard/public/config.json](../../deploy/dashboard/public/config.json) | The model list for local development; in production Terraform writes it ([dashboard.tf](../../deploy/terraform/dashboard.tf#L55-L69)) |
+| [tree_api/Dockerfile](../../deploy/tree_api/Dockerfile), [requirements.txt](../../deploy/tree_api/requirements.txt) | Like the SARIMAX image, plus `libgomp1` (LightGBM needs the OpenMP runtime, which `python:3.13-slim` lacks). The package versions are those of `uv.lock`: the model file is a pickle and reads reliably only with the versions that saved it |
+| [tree_api/stage.sh](../../deploy/tree_api/stage.sh) | Copies `final_model_h1.joblib` and `data_daily.csv` into `artifacts/` (git-ignored) |
+| [tree_api/features.py](../../deploy/tree_api/features.py) | A **copy** of `build_daily_features` of the training script ([run_tree_based.py](../../src/models/trees/run_tree_based.py)), which imports four ML libraries the API does not need. The copy is guarded by a test (see the CI job `tree-api`) |
+| [tree_api/app.py](../../deploy/tree_api/app.py), [service.py](../../deploy/tree_api/service.py), [test_app.py](../../deploy/tree_api/test_app.py) | The endpoints, the model logic (a what-if forecast applies the model to the changed features, so it is not linear; no quantiles) and the tests; see the Tree notes in [API.md](API.md#tree-notes) |
+| [dashboard/public/config.json](../../deploy/dashboard/public/config.json) | The model list for local development (ports 8000 and 8001); in production Terraform writes it ([dashboard.tf](../../deploy/terraform/dashboard.tf#L55-L70)) |
 
 ## 5. Concepts
 
@@ -377,13 +385,19 @@ sequenceDiagram
     AZ->>AZ: check the roles of the service principal
 ```
 
+The subject must match **character for character**. If the repository uses immutable subjects (this one does), GitHub
+puts numeric IDs into it, `repo:OWNER@<owner id>/REPO@<repo id>:environment:production`, so that a renamed or
+transferred repository cannot be mistaken for the original. [bootstrap.sh 2.2](../../deploy/bootstrap.sh#L151-L180)
+therefore asks GitHub for the exact start of the subject instead of building it by hand. The first CD run failed
+with `AADSTS700213: No matching federated identity record` because the credential held a different subject.
+
 What makes it safe:
 
-- The **federated credential** ([bootstrap.sh 2.2](../../deploy/bootstrap.sh#L151-L167)) accepts exactly one subject:
+- The **federated credential** ([bootstrap.sh 2.2](../../deploy/bootstrap.sh#L151-L180)) accepts exactly one subject:
   this repository's `production` environment. Other repositories, forks and branches cannot log in.
 - That environment requires **your approval** and allows only **`master`**
-  ([bootstrap.sh 2.4](../../deploy/bootstrap.sh#L180-L201)).
-- The identity can do **little** ([bootstrap.sh 2.3](../../deploy/bootstrap.sh#L169-L178)): its own resource group
+  ([bootstrap.sh 2.4](../../deploy/bootstrap.sh#L193-L214)).
+- The identity can do **little** ([bootstrap.sh 2.3](../../deploy/bootstrap.sh#L182-L191)): its own resource group
   and the state, nothing on the subscription.
 - The three GitHub variables are IDs, not secrets.
 
@@ -405,29 +419,38 @@ If the state storage account name is taken, change `STATE_ACCOUNT` (and `storage
 
 **Normal change.** Open a pull request: CI runs. After the merge to `master`, CI runs again; when it succeeds, CD
 waits for the approval in the GitHub Actions page, then deploys. A new
-`src/results/sarimax/models/sarimax_daily_1d.json` is such a change.
+`src/results/sarimax/models/sarimax_daily_1d.json`, or a retrained
+`src/results/tree-based/Models/daily/final_model_h1.joblib`, is such a change.
 
 **Deploy a branch before merging, or without GitHub.** `deploy/deploy.sh` from the laptop (CD only deploys `master`).
 
 **Delete everything of the app.** `deploy/deploy.sh destroy` removes `rg-loadforecast` and what is in it. The state
 storage is in another resource group and stays.
 
-**Look at the API logs.** `az containerapp logs show -n sarimax-api -g rg-loadforecast --tail 50`
+**Look at the API logs.** `az containerapp logs show -n sarimax-api -g rg-loadforecast --tail 50` (`-n tree-api` for
+the tree API). The same logs are in the Log Analytics workspace, table `ContainerAppConsoleLogs_CL`.
+
+**Run the APIs and the dashboard on your machine** (commands in [API.md](API.md#sarimax-notes) and
+[API.md](API.md#tree-notes)): SARIMAX on port 8000, tree on 8001, then `npm run dev` in `deploy/dashboard`. The
+dashboard asks a service that is still starting again every few seconds, so the order does not matter.
 
 <a id="add-another-model-api"></a>
-**Add another model API (tree model, foundation model).** A new Container App is one more entry in `var.apps`, but
-three more places have to know about it:
+**Add another model API (for example the hybrid model).** The tree API was added this way. A new Container App is
+one more entry in `var.apps`, but the folder and four more places have to know about it:
 
 | Where | Change |
 |---|---|
-| [variables.tf](../../deploy/terraform/variables.tf#L29-L31) | a new entry in `apps` (image name, port, CPU, memory) |
-| [deploy.sh](../../deploy/deploy.sh#L52-L56) | build and push its image (today only `sarimax-api`) |
-| [dashboard.tf](../../deploy/terraform/dashboard.tf#L61-L66) | add it to the model list of `config.json` (today a single hard-coded entry) |
-| [ci.yml](../../.github/workflows/ci.yml#L26-L53) | tests and smoke test for its folder |
+| `deploy/<name>_api/` | The service: `app.py`, `service.py`, `Dockerfile`, `stage.sh`, `requirements.txt`, `test_app.py`, following the [API contract](API.md). Copy [tree_api](../../deploy/tree_api/) or [sarimax_api](../../deploy/sarimax_api/) |
+| [variables.tf](../../deploy/terraform/variables.tf#L30-L33) | a new entry in `apps` (image name, port, CPU, memory); the image name is the folder name with `-` instead of `_` |
+| [deploy.sh](../../deploy/deploy.sh#L56) | add the folder name to the `for` loop that builds and pushes the images |
+| [dashboard.tf](../../deploy/terraform/dashboard.tf#L63-L64) | add it to the model list of `config.json` (and to `public/config.json` for local development) |
+| [ci.yml](../../.github/workflows/ci.yml#L61-L89) | a job for its folder (copy `tree-api`), and its model file in the `paths` filter ([L8–L28](../../.github/workflows/ci.yml#L8-L28)) |
+| [cd.yml](../../.github/workflows/cd.yml#L75-L99) | its URL (steps `URLs` and `Smoke test`) and a smoke test call |
 
-The service itself has to follow the [API contract](API.md). A model that is only a forecast file (the foundation
-model) needs no API: put the CSV in `deploy/dashboard/public/` and list it with `forecastCsv` in the dashboard's
-config (see [API.md](API.md#dashboard-config)).
+The dashboard also needs a color: `MODEL_SLOT` in [theme.ts](../../deploy/dashboard/src/theme.ts) fixes one per model
+id. A model that is only a forecast file (the foundation model) needs no API: put the CSV in
+`deploy/dashboard/public/` and list it with `forecastCsv` in the dashboard's config (see
+[API.md](API.md#dashboard-config)).
 
 ## 7. Decisions and limits
 
@@ -438,11 +461,15 @@ config (see [API.md](API.md#dashboard-config)).
 | Container Apps, scale to zero | Almost free for a demo; the price is a wait for the first request after idle time. `min_replicas = 1` removes it |
 | Maximum one replica | The API keeps no state and a demo needs no scaling; it also bounds the cost |
 | Image tag = commit | Every version is traceable, and a rollback is a deployment of an older tag |
+| One image per API folder, one loop in `deploy.sh` | The APIs have different packages (the tree API needs LightGBM, not statsmodels), so they cannot share an image |
+| The tree API has a copy of the feature code | The training script imports four ML libraries; a test compares the API with `tree_daily_test.csv`, so a drift fails CI. The better long-term fix is to move the feature function out of the training script |
 | Managed identity for the registry | No registry password anywhere (`admin_enabled = false`) |
 | OIDC for GitHub | No stored Azure secret |
 | State in Azure Storage with versioning | One copy for laptops and CD, a lock against two applies, old versions to roll back |
 | Bootstrap by script, not Terraform | The state storage and the CD identity must exist before Terraform and CD can run |
 | What-if only for the models with an API | A model deployed as an API can recompute; a forecast file cannot |
 
-Known limits: the API loads the model and the data when it starts (a few seconds); the what-if forecast of the
-SARIMAX API is linear in the X by construction (see [API.md](API.md#sarimax-notes)); CD has not run yet.
+Known limits: an API loads its model and the data when it starts (a few seconds), and after scaling to zero the first
+request also waits for the container; the what-if forecast of the SARIMAX API is linear in the X by construction (see
+[API.md](API.md#sarimax-notes)), the one of the tree API is not, and has no interval ([API.md](API.md#tree-notes));
+only the daily 1-day models are deployed, not the 7-day or hourly ones.

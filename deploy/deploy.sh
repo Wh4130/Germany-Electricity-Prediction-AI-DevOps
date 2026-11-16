@@ -12,7 +12,7 @@
 #
 # Steps:
 #   1. the container registry (Terraform, alone: the image needs somewhere to go before the app can use it)
-#   2. the API image: build for linux/amd64 and push it to the registry
+#   2. the API images (SARIMAX, tree): build for linux/amd64 and push them to the registry
 #   3. the dashboard: npm build into deploy/dashboard/dist
 #   4. everything else (Terraform): container app with the new image, storage website, config.json
 # =====================================================================================================================
@@ -49,11 +49,16 @@ terraform apply -input=false ${APPROVE[@]+"${APPROVE[@]}"} -var "image_tag=$TAG"
 ACR_NAME="$(terraform output -raw acr_name)"
 ACR="$(terraform output -raw acr_login_server)"
 
-echo "== 2/4 SARIMAX API image -> $ACR"
-"$HERE/sarimax_api/stage.sh" >/dev/null    # copy model, data and code into the build context
+echo "== 2/4 API images -> $ACR"
 az acr login --name "$ACR_NAME"            # docker login to the registry with the current az identity
-# Container Apps run on linux/amd64; --platform makes that work on an Apple-silicon Mac too
-docker buildx build --platform linux/amd64 -t "$ACR/sarimax-api:$TAG" --push "$HERE/sarimax_api"
+# One image per model API: the folder deploy/<name with _>/ is pushed as <name with ->, which is the `image` of the
+# app in variables.tf (sarimax_api -> sarimax-api). A new model API is one more name in this list.
+for dir in sarimax_api tree_api; do
+  image="${dir//_/-}"
+  "$HERE/$dir/stage.sh" >/dev/null         # copy model, data and code into the build context
+  # Container Apps run on linux/amd64; --platform makes that work on an Apple-silicon Mac too
+  docker buildx build --platform linux/amd64 -t "$ACR/$image:$TAG" --push "$HERE/$dir"
+done
 
 echo "== 3/4 dashboard build"
 (cd "$HERE/dashboard" && npm ci --silent && npm run build --silent)

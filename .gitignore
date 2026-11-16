@@ -35,8 +35,9 @@ src/data/external_raw/
 .ipynb_checkpoints/
 *.ipynb.bak*
 
-# deployment: copied by deploy/sarimax_api/stage.sh
+# deployment: copied by deploy/sarimax_api/stage.sh and deploy/tree_api/stage.sh
 deploy/sarimax_api/artifacts/
+deploy/tree_api/artifacts/
 !deploy/dashboard/*.json
 !deploy/dashboard/public/*.json
 deploy/dashboard/node_modules/

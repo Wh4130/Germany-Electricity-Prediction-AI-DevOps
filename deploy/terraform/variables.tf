@@ -17,7 +17,8 @@ variable "project" {
   default     = "loadforecast"
 }
 
-# One entry per model API. Adding the tree model later is one more entry here (and its image in the registry).
+# One entry per model API. A new model API is one more entry here, its image in deploy.sh, its entry in the
+# dashboard's config.json (dashboard.tf) and a job in ci.yml. `image` is the repository name that deploy.sh pushes to.
 variable "apps" {
   description = "Model APIs: container app name => image repository, port, CPU and memory"
   type = map(object({
@@ -28,6 +29,7 @@ variable "apps" {
   }))
   default = {
     "sarimax-api" = { image = "sarimax-api", port = 8000, cpu = 0.5, memory = "1Gi" }
+    "tree-api"    = { image = "tree-api", port = 8000, cpu = 0.5, memory = "1Gi" }
   }
 }
 

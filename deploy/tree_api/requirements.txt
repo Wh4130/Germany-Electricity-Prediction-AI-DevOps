@@ -1,0 +1,10 @@
+# the versions of the project environment (uv.lock); the model file (joblib) is read by the same lightgbm and
+# scikit-learn that saved it, a pickle of another version can fail to load or predict differently
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+lightgbm==4.7.0
+fastapi==0.162.5
+uvicorn==0.54.0

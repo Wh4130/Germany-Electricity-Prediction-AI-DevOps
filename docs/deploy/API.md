@@ -119,7 +119,7 @@ A model that does not use one of these X returns it in `/features` with its valu
 - `forecastCsv`: a static model, no API and no what-if. The file is in the shared forecast format; only its
   step-1 rows are drawn. Put it in `deploy/dashboard/public/` (the path is relative to the page).
 - `featureSource`: the live model whose `/features` fills the sliders.
-- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` aqua, `foundation` yellow.
+- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` aqua, `foundation` pink.
 - The 80% interval is drawn only when one model is shown; the models can be hidden in the chart.
 
 ## SARIMAX notes
@@ -138,3 +138,30 @@ uv run --with-requirements deploy/sarimax_api/requirements.txt \
 
 - Tests: `uv run --with-requirements deploy/sarimax_api/requirements.txt --with httpx --with pytest pytest deploy/sarimax_api`
 - Image: `deploy/sarimax_api/stage.sh`, then `docker build -t sarimax-api deploy/sarimax_api`.
+
+## Tree notes
+
+Service in `deploy/tree_api/`. The model is `final_model_h1.joblib` of `src/models/trees/run_tree_based.py`, the
+model of the 1-day horizon (the training script picks the best library per horizon; `/meta` names the one in use).
+
+- `/forecast` equals the step-1 rows of `src/results/tree-based/Forecasts/tree_daily_test.csv`. The features are a
+  copy of `build_daily_features` of the training script (`deploy/tree_api/features.py`); a test compares the two, so
+  change both together.
+- A forecast of day d uses the load of d − 1, d − 2 and d − 7 and the X of day d. The monthly indicators
+  (`industrial_confidence`, `ipi_ei_level`, `oxcgrt_stringency`) enter with their value of the day, so `past_only`
+  is `false` for all sliders (the SARIMAX service uses the value of the day before for these three).
+- No quantiles: the model gives a point forecast, so `/forecast` and `/predict` return only `y_pred`, and the
+  dashboard draws no interval for it.
+- A what-if forecast is the model applied to the features of the day with the changed X. It is not linear: a small
+  change can leave the forecast unchanged, and it jumps when a split of the trees is crossed.
+- `solar_generation_proxy` is the feature `solar_radiation_combi` (solar capacity × shortwave radiation).
+- Run locally (port 8001, as in `public/config.json`):
+
+```bash
+uv run --with-requirements deploy/tree_api/requirements.txt \
+    uvicorn app:app --app-dir deploy/tree_api --port 8001
+```
+
+- Tests: `uv run --with-requirements deploy/tree_api/requirements.txt --with httpx --with pytest pytest deploy/tree_api`
+- Image: `deploy/tree_api/stage.sh`, then `docker build -t tree-api deploy/tree_api`. LightGBM needs `libgomp1`,
+  which the Dockerfile installs.

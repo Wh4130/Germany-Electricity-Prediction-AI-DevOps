@@ -61,6 +61,7 @@ resource "azurerm_storage_blob" "config" {
   source_content = jsonencode({
     models = [
       { id = "sarimax", label = "SARIMAX", url = "https://${azurerm_container_app.api["sarimax-api"].ingress[0].fqdn}" },
+      { id = "tree", label = "Tree", url = "https://${azurerm_container_app.api["tree-api"].ingress[0].fqdn}" },
     ]
     featureSource = "sarimax"
   })
