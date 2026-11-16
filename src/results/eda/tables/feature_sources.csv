@@ -1,0 +1,30 @@
+group,feature,resolution,description,source
+Calendar,month,,Month number 1 - 12,derived from `date_from`
+Calendar,day_of_week_raw,,"Weekday number, 0 = Monday ... 6 = Sunday",derived from `date_from`
+Calendar,day_of_week,,Weekday name,derived from `date_from`
+Calendar,is_holiday,,German nationwide public holiday,`holidays` package
+Calendar,is_weekday,,Monday to Friday,derived from `date_from`
+Calendar,weighted_regional_holiday,,Share of the population (0 - 1) with a regional public holiday,"`holidays` package, Destatis 12411LJ003 via DBnomics"
+Calendar,weighted_school_holiday,,Share of the population (0 - 1) in school holidays,"ferien-api.de, Destatis 12411LJ003"
+Calendar,is_bridge_day,,Bridge day next to a Tuesday / Thursday holiday,derived from `is_holiday`
+Calendar,is_christmas_new_year,,24 Dec to 1 Jan,fixed window
+Calendar,is_dst,,Summer time is in effect,derived from `date_from`
+Calendar,is_dst_transition_day,,Day with 23 or 25 hours,derived from `date_from`
+Fourier terms,"sin_y1, cos_y1, sin_y10, cos_y10",,Yearly cycle (period 365.25 days): sin and cos for k = 1 ... 10,derived from `date_from`
+Fourier terms,"sin_d1, cos_d1, sin_d6, cos_d6",H,Daily cycle (period 24 hours): sin and cos for k = 1 ... 6,derived from `date_from`
+Weather,hdd,,"Heating degree days: max(0, 18 - temperature), °C",Open-Meteo archive
+Weather,shortwave_radiation_sum,D,"Solar radiation at the surface, MJ/m²",Open-Meteo archive
+Weather,shortwave_radiation,H,"Solar radiation at the surface, W/m²",Open-Meteo archive
+Weather,wind_speed_10m_mean,D,"Wind speed 10 m above ground, daily mean, km/h",Open-Meteo archive
+Weather,wind_speed_10m,H,"Wind speed 10 m above ground, km/h",Open-Meteo archive
+Weather,precipitation_sum,D,"Precipitation of the day, mm",Open-Meteo archive
+Weather,precipitation,H,"Precipitation of the hour, mm",Open-Meteo archive
+Weather,is_day,H,"Day/night label: 1 if the majority of the population is in daylight that hour, else 0",Open-Meteo archive
+Sun position,daylight_duration,D,"Length of daylight, seconds",Open-Meteo archive
+Day-ahead price,day_ahead_price,H,"Day-ahead price of the hour, EUR/MWh",SMARD chart data (DE-LU)
+Day-ahead price,day_ahead_price_mean,D,Mean of the day-ahead prices of the day,SMARD chart data
+Solar capacity,solar_capacity_mw,,"Cumulative installed PV capacity in Germany, MW",Marktstammdatenregister via open-mastr
+Economic,gas_price_eu_usd,,"European natural gas price of the month, USD per MMBtu",IMF PCPS via DBnomics
+Economic,industrial_confidence,,"Industrial confidence indicator of Germany (balance, percentage points) of the month before","Eurostat `ei_bssi_m_r2`, `BS-ICI-BAL`"
+Economic,ipi_ei_level,,Production index of energy-intensive industries (2021 = 100),Destatis GENESIS 42153-0001
+Policy,oxcgrt_stringency,,"OxCGRT stringency index, 0 - 100",OxCGRT

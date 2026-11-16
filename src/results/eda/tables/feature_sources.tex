@@ -1,0 +1,36 @@
+Calendar & \texttt{month} & Month number 1--12 & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{day\_\allowbreak{}of\_\allowbreak{}week\_\allowbreak{}raw} & Weekday number, 0 = Monday ... 6 = Sunday & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{day\_\allowbreak{}of\_\allowbreak{}week} & Weekday name & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{is\_\allowbreak{}holiday} & German nationwide public holiday & \href{https://pypi.org/project/holidays/}{\texttt{holidays}} package \\
+ & \texttt{is\_\allowbreak{}weekday} & Monday to Friday & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{weighted\_\allowbreak{}regional\_\allowbreak{}holiday} & Share of the population (0--1) with a regional public holiday & \href{https://pypi.org/project/holidays/}{holidays} package, \href{https://api.db.nomics.world/v22/series/DESTATIS/12411LJ003}{Destatis 12411LJ003 via DBnomics} \\
+ & \texttt{weighted\_\allowbreak{}school\_\allowbreak{}holiday} & Share of the population (0--1) in school holidays & \href{https://ferien-api.de/api/v1/holidays}{ferien-api.de}, \href{https://api.db.nomics.world/v22/series/DESTATIS/12411LJ003}{Destatis 12411LJ003} \\
+ & \texttt{is\_\allowbreak{}bridge\_\allowbreak{}day} & Bridge day next to a Tuesday / Thursday holiday & derived from \texttt{is\_\allowbreak{}holiday} \\
+ & \texttt{is\_\allowbreak{}christmas\_\allowbreak{}new\_\allowbreak{}year} & 24 Dec to 1 Jan & fixed window \\
+ & \texttt{is\_\allowbreak{}dst} & Summer time is in effect & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{is\_\allowbreak{}dst\_\allowbreak{}transition\_\allowbreak{}day} & Day with 23 or 25 hours & derived from \texttt{date\_\allowbreak{}from} \\
+\addlinespace[3pt]
+Fourier terms & \texttt{sin\_y}$k$, \texttt{cos\_y}$k$ ($k=1,\dots,10$) & Yearly cycle (period 365.25 days): sin and cos for k = 1 ... 10 & derived from \texttt{date\_\allowbreak{}from} \\
+ & \texttt{sin\_d}$k$, \texttt{cos\_d}$k$ ($k=1,\dots,6$) (H) & Daily cycle (period 24 hours): sin and cos for k = 1 ... 6 & derived from \texttt{date\_\allowbreak{}from} \\
+\addlinespace[3pt]
+Weather & \texttt{hdd} & Heating degree days: \texttt{max(0, 18 - temperature)}, \textdegree{}C & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{shortwave\_\allowbreak{}radiation\_\allowbreak{}sum} (D) & Solar radiation at the surface, MJ/m$^2$ & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{shortwave\_\allowbreak{}radiation} (H) & Solar radiation at the surface, W/m$^2$ & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{wind\_\allowbreak{}speed\_\allowbreak{}10m\_\allowbreak{}mean} (D) & Wind speed 10 m above ground, daily mean, km/h & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{wind\_\allowbreak{}speed\_\allowbreak{}10m} (H) & Wind speed 10 m above ground, km/h & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{precipitation\_\allowbreak{}sum} (D) & Precipitation of the day, mm & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{precipitation} (H) & Precipitation of the hour, mm & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+ & \texttt{is\_\allowbreak{}day} (H) & Day/night label: 1 if the majority of the population is in daylight that hour, else 0 & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+\addlinespace[3pt]
+Sun position & \texttt{daylight\_\allowbreak{}duration} (D) & Length of daylight, seconds & \href{https://archive-api.open-meteo.com/v1/archive}{Open-Meteo archive} \\
+\addlinespace[3pt]
+Day-ahead price & \texttt{day\_\allowbreak{}ahead\_\allowbreak{}price} (H) & Day-ahead price of the hour, EUR/MWh & \href{https://www.smard.de/app/chart_data/4169/DE-LU/index_hour.json}{SMARD chart data} (DE-LU) \\
+ & \texttt{day\_\allowbreak{}ahead\_\allowbreak{}price\_\allowbreak{}mean} (D) & Mean of the day-ahead prices of the day & \href{https://www.smard.de/app/chart_data/4169/DE-LU/index_hour.json}{SMARD chart data} \\
+\addlinespace[3pt]
+Solar capacity & \texttt{solar\_\allowbreak{}capacity\_\allowbreak{}mw} & Cumulative installed PV capacity in Germany, MW & \href{https://www.marktstammdatenregister.de}{Marktstammdatenregister} via \href{https://github.com/OpenEnergyPlatform/open-MaStR}{open-mastr} \\
+\addlinespace[3pt]
+Economic & \texttt{gas\_\allowbreak{}price\_\allowbreak{}eu\_\allowbreak{}usd} & European natural gas price of the month, USD per MMBtu & \href{https://api.db.nomics.world/v22/series/IMF/PCPS/M.W00.PNGASEU.USD}{IMF PCPS via DBnomics} \\
+ & \texttt{industrial\_\allowbreak{}confidence} & Industrial confidence indicator of Germany (balance, percentage points) of the month before & \href{https://ec.europa.eu/eurostat/databrowser/view/ei_bssi_m_r2/default/table}{Eurostat \texttt{ei\_\allowbreak{}bssi\_\allowbreak{}m\_\allowbreak{}r2}}, \texttt{BS-ICI-BAL} \\
+ & \texttt{ipi\_\allowbreak{}ei\_\allowbreak{}level} & Production index of energy-intensive industries (2021 = 100) & \href{https://www-genesis.destatis.de/}{Destatis GENESIS 42153-0001} \\
+\addlinespace[3pt]
+Policy & \texttt{oxcgrt\_\allowbreak{}stringency} & OxCGRT stringency index, 0--100 & \href{https://github.com/OxCGRT/covid-policy-dataset}{OxCGRT} \\
