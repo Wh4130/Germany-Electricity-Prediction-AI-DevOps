@@ -1,7 +1,9 @@
 {
   "models": [
     { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" },
-    { "id": "tree", "label": "Tree", "url": "http://localhost:8001" }
+    { "id": "tree", "label": "Tree", "url": "http://localhost:8001" },
+    { "id": "tabicl", "label": "TabICL", "forecastCsv": "forecasts/tabicl_default_daily_1d_ctxall_test.csv" },
+    { "id": "timesfm", "label": "TimesFM-3", "forecastCsv": "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" }
   ],
   "featureSource": "sarimax"
 }

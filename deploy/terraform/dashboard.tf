@@ -62,6 +62,9 @@ resource "azurerm_storage_blob" "config" {
     models = [
       { id = "sarimax", label = "SARIMAX", url = "https://${azurerm_container_app.api["sarimax-api"].ingress[0].fqdn}" },
       { id = "tree", label = "Tree", url = "https://${azurerm_container_app.api["tree-api"].ingress[0].fqdn}" },
+      # static models: the forecast files are in the dashboard (deploy/dashboard/public/forecasts), no API
+      { id = "tabicl", label = "TabICL", forecastCsv = "forecasts/tabicl_default_daily_1d_ctxall_test.csv" },
+      { id = "timesfm", label = "TimesFM-3", forecastCsv = "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" },
     ]
     featureSource = "sarimax"
   })

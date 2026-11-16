@@ -109,7 +109,8 @@ A model that does not use one of these X returns it in `/features` with its valu
   "models": [
     { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" },
     { "id": "tree", "label": "Tree", "url": "http://localhost:8001" },
-    { "id": "foundation", "label": "TimesFM", "forecastCsv": "forecasts/timesfm_daily_1d_test.csv" }
+    { "id": "tabicl", "label": "TabICL", "forecastCsv": "forecasts/tabicl_default_daily_1d_ctxall_test.csv" },
+    { "id": "timesfm", "label": "TimesFM-3", "forecastCsv": "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" }
   ],
   "featureSource": "sarimax"
 }
@@ -119,7 +120,8 @@ A model that does not use one of these X returns it in `/features` with its valu
 - `forecastCsv`: a static model, no API and no what-if. The file is in the shared forecast format; only its
   step-1 rows are drawn. Put it in `deploy/dashboard/public/` (the path is relative to the page).
 - `featureSource`: the live model whose `/features` fills the sliders.
-- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` aqua, `foundation` pink.
+- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` aqua, `tabicl` pink, `timesfm` purple. A static
+  model has no what-if: the sliders do not move its forecast.
 - The 80% interval is drawn only when one model is shown; the models can be hidden in the chart.
 
 ## SARIMAX notes

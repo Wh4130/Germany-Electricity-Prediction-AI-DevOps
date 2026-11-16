@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 
 // a model keeps its color whatever else is shown (fixed slots, never by position)
-// (slot 4, yellow, is left out: next to the orange of the tree model it is hard to tell apart)
-const MODEL_SLOT: Record<string, number> = { sarimax: 1, tree: 2, hybrid: 3, foundation: 5 };
+// (slot 4, yellow, is left out: next to the orange of the tree model it is hard to tell apart;
+//  slot 6, dark green, is left out: next to the green of the hybrid model it is hard to tell apart)
+const MODEL_SLOT: Record<string, number> = { sarimax: 1, tree: 2, hybrid: 3, tabicl: 5, timesfm: 7, foundation: 5 };
 
 export function modelSlot(id: string, index: number): number {
   return MODEL_SLOT[id] ?? Math.min(6 + index, 8); // any other model: the slots that are still free
