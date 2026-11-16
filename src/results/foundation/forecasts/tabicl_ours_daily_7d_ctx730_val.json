@@ -1,0 +1,45 @@
+{
+  "model": "TabICLForecaster",
+  "experiment": "F6",
+  "variant": "zero-shot (in-context learning)",
+  "resolution": "daily",
+  "horizon": 7,
+  "split": "val",
+  "n_origins": 359,
+  "features": "ours",
+  "temporal_features": [
+    "index",
+    "periodic"
+  ],
+  "context_days": 730,
+  "covariates_known": [
+    "month_sin",
+    "month_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_holiday",
+    "is_weekday",
+    "weighted_regional_holiday",
+    "weighted_school_holiday",
+    "is_bridge_day",
+    "is_christmas_new_year",
+    "is_dst",
+    "is_dst_transition_day",
+    "solar_capacity_mw",
+    "daylight_duration",
+    "hdd",
+    "shortwave_radiation_sum",
+    "wind_speed_10m_mean",
+    "precipitation_sum"
+  ],
+  "covariates_past_only_ffill": [
+    "gas_price_eu_usd",
+    "oxcgrt_stringency",
+    "ipi_ei_level",
+    "industrial_confidence"
+  ],
+  "weather_variant": "A (observed, oracle)",
+  "y_pred": "median",
+  "tabicl_config": {},
+  "runtime_seconds": 261.8
+}

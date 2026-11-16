@@ -1,0 +1,11 @@
+Rank,Date,Weekday,MAE (MWh),MAPE %,Bias (MWh),Naive MAE (MWh),HDD change vs last week,Mean price (EUR/MWh),Likely reason
+1,2024-03-31,Sun,104858.75,12.126352174928705,104858.75,272193.0,-7.1,55,"Weekend, DST change, Much warmer than last week"
+2,2024-01-03,Wed,71897.5,5.309809346106367,-71897.5,196988.0,-3.7,45,"Holiday week, Much warmer than last week"
+3,2024-12-28,Sat,68981.25,5.994930299769328,-68981.25,119241.75,+5.9,123,"Christmas / New Year, Weekend, Much colder than last week"
+4,2024-09-27,Fri,67991.375,5.083624074387341,-67991.375,128591.90999999992,+2.2,15,none in our inputs
+5,2024-05-01,Wed,65787.9375,6.7292014972661445,65787.9375,396971.25,-12.8,4,"Holiday, Much warmer than last week"
+6,2024-05-11,Sat,60007.25,5.901075021382666,60007.25,62518.75,-1.4,54,"Weekend, no other reason in our inputs"
+7,2024-01-28,Sun,59558.5,5.232790814446065,59558.5,179581.75,-2.5,59,"Weekend, no other reason in our inputs"
+8,2024-01-24,Wed,58015.25,3.8553949046406086,58015.25,89990.5,-10.7,33,Much warmer than last week
+9,2024-12-27,Fri,57702.75,4.995254950379874,-57702.75,225668.5,+1.9,122,"Bridge day, Christmas / New Year"
+10,2024-10-27,Sun,57656.75,5.260402791108451,-57656.75,44196.0,+1.5,90,"Weekend, DST change"

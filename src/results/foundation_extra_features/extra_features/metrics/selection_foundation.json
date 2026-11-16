@@ -1,0 +1,76 @@
+{
+  "F2_24": {
+    "experiment": "F2",
+    "horizon": 24,
+    "metric": "MAE",
+    "chosen": {
+      "context_length": 8192
+    },
+    "validation": [
+      {
+        "context_length": 8192,
+        "MAE": 944.8136917183932
+      }
+    ]
+  },
+  "F5_1": {
+    "experiment": "F5",
+    "horizon": 1,
+    "metric": "MAE",
+    "chosen": {
+      "context_length": null
+    },
+    "validation": [
+      {
+        "context_length": null,
+        "MAE": 17960.54743150685
+      }
+    ]
+  },
+  "F5_7": {
+    "experiment": "F5",
+    "horizon": 7,
+    "metric": "MAE",
+    "chosen": {
+      "context_length": null
+    },
+    "validation": [
+      {
+        "context_length": null,
+        "MAE": 22059.11089832869
+      }
+    ]
+  },
+  "F6_1": {
+    "experiment": "F6",
+    "horizon": 1,
+    "metric": "MAE",
+    "chosen": {
+      "features": "default",
+      "context_days": null
+    },
+    "validation": [
+      {
+        "features": "default",
+        "context_days": null,
+        "MAE": 15690.39006849315
+      }
+    ]
+  },
+  "F6_7": {
+    "experiment": "F6",
+    "horizon": 7,
+    "metric": "MAE",
+    "chosen": {
+      "features": "default",
+      "context_days": null
+    },
+    "validation": [
+      {
+        "features": "default",
+        "context_days": null,
+        "MAE": 19435.42081177875
+      }
+    ]
+  }
+}

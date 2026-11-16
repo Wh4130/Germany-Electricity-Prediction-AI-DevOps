@@ -1,0 +1,145 @@
+{
+  "file": "seasonal_naive_daily_7d_test.csv",
+  "model": "seasonal naive",
+  "experiment": null,
+  "split": "test",
+  "setting": "",
+  "resolution": "daily",
+  "horizon": 7,
+  "n_origins": 360,
+  "weather_variant": null,
+  "overall": {
+    "n": 2520,
+    "MAE": 56841.71706349206,
+    "RMSE": 88603.33829646737,
+    "MAPE_%": 4.598327425254427,
+    "MAE_naive": 56841.71706349206,
+    "MAE_skill": 0.0,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day": {
+    "1": {
+      "n": 360,
+      "MAE": 56624.50277777778,
+      "RMSE": 87789.32713545818,
+      "MAPE_%": 4.5634306018470205,
+      "MAE_naive": 56624.50277777778,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "2": {
+      "n": 360,
+      "MAE": 57379.52916666667,
+      "RMSE": 89273.44502077728,
+      "MAPE_%": 4.633307412446716,
+      "MAE_naive": 57379.52916666667,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "3": {
+      "n": 360,
+      "MAE": 57467.677777777775,
+      "RMSE": 89480.36349736238,
+      "MAPE_%": 4.645193272419214,
+      "MAE_naive": 57467.677777777775,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "4": {
+      "n": 360,
+      "MAE": 57251.71597222222,
+      "RMSE": 89097.93434103689,
+      "MAPE_%": 4.633567851643666,
+      "MAE_naive": 57251.71597222222,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "5": {
+      "n": 360,
+      "MAE": 56784.91458333333,
+      "RMSE": 88609.80797263955,
+      "MAPE_%": 4.600095463824551,
+      "MAE_naive": 56784.91458333333,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "6": {
+      "n": 360,
+      "MAE": 56289.90347222222,
+      "RMSE": 88099.05187097487,
+      "MAPE_%": 4.5639065816044795,
+      "MAE_naive": 56289.90347222222,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "7": {
+      "n": 360,
+      "MAE": 56093.77569444444,
+      "RMSE": 87856.86422358149,
+      "MAPE_%": 4.548790792995342,
+      "MAE_naive": 56093.77569444444,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 1715,
+      "MAE": 51448.99474635568,
+      "RMSE": 78919.26302657495,
+      "MAPE_%": 3.810509684244254,
+      "MAE_naive": 51448.99474635568,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 713,
+      "MAE": 45899.82469845722,
+      "RMSE": 64403.85736821918,
+      "MAPE_%": 4.153198186365204,
+      "MAE_naive": 45899.82469845722,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 56,
+      "MAE": 282852.0089285714,
+      "RMSE": 289519.77799209807,
+      "MAPE_%": 27.221732826438444,
+      "MAE_naive": 282852.0089285714,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 19,
+      "MAE": 195819.11842105264,
+      "RMSE": 196670.25034933575,
+      "MAPE_%": 17.259407957365877,
+      "MAE_naive": 195819.11842105264,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 36,
+      "MAE": 220595.3125,
+      "RMSE": 249278.32835103787,
+      "MAPE_%": 19.883266652945363,
+      "MAE_naive": 220595.3125,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

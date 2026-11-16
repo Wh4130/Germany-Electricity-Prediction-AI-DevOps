@@ -1,0 +1,5 @@
+file,model_dir,model,experiment,setting,resolution,horizon,split,n_origins,MAE,RMSE,MAPE_%,bias,MAE_skill,pinball,coverage80_%
+seasonal_naive_daily_1d_test.csv,seasonal_naive,seasonal naive,baseline,,daily,1,test,366,57715.698087431694,89643.62529974518,4.668380448455159,-784.5806010928961,0.0,,
+seasonal_naive_daily_7d_test.csv,seasonal_naive,seasonal naive,baseline,,daily,7,test,360,56841.71706349206,88603.33829646737,4.598327425254427,-59.56170634920635,0.0,,
+seasonal_naive_hourly_1h_test.csv,seasonal_naive,seasonal naive,baseline,,hourly,1,test,366,2154.4945901639344,2930.7408116510487,4.8201102480869675,-9.116120218579235,0.0,,
+seasonal_naive_hourly_24h_test.csv,seasonal_naive,seasonal naive,baseline,,hourly,24,test,366,2657.1668306010924,4101.975039226356,5.142907761535674,-31.65943761384335,0.0,,
