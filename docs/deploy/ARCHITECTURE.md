@@ -247,7 +247,7 @@ trigger) and `jobs` (run in parallel, each on a fresh virtual machine); a job ha
 |---|---|---|
 | [5–29](../../.github/workflows/ci.yml#L5-L29) | Trigger | Push to `master`, pull requests, or by hand. A `paths` filter: only changes in `deploy/`, the SARIMAX `common.py` and `features.py`, the **SARIMAX model JSON**, `data_daily.csv`, and for the tree model its training script, **model file** and forecast file start it. A new model file therefore starts CI, and after it CD |
 | [32–59](../../.github/workflows/ci.yml#L32-L59) | Job `sarimax-api` | pytest ([L40–45](../../.github/workflows/ci.yml#L40-L45), only the API's requirements, `--no-project`); build the image without pushing ([L47–50](../../.github/workflows/ci.yml#L47-L50)); start the container and call `/health`, `/features`, `/predict` ([L52–59](../../.github/workflows/ci.yml#L52-L59)): tests show the Python code is right, the smoke test shows the packaged image is |
-| [61–89](../../.github/workflows/ci.yml#L61-L89) | Job `tree-api` | The same three steps for the tree API ([tests L69–75](../../.github/workflows/ci.yml#L69-L75), [image L77–80](../../.github/workflows/ci.yml#L77-L80), [smoke test L82–89](../../.github/workflows/ci.yml#L82-L89)). Its tests include a comparison of `/forecast` with `tree_daily_test.csv`: if the feature code of the API and of the training script drift apart, CI fails |
+| [61–89](../../.github/workflows/ci.yml#L61-L89) | Job `tree-api` | The same three steps for the tree API ([tests L69–75](../../.github/workflows/ci.yml#L69-L75), [image L77–80](../../.github/workflows/ci.yml#L77-L80), [smoke test L82–89](../../.github/workflows/ci.yml#L82-L89)). Its tests include a comparison of `/forecast` with `tree_daily_1d_test.csv`: if the feature code of the API and of the training script drift apart, CI fails |
 | [91–107](../../.github/workflows/ci.yml#L91-L107) | Job `dashboard` | `npm ci` (exactly the versions of `package-lock.json`) and `npm run build` (includes the TypeScript check) |
 | [109–122](../../.github/workflows/ci.yml#L109-L122) | Job `terraform` | `fmt -check`, `init -backend=false` (does not connect to Azure), `validate` |
 
@@ -462,7 +462,7 @@ id. A model that is only a forecast file (the foundation model) needs no API: pu
 | Maximum one replica | The API keeps no state and a demo needs no scaling; it also bounds the cost |
 | Image tag = commit | Every version is traceable, and a rollback is a deployment of an older tag |
 | One image per API folder, one loop in `deploy.sh` | The APIs have different packages (the tree API needs LightGBM, not statsmodels), so they cannot share an image |
-| The tree API has a copy of the feature code | The training script imports four ML libraries; a test compares the API with `tree_daily_test.csv`, so a drift fails CI. The better long-term fix is to move the feature function out of the training script |
+| The tree API has a copy of the feature code | The training script imports four ML libraries; a test compares the API with `tree_daily_1d_test.csv`, so a drift fails CI. The better long-term fix is to move the feature function out of the training script |
 | Managed identity for the registry | No registry password anywhere (`admin_enabled = false`) |
 | OIDC for GitHub | No stored Azure secret |
 | State in Azure Storage with versioning | One copy for laptops and CD, a lock against two applies, old versions to roll back |

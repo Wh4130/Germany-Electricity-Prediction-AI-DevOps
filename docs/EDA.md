@@ -12,6 +12,7 @@
   - [Daily trend](#daily-trend)
   - [Mean consumption by month](#mean-consumption-by-month)
   - [Weekday effect](#weekday-effect)
+  - [Holiday effect](#holiday-effect)
   - [Intra-day pattern by season](#intra-day-pattern-by-season)
   - [STL decomposition](#stl-decomposition)
 - [PV and wind vs consumption](#pv-and-wind-vs-consumption)
@@ -60,6 +61,17 @@ Notebook: [explortory_data_analysis.ipynb](../src/notebooks/explortory_data_anal
 - Monday to Friday are about 1.04 - 1.07 times the weekly mean, Saturday about 0.90, Sunday about 0.84. The pattern is almost identical across 2019 - 2024.
 - Monday and Friday are slightly lower than the other weekdays.
 - Implication: a day type feature (4 classes) is useful. See the [calendar features](FEATURES.md#calendar).
+
+### Holiday effect
+
+Raw daily means over the training period (2019 - 2023), % change vs the Weekday mean. Seven mutually exclusive day types (a Christmas/New Year day keeps that type even when it is also a public holiday or a weekend; see [plot_holiday_effect.py](../src/analysis/eda/plot_holiday_effect.py) for the exact priority order).
+
+- Saturday and Sunday are already lower than weekdays (-14.7%, -20.4%), as in the weekday effect above.
+- A public holiday on a weekday drops further than a plain weekend (-24.6%) - the lowest of all seven types.
+- A public holiday that happens to fall on a weekend (n = 4, small sample) is close to the Sunday level (-19.8%).
+- Bridge days (-15.8%, n = 7) and the Christmas/New Year window (-18.2%, n = 45) are both clearly lower than a plain weekday, despite most of their days legally being workdays.
+- Implication: `is_holiday`, `is_bridge_day` and `is_christmas_new_year` each carry a real, distinct drop in demand and are kept as calendar features. See [FEATURES - Calendar](FEATURES.md#calendar).
+- `weighted_regional_holiday` and `weighted_school_holiday` are continuous (0 - 1 population shares), not a day type, so they are not in the chart above - not checked here, kept as an extra feature to try.
 
 ### Intra-day pattern by season
 

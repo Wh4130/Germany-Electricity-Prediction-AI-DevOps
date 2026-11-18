@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app import app  # noqa: E402
 from service import PROJECT_ROOT, SLIDERS  # noqa: E402
 
-FORECASTS = PROJECT_ROOT / "src" / "results" / "tree-based" / "Forecasts" / "tree_daily_test.csv"
+FORECASTS = PROJECT_ROOT / "src" / "results" / "tree-based" / "forecasts" / "tree_daily_1d_test.csv"
 
 
 @pytest.fixture(scope = "module")
@@ -29,7 +29,6 @@ def test_forecast_matches_run_tree_based(client):
         pytest.skip("run run_tree_based.py first")
     api = pd.DataFrame(client.get("/forecast").json())
     saved = pd.read_csv(FORECASTS)
-    saved = saved[saved["step"] == 1]
     assert list(api["date"]) == list(saved["target_time"])
     for col in ("y_true", "y_pred"):
         assert np.allclose(api[col], saved[col], atol = 1e-6)

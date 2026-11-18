@@ -146,7 +146,7 @@ uv run --with-requirements deploy/sarimax_api/requirements.txt \
 Service in `deploy/tree_api/`. The model is `final_model_h1.joblib` of `src/models/trees/run_tree_based.py`, the
 model of the 1-day horizon (the training script picks the best library per horizon; `/meta` names the one in use).
 
-- `/forecast` equals the step-1 rows of `src/results/tree-based/Forecasts/tree_daily_test.csv`. The features are a
+- `/forecast` equals `src/results/tree-based/forecasts/tree_daily_1d_test.csv`. The features are a
   copy of `build_daily_features` of the training script (`deploy/tree_api/features.py`); a test compares the two, so
   change both together.
 - A forecast of day d uses the load of d − 1, d − 2 and d − 7 and the X of day d. The monthly indicators

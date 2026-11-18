@@ -1,0 +1,82 @@
+{
+  "file": "tree_daily_1d_test.csv",
+  "model_dir": "tree-based",
+  "model": "tree-based (direct multi-step, one model per horizon)",
+  "label": null,
+  "experiment": null,
+  "split": "test",
+  "is_naive": false,
+  "setting": "",
+  "resolution": "daily",
+  "horizon": 1,
+  "n_origins": 366,
+  "weather_variant": null,
+  "overall": {
+    "n": 366,
+    "MAE": 25211.681496278128,
+    "RMSE": 34206.96086266705,
+    "MAPE_%": 2.015827434617048,
+    "bias": -3385.826580457345,
+    "MAE_naive": 57715.698087431694,
+    "MAE_skill": 0.5631746243788692,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 247,
+      "MAE": 23555.318985064147,
+      "RMSE": 31403.765327893005,
+      "MAPE_%": 1.7396997271297978,
+      "bias": -5421.75615963064,
+      "MAE_naive": 52564.48712550607,
+      "MAE_skill": 0.5518776977920078,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 102,
+      "MAE": 25263.11385136702,
+      "RMSE": 34764.33300307738,
+      "MAPE_%": 2.2637641945470612,
+      "bias": -4651.716627384065,
+      "MAE_naive": 46037.13901960784,
+      "MAE_skill": 0.45124492117967807,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 9,
+      "MAE": 49216.00971515916,
+      "RMSE": 63361.648375221375,
+      "MAPE_%": 4.813694349099559,
+      "bias": 30367.10535864012,
+      "MAE_naive": 259973.66666666666,
+      "MAE_skill": 0.8106884810827283,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 3,
+      "MAE": 54458.81438659535,
+      "RMSE": 57646.376275320305,
+      "MAPE_%": 4.815980904230455,
+      "bias": 54458.81438659535,
+      "MAE_naive": 198661.91666666666,
+      "MAE_skill": 0.7258718968368185,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 9,
+      "MAE": 49771.515405255086,
+      "RMSE": 63678.83641386765,
+      "MAPE_%": 4.501167153787504,
+      "bias": 27310.905414800236,
+      "MAE_naive": 155158.86111111112,
+      "MAE_skill": 0.6792222174819065,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

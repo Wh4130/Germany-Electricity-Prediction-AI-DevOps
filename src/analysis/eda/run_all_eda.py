@@ -10,6 +10,7 @@ import analyze_pv_wind_vs_consumption
 import analyze_stationarity
 import make_feature_sources_table
 import plot_daily_consumption_trend
+import plot_holiday_effect
 import plot_intraday_load_profile_by_season
 import plot_monthly_mean_consumption_by_year
 import plot_mstl_decomposition
@@ -20,6 +21,7 @@ def main() -> None:
     plot_daily_consumption_trend.main()
     plot_monthly_mean_consumption_by_year.main()
     plot_weekday_effect.main()
+    plot_holiday_effect.main()
     plot_intraday_load_profile_by_season.main()
     plot_mstl_decomposition.main("daily")
     plot_mstl_decomposition.main("hourly")
