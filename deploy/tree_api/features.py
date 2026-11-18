@@ -4,7 +4,7 @@ The features of the daily tree model (1 day ahead), as the model was trained.
 This is a COPY of `build_daily_features` in src/models/trees/run_tree_based.py (the training script imports
 catboost, xgboost, lightgbm and scikit-learn at the top, which the API does not need). If the training features
 change, change this file too: `test_app.py` compares the API forecasts with
-src/results/tree-based/forecasts/tree_daily_test.csv and fails when the two drift apart.
+src/results/tree-based/forecasts/tree_daily_1d_test.csv and fails when the two drift apart.
 """
 import pandas as pd
 

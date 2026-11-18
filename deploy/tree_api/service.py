@@ -4,7 +4,7 @@ The daily 1-day tree model behind the API: the 2024 forecasts and what-if foreca
 The model is `final_model_h1.joblib` of src/models/trees/run_tree_based.py (fit on 2019-2023, one model for the
 1-day horizon; it is a LightGBM, the training script picks the best library per horizon). Nothing is trained here.
 A forecast for day d uses the actual load of d - 1, d - 2 and d - 7 (lags) and the X of day d, as in the shared
-evaluation: `/forecast` equals the step-1 rows of src/results/tree-based/forecasts/tree_daily_test.csv.
+evaluation: `/forecast` equals src/results/tree-based/forecasts/tree_daily_1d_test.csv.
 
 What-if: the model is a set of trees, so it is NOT linear in the X. A what-if forecast is the model applied to the
 features of the day with the changed X (the others stay as they are). Small changes can leave the forecast
