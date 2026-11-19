@@ -1,0 +1,82 @@
+{
+  "file": "seasonal_naive_daily_1d_val.csv",
+  "model_dir": "seasonal_naive",
+  "model": "seasonal naive",
+  "label": null,
+  "experiment": null,
+  "split": "val",
+  "is_naive": true,
+  "setting": "",
+  "resolution": "daily",
+  "horizon": 1,
+  "n_origins": 365,
+  "weather_variant": null,
+  "overall": {
+    "n": 365,
+    "MAE": 49920.80890410959,
+    "RMSE": 81771.93182964153,
+    "MAPE_%": 4.1225767667378665,
+    "bias": 75.42945205479452,
+    "MAE_naive": 49920.80890410959,
+    "MAE_skill": 0.0,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 247,
+      "MAE": 43783.39979757085,
+      "RMSE": 69619.89641505411,
+      "MAPE_%": 3.301212567805882,
+      "bias": -13150.466599190284,
+      "MAE_naive": 43783.39979757085,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 101,
+      "MAE": 37557.92326732673,
+      "RMSE": 50575.97048645392,
+      "MAPE_%": 3.430783869654572,
+      "bias": -3342.0618811881186,
+      "MAE_naive": 37557.92326732673,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 9,
+      "MAE": 277983.5,
+      "RMSE": 297913.41538349417,
+      "MAPE_%": 27.275326948459284,
+      "bias": 277983.5,
+      "MAE_naive": 277983.5,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 2,
+      "MAE": 142077.25,
+      "RMSE": 146992.5858600103,
+      "MAPE_%": 12.780354133248975,
+      "bias": 142077.25,
+      "MAE_naive": 142077.25,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 9,
+      "MAE": 179308.05555555556,
+      "RMSE": 221113.90856709905,
+      "MAPE_%": 16.173279905752786,
+      "bias": 179308.05555555556,
+      "MAE_naive": 179308.05555555556,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

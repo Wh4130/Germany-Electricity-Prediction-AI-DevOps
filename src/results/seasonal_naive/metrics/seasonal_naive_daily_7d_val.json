@@ -1,0 +1,161 @@
+{
+  "file": "seasonal_naive_daily_7d_val.csv",
+  "model_dir": "seasonal_naive",
+  "model": "seasonal naive",
+  "label": null,
+  "experiment": null,
+  "split": "val",
+  "is_naive": true,
+  "setting": "",
+  "resolution": "daily",
+  "horizon": 7,
+  "n_origins": 359,
+  "weather_variant": null,
+  "overall": {
+    "n": 2513,
+    "MAE": 48666.46309192201,
+    "RMSE": 80183.07273176209,
+    "MAPE_%": 4.017954191057951,
+    "bias": -129.31227616394747,
+    "MAE_naive": 48666.46309192201,
+    "MAE_skill": 0.0,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day": {
+    "1": {
+      "n": 359,
+      "MAE": 47656.793175487466,
+      "RMSE": 77581.08861221555,
+      "MAPE_%": 3.917381903241584,
+      "bias": -3021.6566852367687,
+      "MAE_naive": 47656.793175487466,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "2": {
+      "n": 359,
+      "MAE": 48676.68593314763,
+      "RMSE": 80158.98054582355,
+      "MAPE_%": 4.011679107143835,
+      "bias": -2001.7639275766016,
+      "MAE_naive": 48676.68593314763,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "3": {
+      "n": 359,
+      "MAE": 48853.1364902507,
+      "RMSE": 80656.69022957762,
+      "MAPE_%": 4.030180048213981,
+      "bias": -738.2298050139276,
+      "MAE_naive": 48853.1364902507,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "4": {
+      "n": 359,
+      "MAE": 49077.6364902507,
+      "RMSE": 81046.61391008289,
+      "MAPE_%": 4.050406109704912,
+      "bias": 44.09610027855153,
+      "MAE_naive": 49077.6364902507,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "5": {
+      "n": 359,
+      "MAE": 48971.81615598886,
+      "RMSE": 80822.98839382535,
+      "MAPE_%": 4.048292114230407,
+      "bias": 996.9428969359332,
+      "MAE_naive": 48971.81615598886,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "6": {
+      "n": 359,
+      "MAE": 48810.86142061281,
+      "RMSE": 80573.92637403564,
+      "MAPE_%": 4.040421317416735,
+      "bias": 1692.6149025069637,
+      "MAE_naive": 48810.86142061281,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "7": {
+      "n": 359,
+      "MAE": 48618.31197771588,
+      "RMSE": 80389.17978950994,
+      "MAPE_%": 4.027318737454201,
+      "bias": 2122.810584958217,
+      "MAE_naive": 48618.31197771588,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 1714,
+      "MAE": 42786.4164235706,
+      "RMSE": 68240.68132451658,
+      "MAPE_%": 3.223948888585213,
+      "bias": -11885.400379229872,
+      "MAE_naive": 42786.4164235706,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 707,
+      "MAE": 37557.92326732673,
+      "RMSE": 50575.97048645392,
+      "MAPE_%": 3.430783869654572,
+      "bias": -3342.0618811881186,
+      "MAE_naive": 37557.92326732673,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 56,
+      "MAE": 304157.9464285714,
+      "RMSE": 311779.5420367349,
+      "MAPE_%": 29.874082409556884,
+      "bias": 304157.9464285714,
+      "MAE_naive": 304157.9464285714,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 14,
+      "MAE": 142077.25,
+      "RMSE": 146992.5858600103,
+      "MAPE_%": 12.78035413324898,
+      "bias": 142077.25,
+      "MAE_naive": 142077.25,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 36,
+      "MAE": 233698.41666666666,
+      "RMSE": 266211.3254692543,
+      "MAPE_%": 21.24444477436461,
+      "bias": 233698.41666666666,
+      "MAE_naive": 233698.41666666666,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

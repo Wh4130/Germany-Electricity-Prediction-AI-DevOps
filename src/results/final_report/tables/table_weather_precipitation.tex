@@ -2,8 +2,10 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
+hourly 1 h & dry & TimesFM-3, no covariates & 346 & 374 & 23 & 84.3 & 83.1 & 68.7 \\
 hourly 1 h & dry & SARIMAX & 346 & 470 & -18 & 80.2 & 86.2 & 68.1 \\
 hourly 1 h & dry & Tree-based & 346 & 405 & -38 & 82.9 &  & 69.4 \\
+hourly 1 h & wet & TimesFM-3, no covariates & 254 & 380 & 1 & 83.9 & 82.3 & 31.3 \\
 hourly 1 h & wet & SARIMAX & 254 & 491 & 20 & 79.2 & 84.1 & 31.9 \\
 hourly 1 h & wet & Tree-based & 254 & 399 & -65 & 83.1 &  & 30.6 \\
 hourly 24 h & dry & TimesFM-3, no covariates & 346 & 1,077 & 71 & 54.7 & 81.3 & 67.6 \\

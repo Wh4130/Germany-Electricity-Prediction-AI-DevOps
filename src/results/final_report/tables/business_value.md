@@ -6,6 +6,7 @@ National scale, all days of the year. Multi-step runs: average lead step.
 
 | Model | Horizon | MAE (MWh) | Yearly error (TWh) | Naive yearly error (TWh) | Reduction vs naive (TWh) | Reference | Reduction vs reference (TWh) |
 |---|---|---|---|---|---|---|---|
+| TimesFM-3, no covariates | hourly 1 h | 384 | 3.38 | 23.33 | 19.95 |  |  |
 | Tree-based | hourly 1 h | 408 | 3.58 | 23.33 | 19.75 |  |  |
 | SARIMAX | hourly 1 h | 489 | 4.29 | 23.33 | 19.04 |  |  |
 | TimesFM-3, covariates | hourly 24 h | 1,045 | 9.18 | 23.34 | 14.16 |  |  |
@@ -29,6 +30,7 @@ Bias < 0 = under-forecast. Error at day-ahead price = sum of |error| x |price|, 
 
 | Model | Horizon | MAE (MWh) | Price-weighted MAE (MWh) | Price-weighted / plain MAE | MAE top-10 % price (MWh) | Bias top-10 % price (MWh) | Error at day-ahead price (EUR m) | Naive error at day-ahead price (EUR m) | Value reduction vs reference (EUR m) |
 |---|---|---|---|---|---|---|---|---|---|
+| TimesFM-3, no covariates | hourly 1 h | 384 | 369 | 0.96 | 355 | -17 | 258.2 | 1,847.9 |  |
 | Tree-based | hourly 1 h | 408 | 396 | 0.97 | 403 | -87 | 277.3 | 1,847.9 |  |
 | SARIMAX | hourly 1 h | 489 | 481 | 0.98 | 428 | -62 | 337.0 | 1,847.9 |  |
 | TimesFM-3, covariates | hourly 24 h | 1,045 | 1,029 | 0.99 | 1,104 | 186 | 720.5 | 1,848.1 |  |
@@ -52,6 +54,9 @@ Error reduction x imbalance cost x market share. Upper bound: observed weather i
 
 | Model | Horizon | Against | Market share % | 5 EUR/MWh (EUR m) | 10 EUR/MWh (EUR m) | 20 EUR/MWh (EUR m) |
 |---|---|---|---|---|---|---|
+| TimesFM-3, no covariates | hourly 1 h | vs seasonal naive | 1.0 | 1.0 | 2.0 | 4.0 |
+| TimesFM-3, no covariates | hourly 1 h | vs seasonal naive | 5.0 | 5.0 | 10.0 | 20.0 |
+| TimesFM-3, no covariates | hourly 1 h | vs seasonal naive | 10.0 | 10.0 | 20.0 | 39.9 |
 | Tree-based | hourly 1 h | vs seasonal naive | 1.0 | 1.0 | 2.0 | 4.0 |
 | Tree-based | hourly 1 h | vs seasonal naive | 5.0 | 4.9 | 9.9 | 19.8 |
 | Tree-based | hourly 1 h | vs seasonal naive | 10.0 | 9.9 | 19.8 | 39.5 |

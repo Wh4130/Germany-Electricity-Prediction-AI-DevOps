@@ -38,7 +38,6 @@ from src.common.dataset import (  # noqa: F401
     DAY_TYPE_COLUMNS,
     ENGINEERED,
     FORECAST_COLUMNS,
-    HORIZONS,
     QUANTILE_COLUMNS,
     QUANTILES,
     SEASONAL_PERIOD,
@@ -48,8 +47,10 @@ from src.common.dataset import (  # noqa: F401
     forecasts_to_frame,
     horizon_label,
     origin_positions,
+    origin_rule,
     write_forecasts,
 )
+from src.common.dataset import HORIZONS as SHARED_HORIZONS
 from src.common.dataset import load_frame as load_base_frame
 from src.common.paths import DATA_DIR, PROJECT_ROOT, model_dir  # noqa: F401
 
@@ -62,6 +63,15 @@ EXTRA_FEATURES_NAME = "foundation_extra_features"  # results folder of run_extra
 DEFAULT_DATA_DIR = DATA_DIR
 DEFAULT_RESULTS_DIR = model_dir(MODEL_NAME)
 DEFAULT_FORECAST_DIR = DEFAULT_RESULTS_DIR / "forecasts"
+
+# --------------------------------------------------------------------------
+# Horizons
+# --------------------------------------------------------------------------
+
+# The shared horizons plus hourly 1 h (added 2026-11-19, TimesFM-3 only; TabICL
+# is daily only). Hourly 1 h origins are every hour, 24 h origins every local
+# midnight (src.common.dataset.origin_positions).
+HORIZONS = {**SHARED_HORIZONS, "hourly": tuple(sorted({1, *SHARED_HORIZONS["hourly"]}))}
 
 # --------------------------------------------------------------------------
 # Covariates (MODELS.md, "Model inputs")
@@ -140,7 +150,7 @@ def covariate_set(
     Parameters
     ----------
     resolution : "hourly" or "daily".
-    horizon : steps of the forecast (24 hourly, 1 / 7 daily).
+    horizon : steps of the forecast (1 / 24 hourly, 1 / 7 daily).
     calendar : "full" (all calendar columns) or "holidays" (only the holiday
         columns, for TabICL's default time features, experiment F6).
     include_covariates : False gives the target history only (F1, F4).
@@ -156,9 +166,13 @@ def covariate_set(
     if resolution == "hourly":
         known += HOUR_OF_DAY
     known += SOLAR_CAPACITY + SUN[resolution] + WEATHER[resolution]
-    # Day-ahead price: published around noon of the day before, so it is only
-    # known for the first local day after a midnight origin: hourly 24 h and
-    # daily 1 d may use it, daily 7 d may not.
+    # Day-ahead price: all prices of a local day are published around noon of
+    # the day before, so at an origin the prices of the origin's own local day
+    # are always known, those of the next day only from noon on.
+    # - hourly 24 h (origin at local midnight): the whole forecast day is known,
+    # - hourly 1 h (origin at any hour): the one target hour is the origin hour,
+    #   which lies in the origin's own day, so it is known,
+    # - daily 1 d: known; daily 7 d: only day 1 would be known, so not used.
     if (resolution == "hourly" and horizon <= 24) or (resolution == "daily" and horizon == 1):
         known.append(DAY_AHEAD_PRICE[resolution])
     if EXTRA_FEATURES if extra is None else extra:

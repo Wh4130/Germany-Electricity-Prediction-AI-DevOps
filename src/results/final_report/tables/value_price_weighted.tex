@@ -2,6 +2,7 @@
 \toprule
 Model & Horizon & MAE (MWh) & Price-weighted MAE (MWh) & Price-weighted / plain MAE & MAE top-10 \% price (MWh) & Bias top-10 \% price (MWh) & Error at day-ahead price (EUR m) & Naive error at day-ahead price (EUR m) & Value reduction vs reference (EUR m) \\
 \midrule
+TimesFM-3, no covariates & hourly 1 h & 384 & 369 & 0.96 & 355 & -17 & 258.2 & 1,847.9 &  \\
 Tree-based & hourly 1 h & 408 & 396 & 0.97 & 403 & -87 & 277.3 & 1,847.9 &  \\
 SARIMAX & hourly 1 h & 489 & 481 & 0.98 & 428 & -62 & 337.0 & 1,847.9 &  \\
 TimesFM-3, covariates & hourly 24 h & 1,045 & 1,029 & 0.99 & 1,104 & 186 & 720.5 & 1,848.1 &  \\

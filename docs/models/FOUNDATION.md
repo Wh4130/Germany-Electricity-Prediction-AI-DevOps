@@ -25,12 +25,14 @@ Models: [SARIMAX](SARIMAX.md) · [TREES](TREES.md) · **FOUNDATION**
 ## Overview
 
 > Implemented: F1, F2, F4, F5 (TimesFM-3 zero-shot) and F6 (TabICLForecaster). Not implemented: F3 (fine-tuning), F7 - F9. Code: [src/models/foundation/](../../src/models/foundation/). Tested end to end on synthetic data with the schema of `final/` and randomly initialised models of the same architecture; no results with the pretrained weights yet.
+>
+> Added 2026-11-19: the **hourly 1 h horizon for TimesFM-3** (F1, F2), with an origin at every hour. Tested on synthetic data with a stand-in model; not yet run with the pretrained weights.
 
 Two pretrained models. They forecast without training on our data (zero-shot), TimesFM-3 can also be fine-tuned. What they are and why they were chosen: [MODELS](../MODELS.md#model-descriptions).
 
 | Model | Resolution | Horizons | Variants | Package |
 |---|---|---|---|---|
-| TimesFM-3 (Google Research, 330 M parameters) | hourly, daily | 24 h / 1 d, 7 d | zero-shot; fine-tuning optional (no official code for version 3, see [fine-tuning](#timesfm-3-fine-tuning)) | `pip install timesfm[torch]` (checked: 3.0.2), weights `google/timesfm-3.0-pytorch` |
+| TimesFM-3 (Google Research, 330 M parameters) | hourly, daily | 1 h, 24 h / 1 d, 7 d | zero-shot; fine-tuning optional (no official code for version 3, see [fine-tuning](#timesfm-3-fine-tuning)) | `pip install timesfm[torch]` (checked: 3.0.2), weights `google/timesfm-3.0-pytorch` |
 | TabICLForecaster | daily | 1 d, 7 d | zero-shot only (in-context learning) | `pip install tabicl[forecast]` (checked: 2.2.0) |
 
 - Split, horizons, input columns, metrics and baselines are the same for all models: [MODELS - Shared setup](../MODELS.md#shared-setup). This document only has what is specific to the foundation models.
@@ -41,12 +43,14 @@ Files in `src/models/foundation/`:
 
 | File | Content |
 |---|---|
-| `data.py` | Load `final/`, select and encode the columns, covariate roles, forecast origins, context and future cuts per origin, forecast file writer (shared by both models) |
+| `data.py` | Load `final/`, select and encode the columns, covariate roles, the foundation horizons (`HORIZONS`: the shared ones plus hourly 1 h), context and future cuts per origin, forecast file writer (shared by both models) |
 | `timesfm3_forecast.py` | Zero-shot forecast with TimesFM-3 (F1, F2, F4, F5). Not called `timesfm3.py`: run as a script, that name would shadow the installed `timesfm3` package |
 | `timesfm3_finetune.py` | Optional, not written: LoRA fine-tuning of TimesFM-3 (own training loop) |
 | `tabicl_forecaster.py` | Forecast with TabICLForecaster (F6) |
 | `evaluate.py` | Fills `y_true`, seasonal naive baseline, all metrics of the shared setup, by lead time and day type |
 | `run_experiments.py` | Validation runs, selection of the settings, test runs, baselines and the summary table |
+
+The forecast origins come from `src/common/dataset.py` (`origin_positions`, `origin_rule`), shared with the evaluation and the seasonal naive files.
 
 ## How to run
 
@@ -60,11 +64,19 @@ uv run python src/models/foundation/run_experiments.py
 uv run python src/models/foundation/run_experiments.py --experiments F4 F5 F6
 uv run python src/models/foundation/run_experiments.py --hourly-contexts 2048 4096
 
+# Only the hourly 1 h runs (e.g. when the 24 h runs exist already), or everything without them
+uv run python src/models/foundation/run_experiments.py --experiments F1 F2 --hourly-horizons 1
+uv run python src/models/foundation/run_experiments.py --hourly-horizons 24
+
+# Skip the validation year: test runs only, with one fixed setting (e.g. the context chosen for 24 h)
+uv run python src/models/foundation/run_experiments.py --experiments F1 F2 --hourly-horizons 1 --skip-val --hourly-contexts 8192
+
 # Quick check that everything runs (first 3 origins per run)
 uv run python src/models/foundation/run_experiments.py --max-origins 3 --hourly-contexts 2048 --results-dir /tmp/fm_check
 
 # Single runs
 uv run python src/models/foundation/timesfm3_forecast.py --resolution hourly --split val --covariates --context-length 4096
+uv run python src/models/foundation/timesfm3_forecast.py --resolution hourly --split val --horizons 1 --context-length 4096
 uv run python src/models/foundation/tabicl_forecaster.py --split val --features default --context 730
 uv run python src/models/foundation/evaluate.py src/results/forecasts/timesfm3_*_val.csv
 ```
@@ -73,21 +85,27 @@ What `run_experiments.py` chooses on the validation year (lowest MAE, `--select-
 
 | Experiment | Grid on 2023 | Test 2024 |
 |---|---|---|
-| F1, F2 | context 2048, 4096, 8192 h | the chosen context |
+| F1, F2 | context 2048, 4096, 8192 h, chosen separately for 1 h and 24 h | the chosen context per horizon |
 | F4, F5 | none (whole history) | whole history |
 | F6 | features `ours` / `default` × context `all` / `730` days | the chosen pair |
 
+`--skip-val` skips the validation grid and the selection: the test runs use the one setting given on the command line, so `--hourly-contexts` (F1, F2) and `--tabicl-features` / `--tabicl-contexts` (F6) must have exactly one value each; with more, the script stops and lists the settings chosen on the validation year in earlier runs. Such entries are marked `"fixed": true` in `selection_foundation.json` (no validation scores); a fixed entry does not replace a validated one with the same setting. The setting is then not chosen on 2023 for that horizon, so report it as such (e.g. "1 h with the context chosen for 24 h"). `--skip-val` and `--skip-test` can not be combined.
+
 Output:
-- `src/results/forecasts/<run>.csv` in the [shared format](../MODELS.md#forecast-files), plus `<run>.json` with the settings (covariates, context, weather variant, run time). Names: `timesfm3_zs_{cov|nocov}_{hourly|daily}_{H}_ctx{L|all}_{val|test}`, `tabicl_{ours|default}_daily_{H}_ctx{all|730}_{split}`, `seasonal_naive_{resolution}_{H}_{split}`.
-- `src/results/metrics/<run>.json` (overall, by lead time, by day type), `summary_foundation.csv`, `selection_foundation.json`.
+- `src/results/forecasts/<run>.csv` in the [shared format](../MODELS.md#forecast-files), plus `<run>.json` with the settings (covariates, context, origin rule, weather variant, run time). Names: `timesfm3_zs_{cov|nocov}_{hourly|daily}_{H}_ctx{L|all}_{val|test}` (H = `1h`, `24h`, `1d`, `7d`), `tabicl_{ours|default}_daily_{H}_ctx{all|730}_{split}`, `seasonal_naive_{resolution}_{H}_{split}`.
+- `src/results/metrics/<run>.json` (overall, by lead time, by day type), `summary_foundation.csv`, `selection_foundation.json`. A run that covers only part of the experiments or horizons (`--experiments`, `--hourly-horizons`) merges its rows into the existing `summary_foundation.csv` and `selection_foundation.json` instead of replacing them.
 - Runs whose forecast file already exists are skipped (`--overwrite` to redo them), so an interrupted run can be restarted.
 
 Conventions:
-- `origin` is the time of the first forecast step; everything strictly before it is known. Hourly in UTC (`date_from_utc`), daily the local date. Hourly origins are at local midnight (22:00 / 23:00 UTC).
+- `origin` is the time of the first forecast step; everything strictly before it is known. Hourly in UTC (`date_from_utc`), daily the local date.
+- Origins (`origin_rule` in `src/common/dataset.py`, written to every JSON sidecar as `origins`):
+  - hourly 24 h: every local midnight (22:00 / 23:00 UTC), 365 in 2023, 366 in 2024,
+  - hourly 1 h: **every hour**, 8760 in 2023, 8784 in 2024. The same origins as the 1-hour forecasts of the [tree](TREES.md) and [SARIMAX](SARIMAX.md) runs, so the hourly 1 h results of the three model families are directly comparable,
+  - daily: every day.
 - `y_pred` is the median for both models. `y_true` is left empty by the model scripts and filled in by `evaluate.py`.
 - Weather is variant A (observed, oracle) for now, marked in every JSON sidecar. Variant B needs the extra ETL step of the shared setup.
-- Horizons (decided 2026-11-04): **hourly 24 h, daily 1 d and 7 d**, not the 24 h / 168 h and 7 d / 30 d of the shared setup. Origins in 2024: 366 (hourly 24 h, daily 1 d) and 360 (daily 7 d).
-- The covariates differ from the shared-setup table in two places (decided 2026-11-04): `hour_sin` / `hour_cos` are added (hourly) and `industrial_confidence` is added as past only. The day-ahead price is used where the shared setup allows it: `day_ahead_price` for the hourly 24 h horizon, `day_ahead_price_mean` for the daily 1 d horizon. See [Covariate roles](#covariate-roles). Other models that should be compared on the same inputs need the same change.
+- Horizons (decided 2026-11-04): **hourly 24 h, daily 1 d and 7 d**, not the 24 h / 168 h and 7 d / 30 d of the shared setup. Origins in 2024: 366 (hourly 24 h, daily 1 d) and 360 (daily 7 d). **Hourly 1 h added for TimesFM-3 on 2026-11-19** (8784 origins in 2024); TabICL stays daily only. The shared `HORIZONS` in `src/common/dataset.py` is unchanged; the foundation horizons are `data.HORIZONS`.
+- The covariates differ from the shared-setup table in two places (decided 2026-11-04): `hour_sin` / `hour_cos` are added (hourly) and `industrial_confidence` is added as past only. The day-ahead price is used where the shared setup allows it: `day_ahead_price` for the hourly 1 h and 24 h horizons, `day_ahead_price_mean` for the daily 1 d horizon. See [Covariate roles](#covariate-roles). Other models that should be compared on the same inputs need the same change.
 - A run whose forecast file exists but whose JSON sidecar lists other covariates is run again, so results of an older feature set are never mixed in.
 
 ## Preprocessing
@@ -112,7 +130,7 @@ Each input column has one of three roles. They follow the `known` / `forecast` /
 | Role | Columns | Context rows | Future rows |
 |---|---|---|---|
 | Target | `actual_consumption` | observed values | not given (to predict) |
-| Known future | calendar columns, `hour_sin` / `hour_cos` (hourly), `solar_capacity_mw`, `is_day` / `daylight_duration`, `day_ahead_price` (hourly 24 h) / `day_ahead_price_mean` (daily 1 d) | values | values |
+| Known future | calendar columns, `hour_sin` / `hour_cos` (hourly), `solar_capacity_mw`, `is_day` / `daylight_duration`, `day_ahead_price` (hourly 1 h, 24 h) / `day_ahead_price_mean` (daily 1 d) | values | values |
 | Forecast | weather columns | observed values | weather forecast, see the weather protocol in the [shared setup](../MODELS.md#shared-setup) |
 | Past only | `gas_price_eu_usd`, `oxcgrt_stringency`, `ipi_ei_level`, `industrial_confidence`, shifted `generation_*` (ablation 5, not used) | values | not known |
 
@@ -120,13 +138,13 @@ In the code (`data.covariate_set`):
 
 | Run | Variates | Known | Past only |
 |---|---|---|---|
-| hourly 24 h | 26 | 21 (12 calendar, 2 hour, solar capacity, `is_day`, 4 weather, `day_ahead_price`) | 4 |
+| hourly 1 h, 24 h | 26 | 21 (12 calendar, 2 hour, solar capacity, `is_day`, 4 weather, `day_ahead_price`) | 4 |
 | daily 1 d | 24 | 19 (12 calendar, solar capacity, `daylight_duration`, 4 weather, `day_ahead_price_mean`) | 4 |
 | daily 7 d | 23 | 18 (as 1 d, without the price) | 4 |
 
 Derived in `data.py` or handled specially:
 - `hour_sin`, `hour_cos`: from the **local** hour of `date_from` (the load follows the local clock); the double 02:00 at the end of DST gets the same value twice. The same values as the Fourier pair `sin_d1` / `cos_d1`.
-- Day-ahead price: all hourly prices of a day are published together around noon of the day before, so with an origin at local midnight they are known for the whole next local day and not beyond. The hourly 24 h horizon uses the hourly `day_ahead_price`, the daily 1 d horizon `day_ahead_price_mean`; the daily 7 d horizon uses neither (only day 1 would be known). Both are columns of `final/`, nothing is derived.
+- Day-ahead price: all hourly prices of a day are published together around noon of the day before, so at any origin the prices of the origin's own local day are known, those of the next day only from noon on. With an origin at local midnight they are known for the whole next local day and not beyond. The hourly 24 h horizon (midnight origins) uses the hourly `day_ahead_price` for all 24 steps; the hourly 1 h horizon uses it too, because its one target hour is the origin hour, which lies in the origin's own day. The daily 1 d horizon uses `day_ahead_price_mean`; the daily 7 d horizon uses neither (only day 1 would be known). Both are columns of `final/`, nothing is derived.
 - `industrial_confidence` is the value of the month before (FEATURES), but when the horizon crosses into the next month, that month's value is published after the origin, so it is **past only**: TimesFM-3 gets it as a past covariate, TabICL the last value known at the origin.
 
 <a id="timesfm-3-preprocessing"></a>
@@ -151,11 +169,11 @@ outputs = forecaster.predict_batch(
 
 - **Target**: a 1-D array of `actual_consumption` over the context.
 - **Past covariates** (`past_only_covariates`): the past-only columns, one row per column, length = context.
-- **Past-future covariates** (`past_future_covariates`): the known future and forecast columns, one row per column, length = context + horizon.
+- **Past-future covariates** (`past_future_covariates`): the known future and forecast columns, one row per column, length = context + horizon (context + 1 for the 1 h horizon).
 - **Context length**: at most **15 360 steps**. Longer contexts are cut to the most recent 15 360 (checked in `timesfm3` 3.0.2, `_MAX_CONTEXT_LENGTH`). The covariates are cut the same way.
-  - hourly: start with 2048 h (~12 weeks), then try 4096 h and 8192 h. A longer context shows more of the weekly and seasonal pattern but also older regimes, and costs more. Pick it on the validation year.
+  - hourly: start with 2048 h (~12 weeks), then try 4096 h and 8192 h. A longer context shows more of the weekly and seasonal pattern but also older regimes, and costs more. Pick it on the validation year, separately for 1 h and 24 h.
   - daily: the whole history before the origin (at most 2192 days, far below the limit). Early origins simply have a shorter context.
-- **Horizon**: no fixed maximum. The horizon is rounded up to a multiple of the output patch and predicted in one pass, so any horizon works. A 1-step horizon still costs one full output patch (64 steps).
+- **Horizon**: no fixed maximum. The horizon is rounded up to a multiple of the output patch and predicted in one pass, so any horizon works. A 1-step horizon still costs one full output patch (64 steps); `timesfm3_forecast.py` keeps only the first `H` steps of the output.
 - The inputs are grouped into patches of 32 time steps. A context that is a multiple of 32 avoids padding.
 - **Number of variates**: target + covariates together, at most **32**. `TimesFM3Evaluator.predict_batch` acts on it (`_MAX_VARIATES_PER_FORWARD = 32` in `timesfm3/torch/evaluator.py`): above 32 it **drops covariates at random** (fixed seed) to fit. `timesfm3_forecast.py` stops with an error instead, so this can not happen unnoticed. Our set is 23 - 26. All 12 shifted `generation_*` columns (ablation 5) would go above 32: use a few aggregates (e.g. total renewables of the day before) instead.
 - `TimesFM3Evaluator` defaults (kept): symmetric averaging (the series and its negative are both forecast and averaged, doubles the batch internally), `make_positive=True`, sorted quantiles. The point forecast is the median quantile.
@@ -202,8 +220,9 @@ Both models scale by themselves (checked in the package code). **Pass raw values
 ### TimesFM-3: zero-shot
 
 - No training. For every forecast origin: context + covariates in, point forecast and 9 quantiles (0.1 - 0.9) out.
-- The horizon is predicted in one pass (no step-by-step decoding), so the cost depends on the context length, hardly on the horizon.
-- Batch the origins: all origins of one test year fit easily on the RTX 3090 in a few batches. Rough estimate: minutes for the whole hourly test year, seconds for the daily one (not measured). The code starts with `per_core_batch_size=16` and halves it on a CUDA out-of-memory error; the batch size at the end and the run time are in the JSON sidecar.
+- The horizon is predicted in one pass (no step-by-step decoding), so the cost depends on the context length and the number of origins, hardly on the horizon.
+- Batch the origins: all origins of one test year fit easily on the RTX 3090 in a few batches. Rough estimate: minutes for the whole hourly 24 h test year, seconds for the daily one (not measured). The code starts with `per_core_batch_size=16` and halves it on a CUDA out-of-memory error; the batch size at the end and the run time are in the JSON sidecar.
+- **Hourly 1 h**: one forward pass per hour of the year (8784 origins in 2024 against 366 for 24 h), so a 1 h run takes about **24 times as long** as the 24 h run with the same context, and the F1 / F2 validation grid (2 experiments × 3 contexts) is the most expensive part of `run_experiments.py`. Start with `--hourly-contexts 2048` or the context chosen for 24 h if time is short, or skip the validation year altogether (`--skip-val --hourly-contexts <the 24 h choice>`), which leaves one 1 h run per experiment instead of four (three contexts on 2023 plus the test run). The 24 h run cannot be reused for 1 h: its step-1 rows only cover the midnight hours.
 
 <a id="timesfm-3-fine-tuning"></a>
 ### TimesFM-3: fine-tuning
@@ -233,13 +252,13 @@ Both models scale by themselves (checked in the package code). **Pass raw values
 The protocol is the one of the [shared setup](../MODELS.md#shared-setup): the same forecast origins, horizons, metrics and forecast file format as all other models. Specific to the foundation models:
 
 - **Zero-shot vs fine-tuned**: if the optional fine-tuning is done, report both for TimesFM-3. The difference shows what our data adds to the pretraining.
-- **Value of the covariates**: also run TimesFM-3 zero-shot **without covariates** (target history only). The gap to the run with covariates is the covariate gain (F1 vs F2, F4 vs F5).
+- **Value of the covariates**: also run TimesFM-3 zero-shot **without covariates** (target history only). The gap to the run with covariates is the covariate gain (F1 vs F2 at 1 h and 24 h, F4 vs F5).
 - **Data contamination**: German load data is public and may be in the pretraining data, so 2019 - 2024 can look better than new data. Check on a fresh 2025 period (needs the 2025 SMARD data and the feature pipelines extended to 2025, see the shared setup). If the advantage of the foundation models over N-HiTS and the trees shrinks a lot on 2025, contamination is likely.
 - **Error by day type**: report the error on holidays, bridge days and Christmas separately. Pretrained models know weekly patterns well but not German holidays, those come only from the covariates.
 
 `evaluate.py` details:
-- Seasonal naive for the same origins and steps: the last observed week repeated (hourly lag 168 h, daily lag 7 d). Also written as its own forecast file, so other models can use it.
-- Lead time: daily 7 d by day 1 - 7. Hourly 24 h and daily 1 d have no split. (Code for longer horizons is kept: hourly by day, daily 30 d by week 1 - 4.)
+- Seasonal naive for the same origins and steps: the last observed week repeated (hourly lag 168 h, daily lag 7 d). Also written as its own forecast file, so other models can use it. The hourly 1 h file has the same every-hour origins as the model runs (8784 in 2024).
+- Lead time: daily 7 d by day 1 - 7. Hourly 1 h, hourly 24 h and daily 1 d have no split. (Code for longer horizons is kept: hourly by day, daily 30 d by week 1 - 4.)
 - Day types of the target time: `normal_weekday` (Mon - Fri, not a holiday, bridge day or Christmas window), `weekend` (Sat / Sun, not a holiday or Christmas window), and the overlapping `holiday`, `bridge_day`, `christmas_new_year`.
 - The script can evaluate any forecast file in the shared format, not only the foundation models.
 
@@ -247,8 +266,8 @@ The protocol is the one of the [shared setup](../MODELS.md#shared-setup): the sa
 
 | # | Model | Resolution | Horizon | Variant | Purpose | Status |
 |---|---|---|---|---|---|---|
-| F1 | TimesFM-3 | hourly | 24 h | zero-shot, no covariates | lower bound, covariate gain | implemented |
-| F2 | TimesFM-3 | hourly | 24 h | zero-shot, covariates | main zero-shot result | implemented |
+| F1 | TimesFM-3 | hourly | 1 h, 24 h | zero-shot, no covariates | lower bound, covariate gain | implemented (1 h added 2026-11-19) |
+| F2 | TimesFM-3 | hourly | 1 h, 24 h | zero-shot, covariates | main zero-shot result | implemented (1 h added 2026-11-19) |
 | F3 | TimesFM-3 | hourly | 24 h | fine-tuned, covariates (optional, own training loop) | what fine-tuning adds | |
 | F4 | TimesFM-3 | daily | 1 d, 7 d | zero-shot, no covariates | lower bound, covariate gain | implemented |
 | F5 | TimesFM-3 | daily | 1 d, 7 d | zero-shot, covariates | main daily result | implemented |
@@ -275,4 +294,5 @@ Checked on 2026-10-27 and 2026-11-04 in the package code (`timesfm` 3.0.2, `tabi
 
 Still open:
 - How much GPU memory and time TimesFM-3 needs with 25 - 26 variates and an 8192 h context (the first full run reports the batch size that fit and the run time in the JSON sidecars).
+- Run time of the hourly 1 h runs with the pretrained weights (8760 / 8784 origins per year, one forward pass each). If the full F1 / F2 grid at 1 h is too slow, choose the 1 h context on a smaller grid.
 - `gas_price_eu_usd` in `final/` is the value of the row's own month. Forward-filled from the origin, the future rows get the value of the origin's month, which may not be published yet at that time. The shared setup says "value of the last published month"; a one-month shift in the economic indicator pipeline would make it strict for all models.

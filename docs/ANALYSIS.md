@@ -1,190 +1,285 @@
-# Results Analysis Plan: Foundation Models for German Electricity Load Forecasting
- 
-Goal: show that the models work, where they work best, where they still fail and how we fix it, and what this is worth in business terms.
- 
-Storyline: it works, it beats the alternatives, we understand its weak spots, we tested fixes for them, and here is the value.
- 
-Evaluation basis: settings chosen on 2023 (validation), results reported on 2024 (test), compared with the seasonal naive benchmark (last week repeated).
- 
-Status (11 Nov 2026): original runs done, extra-features run done, weather and day-type analyses done, table, figure, worst-day and business-value scripts written. Open: significance test, running the scripts on the final results.
- 
- 
-## 0. Executive Summary
- 
-Analysis:
-- Summarise the main result in three or four sentences a manager can repeat.
-- Write this section last.
-Evidence to show:
-- Hourly 24 h (TimesFM-3): MAE 1,045 MWh, 2.0 % error, 61 % less error than the benchmark, 80 % band correct 81.6 % of the time.
-- Daily (TabICL with the extra features): 1.5 % error for the next day, 1.8 % for the next week, 60 to 68 % less error than the benchmark.
-- No training needed; a new forecast setup takes minutes.
-- The error analysis found systematic weaknesses, and a targeted fix cut the cold-snap under-forecast at 7 days by a quarter to a third.
-- The estimated yearly value in euros from section 5.
-- Figure 1: forecast vs actual for a typical 2024 week, with the 80 % band.
-## 1. Data and Evaluation Setup
- 
-Analysis:
-- Describe the data, the target, the two resolutions and the horizons, and why each horizon matters (day-ahead market, weekly planning).
-- Explain how the evaluation is kept honest: choose on 2023, test once on 2024.
-- Explain the benchmark and the metrics in plain words.
-Evidence to show:
-- Table of resolutions, horizons, number of forecast origins and inputs.
-- Table of the settings compared on 2023 and the one chosen (context length, TabICL features).
-- Short metric glossary:
-  - MAE: average error in MWh, also given as % of load.
-  - Skill: share of the benchmark's error that the model removes.
-  - Coverage: how often the actual value lies inside the 80 % band.
-  - Bias: forecast minus actual; positive = over-forecast, negative = under-forecast.
-## 2. Model Comparison
- 
-Analysis:
-- Which model is best for each horizon, and by how much.
-- Strengths and weaknesses of each model.
-- Which model we recommend for which use.
-Evidence to show:
-- Table 1: main results on 2024 for seasonal naive, TimesFM-3 without covariates, TimesFM-3 with covariates, TabICL, and TabICL with extra features, per horizon (MAE, MAPE, skill, pinball loss, coverage).
-- Figure 2: skill per model and horizon.
-- Our classical models (SARIMAX, tree models) on the same origins, if available.
-- Statistical test (Diebold-Mariano): TabICL vs TimesFM-3 on daily data, and TabICL with vs without extra features (the gain is only about 2 %).
-- Key facts:
-  - Hourly: TimesFM-3 with covariates is best (MAE 1,045 MWh, 2.0 %).
-  - Daily: TabICL is best, 6 to 8 % lower MAE than TimesFM-3 with covariates.
-  - With the extra features, TabICL improves by about 2 % on both 2023 and 2024; TimesFM-3 does not improve (hourly unchanged, daily 0.5 to 2.3 % worse on both years).
-- Table 2: strengths and weaknesses:
-  - Seasonal naive: free and simple, but large errors and no uncertainty band.
-  - TimesFM-3: best hourly, well-calibrated hourly bands, no training; weak on bridge days, does not benefit from extra engineered inputs and uses rare yes/no flags unreliably, weights are non-commercial.
-  - TabICL: best daily, strong on all special days, benefits from targeted features; bands too narrow (75 to 79 %), tested on daily data only, licence to check.
-Conclusion and business insight:
-- All foundation models clearly beat the benchmark without any training.
-- Recommended setup: TimesFM-3 with the original inputs for hourly operations, TabICL with the extra features for daily planning.
-## 3. Day-Type Influence
- 
-Analysis:
-- Which day types are forecast best and worst.
-- How much the holiday covariates help, and on which days.
-- What remains weak, what we tested, and what to do next.
-Evidence to show:
-- Table 3: MAE and coverage per day type (normal weekday, weekend, holiday, bridge day, Christmas), hourly without vs with covariates, and daily TimesFM-3 vs TabICL.
-- Figure 3: MAE and coverage by day type, without vs with covariates.
-- Key facts:
-  - Holiday error falls by 62 % with covariates.
-  - Holiday band coverage rises from 23 % to 77 %.
-  - 64 % of the covariate gain comes from about 5 % of the hours (holidays and Christmas).
-  - Bridge days get worse for hourly TimesFM-3 with covariates (coverage 46 %).
-  - TabICL forecasts bridge days well (2.4 % vs 5.7 % error for TimesFM-3 daily).
-  - With extra features, TabICL improves most on special days (1 d: holidays -10 %, bridge days -15 %).
-  - After covariates, 89 % of the remaining error is on ordinary days.
-- Holiday weeks (ordinary weekdays in a week with a holiday, or 18 to 23 December; 30 days in 2024):
-  - TimesFM-3 daily over-forecasts them by 14,500 MWh per day.
-  - The holiday-week flag we added made this worse for TimesFM-3 (over-forecast roughly doubles, MAE +28 to +38 %).
-  - TabICL hardly had the problem (bias +900 MWh per day).
-- Caveat: 2024 has only 9 holidays, 3 bridge days and 30 holiday-week days.
-Business insight:
-- Holiday errors repeat every year and always go in the same direction, so they are expensive to leave unfixed. Holiday covariates are essential.
-- Bridge days and holiday weeks are known risks: flag them, widen the bands, or use TabICL's daily total there.
-Future work:
-- Reconciliation: daily total from TabICL, hourly shape from TimesFM-3.
-- A narrower holiday-week definition (only the days next to a holiday, or school-holiday weeks), tested for TabICL only.
-- Regional holidays.
-## 4. Weather Influence
- 
-Analysis:
-- Under which weather conditions the models do best and worst.
-- In which direction the errors go (over- or under-forecast).
-- Which fixes we tested and what they achieved.
-### 4a. Weaknesses found
- 
-Evidence to show:
-- Table 4: bias and MAE by temperature change vs last week (much warmer, similar, much colder).
-- Table 5: bias at midday by radiation level within the month (dull, average, sunny).
-- Figure 4: bias by temperature change, for all models.
-- Figure 5: hour x month error heatmap (hourly, with covariates).
-- Key facts:
-  - All models under-forecast when it gets colder and over-forecast when it gets warmer, even with observed weather. They react in the right direction, but not enough.
-  - Covariates capture about 55 % of the rooftop-PV effect at midday: sunny middays are over-forecast, dull middays under-forecast.
-  - Error peaks at midday and is lowest at night.
-  - Hot spots: December evenings, November afternoons, March and May.
-  - Wind and rain have no effect of their own once the other inputs are used.
-  - Summer has the weakest skill; there is no temperature input for heat.
-### 4b. Targeted fixes tested
- 
-Evidence to show:
-- Table 7: bias before and after, for each feature in the group it was designed for.
-- Figure 6: before/after bias on "much colder" days, per model.
-- Results:
-  - Temperature change vs last week (hdd_delta_7d): works partly. Cold-snap under-forecast at 7 days falls by 33 % (TimesFM-3) and 24 % (TabICL); at 1 day by 20 % for TimesFM-3; no change hourly. Most of the under-reaction remains.
-  - PV proxy (capacity x radiation): no effect on the midday bias. Dropped.
-  - Holiday week: works against TimesFM-3, no clear gain for TabICL. Dropped for TimesFM-3; a narrower version may be retested.
-  - TabICL's overall 2 % gain is spread over most weather groups and special days, so it cannot be attributed to one feature. We keep all three features for TabICL, because the gain holds on both years; a feature-by-feature test was not run.
-Business insight:
-- The cold-snap error is one-sided: a balancing group would be short when imbalance prices are high, so this error costs more than average. The temperature-change feature reduces this risk at the weekly horizon.
-- Midday becomes the hardest hour as rooftop PV grows. Adding inputs did not help, so this needs a different method.
-- For weather data, focus on radiation and temperature forecasts; wind and rain can be dropped.
-Future work:
-- Residual correction layer, fitted on 2023: regress the forecast errors on temperature change, radiation and hour of day, and apply the correction to 2024. Adding inputs has reached its limit for TimesFM-3.
-- Add a temperature or cooling-degree input for summer.
-- Wider uncertainty bands on days with large weather changes.
-## 5. Business Value
- 
-Analysis:
-- Translate the accuracy gains into money and operational benefits.
-Evidence to show:
-- Yearly error reduction in 2024 (national scale): 14.2 TWh less than the benchmark, 1.9 TWh from the covariates alone.
-- Table 6: value sensitivity, for an imbalance cost of 5, 10 and 20 EUR/MWh and a market share of 1 %, 5 % and 10 % (hourly).
-- Price-weighted MAE and bias in the 10 % most expensive hours: are we accurate, and not short, when power is expensive?
-- Error valued at the day-ahead price, in EUR million, model vs benchmark.
-- Qualitative benefits:
-  - Reliable bands allow risk-based reserves instead of fixed margins.
-  - No training pipeline, so low build and maintenance cost.
-  - Fast to extend to new areas or updated data.
-## 6. Limitations
- 
-Analysis:
-- State the limits ourselves, so the results are trusted.
-Evidence to show:
-- Observed weather was used, so the results are an upper bound. Run with real weather forecasts (variant B) before the final report if possible.
-- SMARD data is public and may be in the pretraining data; the 2025 test (F8) checks this.
-- Small samples for holidays, bridge days and holiday weeks. The worst-days table shows which single days drive the averages.
-- The extra features were designed after looking at 2024 errors. Mitigation: TabICL improves on 2023 as well, and two of three features were dropped because they did not work.
-- The TabICL gain from the extra features is about 2 % and still needs a significance test. It is not known which of the three features causes it.
-## 7. Recommendations and Roadmap
- 
-Analysis:
-- Prioritised next steps, each with expected gain and effort.
-Evidence to show:
-1. Production setup: TimesFM-3 with the original inputs for hourly; TabICL with the extra features for daily.
-2. Bridge-day and holiday-week reconciliation with TabICL's daily total (small effort, fixes the worst band problem).
-3. Residual correction layer for the remaining temperature and PV bias (medium effort).
-4. Recalibrate the uncertainty bands by day type and by size of the weather change.
-5. Real weather forecasts (variant B) and the 2025 test before deployment.
-## Scripts
- 
-Done:
-- evaluate.py: overall, day-type and lead-time metrics.
-- weather_breakdown.py: weather and holiday-week tables, hour x month heatmap data.
-- run_extra_features.py: rerun with the engineered features into a separate results folder.
-- report_tables.py: all report tables as CSV and one Markdown file.
-- business_value.py: error volume, price-weighted accuracy, value sensitivity.
-- worst_days.py: the 10 worst forecast days per model, with the likely reason.
-- report_figures.py: the six figures, titles computed from the data.
-To do:
-- dm_test.py: Diebold-Mariano test.
-- Optional: reconcile_daily_hourly.py, recalibrate_intervals.py.
-## Figures and Tables Checklist
- 
-Figures:
-1. Forecast vs actual week with 80 % band (section 0)
-2. Skill per model and horizon (section 2)
-3. MAE and coverage by day type, without vs with covariates (section 3)
-4. Bias by temperature change (section 4a)
-5. Hour x month error heatmap (section 4a)
-6. Bias on "much colder" days before and after the temperature-change feature (section 4b)
-Tables:
-1. Main results on 2024 (section 2)
-2. Strengths and weaknesses per model (section 2)
-3. Results by day type (section 3)
-4. Results by temperature change (section 4a)
-5. Midday results by radiation (section 4a)
-6. Value sensitivity (section 5)
-7. Targeted fixes: bias before and after, per feature (section 4b)
-Rule for every figure: the title states the message, for example "Holiday covariates cut holiday error by 62 %", not "MAE by day type".
+"""
+Run the foundation-model experiments F1, F2, F4, F5 and F6 end to end.
+
+Protocol (MODELS.md, "Shared setup"; FOUNDATION.md, "Experiments"):
+
+1. **Validation year (2023)**: every setting that has to be chosen is run on
+   the 2023 origins.
+   - F1 / F2 (hourly TimesFM-3, 1 h and 24 h): context length 2048, 4096,
+     8192 h, chosen separately for each horizon. The 1 h runs have an origin
+     at every hour (8760 in 2023), so each takes ~24 times as long as the
+     24 h run with the same context.
+   - F4 / F5 (daily TimesFM-3): the whole history, nothing to choose
+     (the validation run is still made, as a reference).
+   - F6 (TabICL): features ``ours`` / ``default`` x context ``all`` / ``730`` days.
+2. **Selection**: per experiment and horizon, the setting with the lowest
+   validation MAE (``--select-metric pinball`` for the mean pinball loss).
+3. **Test year (2024)**: one run with the selected setting, used once.
+   ``--skip-val`` skips steps 1 and 2: the test runs use the one setting given
+   on the command line (e.g. the context chosen for 24 h), marked
+   ``"fixed": true`` in ``selection_foundation.json``.
+4. Seasonal naive files for every resolution, horizon and split (in
+   ``src/results/seasonal_naive/``), then all metrics, ``summary_foundation.csv``
+   and ``selection_foundation.json`` in ``<results-dir>/metrics``.
+
+The weather inputs are the observed values (weather variant A, oracle), so
+the results are an upper bound and marked as such in every JSON sidecar.
+
+Examples (from the project root):
+
+    uv run python -m src.models.foundation.run_experiments                     # all five experiments
+    uv run python -m src.models.foundation.run_experiments --experiments F4 F5 F6
+    uv run python -m src.models.foundation.run_experiments --hourly-contexts 2048 4096   # smaller F1 / F2 grid
+    uv run python -m src.models.foundation.run_experiments --experiments F1 F2 --hourly-horizons 1   # only the 1 h runs
+    uv run python -m src.models.foundation.run_experiments --hourly-horizons 24  # without the 1 h runs
+    uv run python -m src.models.foundation.run_experiments --experiments F1 F2 --hourly-horizons 1 \\
+        --skip-val --hourly-contexts 8192                                        # 1 h test runs only
+    uv run python -m src.models.foundation.run_experiments --extra-features    # = run_extra_features.py
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import pandas as pd
+
+from src.common import evaluation
+from src.common.paths import NAIVE_MODEL, forecast_dir
+from src.models.foundation import data, tabicl_forecaster, timesfm3_forecast
+from src.models.foundation.data import HORIZONS, covariate_set, load_frame, origin_positions, write_forecasts
+
+ALL_EXPERIMENTS = ["F1", "F2", "F4", "F5", "F6"]
+COVARIATE_EXPERIMENTS = ["F2", "F5", "F6"]
+TIMESFM_EXPERIMENTS = {"F1": ("hourly", False), "F2": ("hourly", True), "F4": ("daily", False), "F5": ("daily", True)}
+
+
+def same_run(path: Path, cov, n_origins: int) -> bool:
+    """True if the JSON sidecar of an existing run has the same covariates and origin count.
+
+    The origin count catches files of a --max-origins test run, so a full run
+    never reuses them.
+    """
+    meta_path = path.with_suffix(".json")
+    if not meta_path.exists():
+        return False
+    meta = json.loads(meta_path.read_text())
+    past = meta.get("covariates_past_only", meta.get("covariates_past_only_ffill"))
+    return (meta.get("covariates_known") == cov.known and past == cov.past_only
+            and meta.get("n_origins") == n_origins)
+
+
+def fixed_settings(args, horizons: dict, previous: dict) -> dict:
+    """--skip-val: the one setting of every experiment and horizon, in the format of the selection.
+
+    Each grid option must have exactly one value; a validated choice of an
+    earlier run (``previous``, from selection_foundation.json) is shown as a hint.
+    """
+    def one(values, flag, exps):
+        if len(values) == 1:
+            return values[0]
+        done = [f"{k}: {v['chosen']}" for k, v in previous.items()
+                if v.get("experiment") in exps and not v.get("fixed")]
+        hint = f"; chosen on the validation year before: {', '.join(done)}" if done else ""
+        raise SystemExit(f"--skip-val needs exactly one value of {flag}, got {values}{hint}")
+
+    out = {}
+    for exp in args.experiments:
+        if exp == "F6":
+            chosen = {"features": one(args.tabicl_features, "--tabicl-features", ["F6"]),
+                      "context_days": tabicl_forecaster.parse_context(
+                          one(args.tabicl_contexts, "--tabicl-contexts", ["F6"]))}
+            hs = horizons["daily"]
+        else:
+            res, _ = TIMESFM_EXPERIMENTS[exp]
+            ctx = one(args.hourly_contexts, "--hourly-contexts", ["F1", "F2"]) if res == "hourly" else None
+            chosen = {"context_length": ctx}
+            hs = horizons[res]
+        for h in hs:
+            out[f"{exp}_{h}"] = {"experiment": exp, "horizon": h, "metric": None, "chosen": chosen,
+                                 "validation": [], "fixed": True,
+                                 "note": "fixed setting, no validation run (--skip-val)"}
+            print(f"[select] {exp} h={h}: {chosen} (fixed, no validation)")
+    return out
+
+
+def build_parser(extra_features: bool = False) -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--experiments", nargs="+", choices=ALL_EXPERIMENTS,
+                   default=COVARIATE_EXPERIMENTS if extra_features else ALL_EXPERIMENTS)
+    p.add_argument("--extra-features", action="store_true", default=extra_features,
+                   help="give the covariate models the engineered covariates (data.ENGINEERED); "
+                        f"results go to src/results/{data.EXTRA_FEATURES_NAME}/ unless --results-dir is given")
+    p.add_argument("--hourly-horizons", type=int, nargs="+", choices=HORIZONS["hourly"],
+                   default=list(HORIZONS["hourly"]),
+                   help="horizons of F1 / F2 (1 h: an origin at every hour, ~24x the run time of 24 h)")
+    p.add_argument("--hourly-contexts", type=int, nargs="+", default=[2048, 4096, 8192])
+    p.add_argument("--tabicl-contexts", nargs="+", default=["all", "730"])
+    p.add_argument("--tabicl-features", nargs="+", default=["ours", "default"])
+    p.add_argument("--select-metric", choices=["MAE", "pinball"], default="MAE")
+    p.add_argument("--skip-test", action="store_true", help="validation runs and selection only")
+    p.add_argument("--skip-val", action="store_true",
+                   help="no validation runs and no selection: test runs with a fixed setting, so exactly one "
+                        "value of --hourly-contexts (and of --tabicl-features / --tabicl-contexts for F6)")
+    p.add_argument("--batch-size", type=int, default=16, help="TimesFM-3 per_core_batch_size")
+    p.add_argument("--device", default=None)
+    p.add_argument("--timesfm-checkpoint", default=timesfm3_forecast.CHECKPOINT)
+    p.add_argument("--tabicl-model-path", default=None)
+    p.add_argument("--tabicl-n-estimators", type=int, default=None)
+    p.add_argument("--max-origins", type=int, default=None, help="only the first N origins (smoke test)")
+    p.add_argument("--overwrite", action="store_true", help="rerun runs whose forecast file exists")
+    p.add_argument("--data-dir", type=Path, default=data.DEFAULT_DATA_DIR)
+    p.add_argument("--results-dir", type=Path, default=None,
+                   help=f"default: src/results/{data.MODEL_NAME} "
+                        f"(--extra-features: src/results/{data.EXTRA_FEATURES_NAME})")
+    p.add_argument("--naive-dir", type=Path, default=forecast_dir(NAIVE_MODEL),
+                   help="where the seasonal naive forecast files go")
+    return p
+
+
+def main(argv: list[str] | None = None, extra_features: bool = False) -> None:
+    parser = build_parser(extra_features)
+    args = parser.parse_args(argv)
+    if args.skip_val and args.skip_test:
+        parser.error("--skip-val and --skip-test together leave nothing to run")
+    if args.extra_features:
+        data.EXTRA_FEATURES = True  # read by covariate_set() at call time
+        print(f"[run] engineered covariates switched on: {data.ENGINEERED}")
+    if args.results_dir is None:
+        args.results_dir = data.model_dir(data.EXTRA_FEATURES_NAME if args.extra_features else data.MODEL_NAME)
+
+    # Horizons of this run: the TimesFM-3 hourly ones can be narrowed with --hourly-horizons.
+    horizons = {**HORIZONS, "hourly": tuple(sorted(set(args.hourly_horizons)))}
+
+    forecast_dir_ = args.results_dir / "forecasts"
+    metrics_dir = args.results_dir / "metrics"
+    selection_file = metrics_dir / "selection_foundation.json"
+    previous_selection = json.loads(selection_file.read_text()) if selection_file.exists() else {}
+    frames = {}
+
+    def frame(res):
+        if res not in frames:
+            frames[res] = load_frame(res, args.data_dir)
+        return frames[res]
+
+    model = None
+
+    def timesfm():
+        nonlocal model
+        if model is None:
+            model = timesfm3_forecast.load_model(args.timesfm_checkpoint, args.batch_size, args.device)
+        return model
+
+    tabicl_config = {}
+    if args.tabicl_model_path:
+        tabicl_config["model_path"] = args.tabicl_model_path
+    if args.tabicl_n_estimators:
+        tabicl_config["n_estimators"] = args.tabicl_n_estimators
+    if args.device:
+        tabicl_config["device"] = args.device
+
+    produced: list[Path] = []
+    candidates: dict[tuple[str, int], list[tuple[dict, Path]]] = {}
+
+    def run(path: Path, make, cov, res, split, h):
+        """Run one forecast unless the same run exists already (resumable)."""
+        n = len(origin_positions(frame(res), split, h))
+        n = n if args.max_origins is None else min(n, args.max_origins)
+        if path.exists() and not args.overwrite and same_run(path, cov, n):
+            print(f"[run] exists, skipped: {path.name}")
+        else:
+            if path.exists() and not args.overwrite:
+                print(f"[run] inputs or origins changed since {path.name} was written, running it again")
+            out, meta = make()
+            write_forecasts(out, path, meta)
+        produced.append(path)
+        return path
+
+    def timesfm_run(exp, h, split, ctx):
+        res, cov = TIMESFM_EXPERIMENTS[exp]
+        name = timesfm3_forecast.run_name(res, h, split, cov, ctx)
+        return run(forecast_dir_ / f"{name}.csv", lambda: timesfm3_forecast.forecast(
+            timesfm(), frame(res), split, h, cov, ctx, max_origins=args.max_origins),
+            covariate_set(res, h, include_covariates=cov), res, split, h)
+
+    def tabicl_run(h, split, feats, ctx):
+        name = tabicl_forecaster.run_name(h, split, feats, ctx)
+        return run(forecast_dir_ / f"{name}.csv", lambda: tabicl_forecaster.forecast(
+            frame("daily"), split, h, feats, ctx, tabicl_config, max_origins=args.max_origins),
+            covariate_set("daily", h, calendar=tabicl_forecaster.FEATURE_SETS[feats][0]), "daily", split, h)
+
+    # ---------------------------------------------------------------- 1. validation
+    for exp in [e for e in args.experiments if e in TIMESFM_EXPERIMENTS and not args.skip_val]:
+        res, _ = TIMESFM_EXPERIMENTS[exp]
+        contexts = args.hourly_contexts if res == "hourly" else [None]
+        for h in horizons[res]:
+            for ctx in contexts:
+                path = timesfm_run(exp, h, "val", ctx)
+                candidates.setdefault((exp, h), []).append(({"context_length": ctx}, path))
+
+    if "F6" in args.experiments and not args.skip_val:
+        for h in horizons["daily"]:
+            for feats in args.tabicl_features:
+                for ctx in map(tabicl_forecaster.parse_context, args.tabicl_contexts):
+                    path = tabicl_run(h, "val", feats, ctx)
+                    candidates.setdefault(("F6", h), []).append(({"features": feats, "context_days": ctx}, path))
+
+    # ---------------------------------------------------------------- 2. selection
+    selection = fixed_settings(args, horizons, previous_selection) if args.skip_val else {}
+    for (exp, h), cands in candidates.items():
+        scores = evaluation.evaluate_files([pth for _, pth in cands], metrics_dir, data_dir=args.data_dir,
+                                           frames=frames)
+        metric = scores[args.select_metric].to_numpy()
+        best = int(metric.argmin())
+        selection[f"{exp}_{h}"] = {
+            "experiment": exp, "horizon": h, "metric": args.select_metric,
+            "chosen": cands[best][0],
+            "validation": [{**c, args.select_metric: float(m)} for (c, _), m in zip(cands, metric)],
+        }
+        print(f"[select] {exp} h={h}: {cands[best][0]} ({args.select_metric}={metric[best]:.1f})")
+
+    # ---------------------------------------------------------------- 3. test
+    if not args.skip_test:
+        for sel in selection.values():
+            exp, h, chosen = sel["experiment"], sel["horizon"], sel["chosen"]
+            if exp == "F6":
+                tabicl_run(h, "test", chosen["features"], chosen["context_days"])
+            else:
+                timesfm_run(exp, h, "test", chosen["context_length"])
+
+    # ---------------------------------------------------------------- 4. baselines + metrics
+    resolutions = sorted({TIMESFM_EXPERIMENTS[e][0] for e in args.experiments if e in TIMESFM_EXPERIMENTS}
+                         | ({"daily"} if "F6" in args.experiments else set()))
+    splits = ["val"] if args.skip_test else ["test"] if args.skip_val else ["val", "test"]
+    naive_files = [evaluation.naive_forecast_file(frame(res), split, h, args.naive_dir)
+                   for res in resolutions for h in horizons[res] for split in splits]
+
+    model_summary = evaluation.evaluate_files(sorted(set(produced)), metrics_dir, data_dir=args.data_dir,
+                                              frames=frames)
+    naive_summary = evaluation.evaluate_files(naive_files, data_dir=args.data_dir, frames=frames)  # own folder
+    summary = pd.concat([model_summary, naive_summary], ignore_index=True)
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+
+    # Merge with the files of earlier runs, so a partial run (e.g. --hourly-horizons 1)
+    # adds its rows instead of dropping the others. Rows of the same file are replaced.
+    summary_path = metrics_dir / "summary_foundation.csv"
+    selection_path = metrics_dir / "selection_foundation.json"
+    if summary_path.exists():
+        old = pd.read_csv(summary_path)
+        summary = pd.concat([old[~old["file"].isin(summary["file"])], summary], ignore_index=True)
+    # A --skip-val entry does not replace a validated entry that chose the same setting.
+    selection = {**previous_selection, **{k: v for k, v in selection.items()
+                                          if not (v.get("fixed") and k in previous_selection
+                                                  and previous_selection[k]["chosen"] == v["chosen"])}}
+    summary.to_csv(summary_path, index=False)
+    selection_path.write_text(json.dumps(selection, indent=2, default=str))
+
+    with pd.option_context("display.width", 220, "display.max_columns", 20, "display.float_format", "{:,.3f}".format):
+        print(summary.drop(columns=["file", "model", "model_dir"])
+              .sort_values(["resolution", "horizon", "split", "experiment", "setting"]).to_string(index=False))
+    print(f"\n[run] summary -> {metrics_dir / 'summary_foundation.csv'}")
+
+
+if __name__ == "__main__":
+    main()

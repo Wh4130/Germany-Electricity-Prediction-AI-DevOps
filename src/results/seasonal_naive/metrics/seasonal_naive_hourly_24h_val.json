@@ -1,0 +1,82 @@
+{
+  "file": "seasonal_naive_hourly_24h_val.csv",
+  "model_dir": "seasonal_naive",
+  "model": "seasonal naive",
+  "label": null,
+  "experiment": null,
+  "split": "val",
+  "is_naive": true,
+  "setting": "",
+  "resolution": "hourly",
+  "horizon": 24,
+  "n_origins": 365,
+  "weather_variant": null,
+  "overall": {
+    "n": 8760,
+    "MAE": 2339.6975171232875,
+    "RMSE": 3769.9120378193525,
+    "MAPE_%": 4.635933768138461,
+    "bias": 3.183019406392694,
+    "MAE_naive": 2339.6975171232875,
+    "MAE_skill": 0.0,
+    "pinball": null,
+    "coverage80_%": null
+  },
+  "by_day_type": {
+    "normal_weekday": {
+      "n": 5929,
+      "MAE": 2130.375484904706,
+      "RMSE": 3299.961847437279,
+      "MAPE_%": 3.8885605920161375,
+      "bias": -548.9086270871985,
+      "MAE_naive": 2130.375484904706,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "weekend": {
+      "n": 2423,
+      "MAE": 1743.0384853487412,
+      "RMSE": 2340.347147589188,
+      "MAPE_%": 3.8292632350104645,
+      "bias": -136.5591209244738,
+      "MAE_naive": 1743.0384853487412,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "holiday": {
+      "n": 216,
+      "MAE": 11685.888888888889,
+      "RMSE": 13260.224151085722,
+      "MAPE_%": 27.44088624110359,
+      "bias": 11582.645833333334,
+      "MAE_naive": 11685.888888888889,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "bridge_day": {
+      "n": 48,
+      "MAE": 5919.885416666667,
+      "RMSE": 6486.82919761747,
+      "MAPE_%": 12.695719533990287,
+      "bias": 5919.885416666667,
+      "MAE_naive": 5919.885416666667,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    },
+    "christmas_new_year": {
+      "n": 216,
+      "MAE": 7601.384259259259,
+      "RMSE": 9703.799325199898,
+      "MAPE_%": 16.50610914832324,
+      "bias": 7471.168981481482,
+      "MAE_naive": 7601.384259259259,
+      "MAE_skill": 0.0,
+      "pinball": null,
+      "coverage80_%": null
+    }
+  }
+}

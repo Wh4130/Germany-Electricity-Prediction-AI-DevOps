@@ -2,12 +2,16 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
+hourly 1 h & 0 (no heating) & TimesFM-3, no covariates & 137 & 383 & 10 & 81.4 & 80.3 & 21.8 \\
 hourly 1 h & 0 (no heating) & SARIMAX & 137 & 463 & -41 & 77.5 & 85.3 & 20.8 \\
 hourly 1 h & 0 (no heating) & Tree-based & 137 & 452 & -69 & 78.1 &  & 23.9 \\
+hourly 1 h & mild & TimesFM-3, no covariates & 202 & 382 & 36 & 82.1 & 82.2 & 27.4 \\
 hourly 1 h & mild & SARIMAX & 202 & 503 & 24 & 76.4 & 83.3 & 28.5 \\
 hourly 1 h & mild & Tree-based & 202 & 394 & 3 & 81.5 &  & 26.3 \\
+hourly 1 h & cool & TimesFM-3, no covariates & 195 & 387 & 30 & 83.7 & 82.4 & 27.3 \\
 hourly 1 h & cool & SARIMAX & 195 & 472 & 17 & 80.1 & 86.4 & 26.3 \\
 hourly 1 h & cool & Tree-based & 195 & 407 & -64 & 82.9 &  & 26.7 \\
+hourly 1 h & cold & TimesFM-3, no covariates & 138 & 351 & -13 & 87.8 & 86.3 & 23.5 \\
 hourly 1 h & cold & SARIMAX & 138 & 462 & -35 & 83.9 & 87.0 & 24.4 \\
 hourly 1 h & cold & Tree-based & 138 & 369 & -64 & 87.2 &  & 23.0 \\
 hourly 24 h & 0 (no heating) & TimesFM-3, no covariates & 137 & 1,134 & 25 & 45.0 & 80.7 & 22.1 \\

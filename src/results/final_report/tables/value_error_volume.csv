@@ -1,4 +1,5 @@
 Model,Horizon,MAE (MWh),Yearly error (TWh),Naive yearly error (TWh),Reduction vs naive (TWh),Reference,Reduction vs reference (TWh)
+"TimesFM-3, no covariates",hourly 1 h,384.389,3.376,23.332,19.955,,
 Tree-based,hourly 1 h,407.525,3.58,23.332,19.752,,
 SARIMAX,hourly 1 h,488.865,4.294,23.332,19.037,,
 "TimesFM-3, covariates",hourly 24 h,1044.71,9.176,23.338,14.162,,

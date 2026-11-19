@@ -9,8 +9,9 @@ Sorted by MAE; the best model is in bold, the benchmark is the last row. Error r
 
 | Model | Results folder | Setting | Origins | MAE (MWh) | MAPE % | Error reduction vs naive % | RMSE (MWh) | Bias (MWh) | Pinball (MWh) | 80 % band coverage % |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **Tree-based** | tree-based |  | 8784 | 408 | 0.8 | 84.7 | 531 | -46 |  |  |
-| SARIMAX | sarimax |  | 8784 | 489 | 1.0 | 81.6 | 706 |  | 196 | 84.7 |
+| **TimesFM-3, no covariates** | foundation | ctx=8192 | 8784 | 384 | 0.7 | 85.5 | 512 | 22 | 152 | 82.8 |
+| Tree-based | tree-based |  | 8784 | 408 | 0.8 | 84.7 | 531 | -46 |  |  |
+| SARIMAX | sarimax |  | 8784 | 489 | 1.0 | 81.6 | 706 | -13 | 196 | 84.7 |
 | Seasonal naive | seasonal_naive |  | 366 | 2,154 | 4.8 | 0.0 | 2,931 | -9 |  |  |
 
 ## Table 1. Main results, hourly 24 h, test year
@@ -19,10 +20,10 @@ Sorted by MAE; the best model is in bold, the benchmark is the last row. Error r
 
 | Model | Results folder | Setting | Origins | MAE (MWh) | MAPE % | Error reduction vs naive % | RMSE (MWh) | Bias (MWh) | Pinball (MWh) | 80 % band coverage % |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **TimesFM-3, covariates** | foundation | ctx=8192 | 366 | 1,045 | 2.0 | 60.7 | 1,491 |  | 408 | 81.6 |
+| **TimesFM-3, covariates** | foundation | ctx=8192 | 366 | 1,045 | 2.0 | 60.7 | 1,491 | 63 | 408 | 81.6 |
 | Tree-based | tree-based |  | 8784 | 1,153 | 2.2 | 56.6 | 1,508 | -238 |  |  |
-| TimesFM-3, no covariates | foundation | ctx=8192 | 366 | 1,260 | 2.4 | 52.6 | 2,038 |  | 504 | 78.7 |
-| SARIMAX | sarimax |  | 366 | 1,330 | 2.6 | 49.9 | 1,798 |  | 530 | 76.5 |
+| TimesFM-3, no covariates | foundation | ctx=8192 | 366 | 1,260 | 2.4 | 52.6 | 2,038 | 137 | 504 | 78.7 |
+| SARIMAX | sarimax |  | 366 | 1,330 | 2.6 | 49.9 | 1,798 | -104 | 530 | 76.5 |
 | Seasonal naive | seasonal_naive |  | 366 | 2,657 | 5.1 | 0.0 | 4,102 | -32 |  |  |
 
 ## Table 1. Main results, daily 1 d, test year
@@ -31,11 +32,11 @@ Sorted by MAE; the best model is in bold, the benchmark is the last row. Error r
 
 | Model | Results folder | Setting | Origins | MAE (MWh) | MAPE % | Error reduction vs naive % | RMSE (MWh) | Bias (MWh) | Pinball (MWh) | 80 % band coverage % |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **TabICL** | foundation | features=default ctx=all | 366 | 19,091 | 1.5 | 66.9 | 24,700 |  | 7,448 | 76.5 |
-| TimesFM-3, covariates | foundation | ctx=all | 366 | 20,691 | 1.7 | 64.2 | 27,985 |  | 8,186 | 85.2 |
-| SARIMAX | sarimax |  | 366 | 21,600 | 1.7 | 62.6 | 29,852 |  | 8,520 | 80.6 |
+| **TabICL** | foundation | features=default ctx=all | 366 | 19,091 | 1.5 | 66.9 | 24,700 | -205 | 7,448 | 76.5 |
+| TimesFM-3, covariates | foundation | ctx=all | 366 | 20,691 | 1.7 | 64.2 | 27,985 | 560 | 8,186 | 85.2 |
+| SARIMAX | sarimax |  | 366 | 21,600 | 1.7 | 62.6 | 29,852 | -1,138 | 8,520 | 80.6 |
 | Tree-based | tree-based |  | 366 | 25,212 | 2.0 | 56.3 | 34,207 | -3,386 |  |  |
-| TimesFM-3, no covariates | foundation | ctx=all | 366 | 28,796 | 2.4 | 50.1 | 46,954 |  | 11,572 | 80.3 |
+| TimesFM-3, no covariates | foundation | ctx=all | 366 | 28,796 | 2.4 | 50.1 | 46,954 | 945 | 11,572 | 80.3 |
 | Seasonal naive | seasonal_naive |  | 366 | 57,716 | 4.7 | 0.0 | 89,644 | -785 |  |  |
 
 ## Table 1. Main results, daily 7 d, test year
@@ -44,11 +45,11 @@ Sorted by MAE; the best model is in bold, the benchmark is the last row. Error r
 
 | Model | Results folder | Setting | Origins | MAE (MWh) | MAPE % | Error reduction vs naive % | RMSE (MWh) | Bias (MWh) | Pinball (MWh) | 80 % band coverage % |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **TabICL** | foundation | features=default ctx=all | 360 | 22,911 | 1.8 | 59.7 | 29,839 |  | 9,033 | 75.0 |
-| TimesFM-3, covariates | foundation | ctx=all | 360 | 24,331 | 1.9 | 57.2 | 32,539 |  | 9,645 | 78.6 |
-| SARIMAX | sarimax |  | 360 | 29,385 | 2.3 | 48.3 | 39,181 |  | 11,590 | 82.3 |
+| **TabICL** | foundation | features=default ctx=all | 360 | 22,911 | 1.8 | 59.7 | 29,839 | 618 | 9,033 | 75.0 |
+| TimesFM-3, covariates | foundation | ctx=all | 360 | 24,331 | 1.9 | 57.2 | 32,539 | -830 | 9,645 | 78.6 |
+| SARIMAX | sarimax |  | 360 | 29,385 | 2.3 | 48.3 | 39,181 | -5,147 | 11,590 | 82.3 |
 | Tree-based | tree-based |  | 366 | 32,188 | 2.6 | 43.5 | 43,203 | -4,994 |  |  |
-| TimesFM-3, no covariates | foundation | ctx=all | 360 | 34,562 | 2.8 | 39.2 | 52,545 |  | 13,833 | 78.9 |
+| TimesFM-3, no covariates | foundation | ctx=all | 360 | 34,562 | 2.8 | 39.2 | 52,545 | -486 | 13,833 | 78.9 |
 | Seasonal naive | seasonal_naive |  | 360 | 56,842 | 4.6 | 0.0 | 88,603 | -60 |  |  |
 
 
@@ -95,6 +96,11 @@ Hours / days: forecast rows whose target falls on that day type (multi-step runs
 | TimesFM-3, no covariates | daily 7 d | Holiday | 56 | 208,100 | 20.3 | 282,852 | 26.4 | 19.6 | 13.4 |
 | TimesFM-3, no covariates | daily 7 d | Bridge day | 19 | 128,486 | 11.4 | 195,819 | 34.4 | 26.3 | 2.8 |
 | TimesFM-3, no covariates | daily 7 d | Christmas / New Year | 36 | 60,090 | 5.4 | 220,595 | 72.8 | 83.3 | 2.5 |
+| TimesFM-3, no covariates | hourly 1 h | Normal weekday | 5928 | 378 | 0.7 | 2,461 | 84.7 | 82.9 | 66.3 |
+| TimesFM-3, no covariates | hourly 1 h | Weekend | 2448 | 371 | 0.8 | 2,145 | 82.7 | 82.9 | 26.9 |
+| TimesFM-3, no covariates | hourly 1 h | Holiday | 216 | 654 | 1.6 | 10,914 | 94.0 | 76.9 | 4.2 |
+| TimesFM-3, no covariates | hourly 1 h | Bridge day | 72 | 525 | 1.1 | 8,278 | 93.7 | 86.1 | 1.1 |
+| TimesFM-3, no covariates | hourly 1 h | Christmas / New Year | 216 | 425 | 0.9 | 6,631 | 93.6 | 87.5 | 2.7 |
 | TimesFM-3, no covariates | hourly 24 h | Normal weekday | 5928 | 1,115 | 2.0 | 2,461 | 54.7 | 79.8 | 59.7 |
 | TimesFM-3, no covariates | hourly 24 h | Weekend | 2447 | 1,056 | 2.3 | 2,146 | 50.8 | 80.6 | 23.3 |
 | TimesFM-3, no covariates | hourly 24 h | Holiday | 217 | 7,259 | 16.5 | 10,905 | 33.4 | 22.6 | 14.2 |
@@ -164,12 +170,16 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | no heating either week | TimesFM-3, no covariates | 107 | 374 | 15 | 81.1 | 80.6 | 14.2 |
 | hourly 1 h | no heating either week | SARIMAX | 107 | 451 | -14 | 77.1 | 86.3 | 13.5 |
 | hourly 1 h | no heating either week | Tree-based | 107 | 445 | -87 | 77.5 |  | 15.7 |
+| hourly 1 h | much warmer | TimesFM-3, no covariates | 111 | 413 | 21 | 84.7 | 79.6 | 19.3 |
 | hourly 1 h | much warmer | SARIMAX | 111 | 492 | 8 | 81.8 | 83.8 | 18.2 |
 | hourly 1 h | much warmer | Tree-based | 111 | 437 | 28 | 83.8 |  | 19.0 |
+| hourly 1 h | similar | TimesFM-3, no covariates | 293 | 367 | 27 | 82.3 | 83.9 | 50.9 |
 | hourly 1 h | similar | SARIMAX | 293 | 479 | -17 | 76.9 | 85.5 | 52.3 |
 | hourly 1 h | similar | Tree-based | 293 | 393 | -52 | 81.0 |  | 50.8 |
+| hourly 1 h | much colder | TimesFM-3, no covariates | 106 | 364 | -23 | 89.0 | 85.3 | 15.6 |
 | hourly 1 h | much colder | SARIMAX | 106 | 472 | 17 | 85.7 | 86.5 | 16.0 |
 | hourly 1 h | much colder | Tree-based | 106 | 363 | -75 | 89.0 |  | 14.5 |
 | hourly 24 h | no heating either week | TimesFM-3, no covariates | 107 | 1,179 | -9 | 40.3 | 79.4 | 15.3 |
@@ -235,10 +245,13 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | dull | TimesFM-3, no covariates | 283 | 419 | -80 | 84.6 | 79.5 | 9.4 |
 | hourly 1 h | dull | SARIMAX | 283 | 476 | 12 | 82.5 | 82.4 | 8.4 |
 | hourly 1 h | dull | Tree-based | 283 | 448 | -13 | 83.5 |  | 9.4 |
+| hourly 1 h | average | TimesFM-3, no covariates | 303 | 403 | 25 | 85.0 | 80.1 | 8.9 |
 | hourly 1 h | average | SARIMAX | 303 | 466 | 8 | 82.7 | 84.0 | 8.2 |
 | hourly 1 h | average | Tree-based | 303 | 473 | 23 | 82.4 |  | 9.8 |
+| hourly 1 h | sunny | TimesFM-3, no covariates | 214 | 429 | 113 | 85.3 | 77.7 | 9.4 |
 | hourly 1 h | sunny | SARIMAX | 214 | 480 | -21 | 83.6 | 84.8 | 8.3 |
 | hourly 1 h | sunny | Tree-based | 214 | 468 | 37 | 84.0 |  | 9.6 |
 | hourly 24 h | dull | TimesFM-3, no covariates | 283 | 1,411 | -612 | 48.0 | 74.6 | 10.8 |
@@ -290,10 +303,13 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | holiday week | TimesFM-3, no covariates | 30 | 408 | 5 | 89.5 | 82.8 | 9.3 |
 | hourly 1 h | holiday week | SARIMAX | 30 | 519 | 55 | 86.7 | 83.5 | 9.4 |
 | hourly 1 h | holiday week | Tree-based | 30 | 417 | -16 | 89.3 |  | 8.9 |
+| hourly 1 h | weekend | TimesFM-3, no covariates | 102 | 371 | 18 | 82.7 | 82.9 | 28.9 |
 | hourly 1 h | weekend | SARIMAX | 102 | 511 | -63 | 76.2 | 81.9 | 31.4 |
 | hourly 1 h | weekend | Tree-based | 102 | 401 | -68 | 81.3 |  | 29.0 |
+| hourly 1 h | other weekday | TimesFM-3, no covariates | 217 | 373 | 17 | 83.5 | 82.9 | 61.8 |
 | hourly 1 h | other weekday | SARIMAX | 217 | 454 | 12 | 80.0 | 87.5 | 59.3 |
 | hourly 1 h | other weekday | Tree-based | 217 | 403 | -41 | 82.2 |  | 62.1 |
 | hourly 24 h | holiday week | TimesFM-3, no covariates | 30 | 1,383 | -202 | 64.5 | 78.2 | 10.8 |
@@ -345,12 +361,16 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | 0 (no heating) | TimesFM-3, no covariates | 137 | 383 | 10 | 81.4 | 80.3 | 21.8 |
 | hourly 1 h | 0 (no heating) | SARIMAX | 137 | 463 | -41 | 77.5 | 85.3 | 20.8 |
 | hourly 1 h | 0 (no heating) | Tree-based | 137 | 452 | -69 | 78.1 |  | 23.9 |
+| hourly 1 h | mild | TimesFM-3, no covariates | 202 | 382 | 36 | 82.1 | 82.2 | 27.4 |
 | hourly 1 h | mild | SARIMAX | 202 | 503 | 24 | 76.4 | 83.3 | 28.5 |
 | hourly 1 h | mild | Tree-based | 202 | 394 | 3 | 81.5 |  | 26.3 |
+| hourly 1 h | cool | TimesFM-3, no covariates | 195 | 387 | 30 | 83.7 | 82.4 | 27.3 |
 | hourly 1 h | cool | SARIMAX | 195 | 472 | 17 | 80.1 | 86.4 | 26.3 |
 | hourly 1 h | cool | Tree-based | 195 | 407 | -64 | 82.9 |  | 26.7 |
+| hourly 1 h | cold | TimesFM-3, no covariates | 138 | 351 | -13 | 87.8 | 86.3 | 23.5 |
 | hourly 1 h | cold | SARIMAX | 138 | 462 | -35 | 83.9 | 87.0 | 24.4 |
 | hourly 1 h | cold | Tree-based | 138 | 369 | -64 | 87.2 |  | 23.0 |
 | hourly 24 h | 0 (no heating) | TimesFM-3, no covariates | 137 | 1,134 | 25 | 45.0 | 80.7 | 22.1 |
@@ -416,10 +436,13 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | calm | TimesFM-3, no covariates | 234 | 336 | 44 | 85.1 | 85.6 | 29.2 |
 | hourly 1 h | calm | SARIMAX | 234 | 463 | -40 | 79.5 | 86.7 | 31.7 |
 | hourly 1 h | calm | Tree-based | 234 | 374 | -39 | 83.4 |  | 30.2 |
+| hourly 1 h | moderate | TimesFM-3, no covariates | 289 | 371 | 26 | 82.2 | 83.6 | 33.1 |
 | hourly 1 h | moderate | SARIMAX | 289 | 470 | -3 | 77.4 | 86.0 | 33.1 |
 | hourly 1 h | moderate | Tree-based | 289 | 395 | -39 | 81.0 |  | 32.9 |
+| hourly 1 h | windy | TimesFM-3, no covariates | 214 | 419 | -19 | 84.8 | 79.6 | 37.8 |
 | hourly 1 h | windy | SARIMAX | 214 | 494 | 22 | 82.1 | 83.9 | 35.2 |
 | hourly 1 h | windy | Tree-based | 214 | 440 | -62 | 84.1 |  | 36.9 |
 | hourly 24 h | calm | TimesFM-3, no covariates | 234 | 1,020 | 297 | 54.8 | 81.4 | 30.3 |
@@ -471,8 +494,10 @@ Bias = forecast minus actual: positive = over-forecast, negative = under-forecas
 
 | Horizon | Weather | Model | Days | MAE (MWh) | Bias (MWh) | Error reduction vs naive % | 80 % band coverage % | Share of all error % |
 |---|---|---|---|---|---|---|---|---|
+| hourly 1 h | dry | TimesFM-3, no covariates | 346 | 374 | 23 | 84.3 | 83.1 | 68.7 |
 | hourly 1 h | dry | SARIMAX | 346 | 470 | -18 | 80.2 | 86.2 | 68.1 |
 | hourly 1 h | dry | Tree-based | 346 | 405 | -38 | 82.9 |  | 69.4 |
+| hourly 1 h | wet | TimesFM-3, no covariates | 254 | 380 | 1 | 83.9 | 82.3 | 31.3 |
 | hourly 1 h | wet | SARIMAX | 254 | 491 | 20 | 79.2 | 84.1 | 31.9 |
 | hourly 1 h | wet | Tree-based | 254 | 399 | -65 | 83.1 |  | 30.6 |
 | hourly 24 h | dry | TimesFM-3, no covariates | 346 | 1,077 | 71 | 54.7 | 81.3 | 67.6 |
