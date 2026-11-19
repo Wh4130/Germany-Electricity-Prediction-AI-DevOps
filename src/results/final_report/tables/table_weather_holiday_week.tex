@@ -2,54 +2,54 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
-hourly 1 h & holiday week & TimesFM-3, no covariates & 30 & 408 & 5 & 89.5 & 82.8 & 9.3 \\
+hourly 1 h & holiday week & TimesFM-3 & 30 & 408 & 5 & 89.5 & 82.8 & 9.3 \\
 hourly 1 h & holiday week & SARIMAX & 30 & 519 & 55 & 86.7 & 83.5 & 9.4 \\
 hourly 1 h & holiday week & Tree-based & 30 & 417 & -16 & 89.3 &  & 8.9 \\
-hourly 1 h & weekend & TimesFM-3, no covariates & 102 & 371 & 18 & 82.7 & 82.9 & 28.9 \\
+hourly 1 h & weekend & TimesFM-3 & 102 & 371 & 18 & 82.7 & 82.9 & 28.9 \\
 hourly 1 h & weekend & SARIMAX & 102 & 511 & -63 & 76.2 & 81.9 & 31.4 \\
 hourly 1 h & weekend & Tree-based & 102 & 401 & -68 & 81.3 &  & 29.0 \\
-hourly 1 h & other weekday & TimesFM-3, no covariates & 217 & 373 & 17 & 83.5 & 82.9 & 61.8 \\
+hourly 1 h & other weekday & TimesFM-3 & 217 & 373 & 17 & 83.5 & 82.9 & 61.8 \\
 hourly 1 h & other weekday & SARIMAX & 217 & 454 & 12 & 80.0 & 87.5 & 59.3 \\
 hourly 1 h & other weekday & Tree-based & 217 & 403 & -41 & 82.2 &  & 62.1 \\
-hourly 24 h & holiday week & TimesFM-3, no covariates & 30 & 1,383 & -202 & 64.5 & 78.2 & 10.8 \\
-hourly 24 h & holiday week & TimesFM-3, covariates & 30 & 1,172 & 186 & 69.9 & 78.3 & 10.3 \\
+hourly 24 h & holiday week & TimesFM-3 & 30 & 1,172 & 186 & 69.9 & 78.3 & 10.3 \\
+hourly 24 h & holiday week & TimesFM-3 & 30 & 1,383 & -202 & 64.5 & 78.2 & 10.8 \\
 hourly 24 h & holiday week & SARIMAX & 30 & 1,601 & 645 & 58.9 & 70.0 & 11.1 \\
 hourly 24 h & holiday week & Tree-based & 30 & 1,167 & -218 & 70.0 &  & 8.9 \\
-hourly 24 h & weekend & TimesFM-3, no covariates & 102 & 1,056 & 36 & 50.8 & 80.6 & 28.1 \\
-hourly 24 h & weekend & TimesFM-3, covariates & 102 & 945 & 4 & 56.0 & 83.0 & 28.2 \\
+hourly 24 h & weekend & TimesFM-3 & 102 & 945 & 4 & 56.0 & 83.0 & 28.2 \\
+hourly 24 h & weekend & TimesFM-3 & 102 & 1,056 & 36 & 50.8 & 80.6 & 28.1 \\
 hourly 24 h & weekend & SARIMAX & 102 & 1,260 & -721 & 41.3 & 78.0 & 29.6 \\
 hourly 24 h & weekend & Tree-based & 102 & 1,186 & -405 & 44.7 &  & 30.6 \\
-hourly 24 h & other weekday & TimesFM-3, no covariates & 217 & 1,078 & -81 & 52.3 & 80.0 & 61.1 \\
-hourly 24 h & other weekday & TimesFM-3, covariates & 217 & 970 & 2 & 57.1 & 81.9 & 61.6 \\
+hourly 24 h & other weekday & TimesFM-3 & 217 & 970 & 2 & 57.1 & 81.9 & 61.6 \\
+hourly 24 h & other weekday & TimesFM-3 & 217 & 1,078 & -81 & 52.3 & 80.0 & 61.1 \\
 hourly 24 h & other weekday & SARIMAX & 217 & 1,188 & 150 & 47.5 & 79.7 & 59.4 \\
 hourly 24 h & other weekday & Tree-based & 217 & 1,102 & -174 & 51.3 &  & 60.5 \\
-daily 1 d & holiday week & TimesFM-3, no covariates & 30 & 31,147 & -11,232 & 64.7 & 90.0 & 11.2 \\
-daily 1 d & holiday week & TimesFM-3, covariates & 30 & 22,310 & 14,505 & 74.7 & 86.7 & 10.0 \\
+daily 1 d & holiday week & TimesFM-3 & 30 & 22,310 & 14,505 & 74.7 & 86.7 & 10.0 \\
+daily 1 d & holiday week & TimesFM-3 & 30 & 31,147 & -11,232 & 64.7 & 90.0 & 11.2 \\
 daily 1 d & holiday week & TabICL & 30 & 23,718 & 886 & 73.1 & 73.3 & 11.1 \\
 daily 1 d & holiday week & SARIMAX & 30 & 29,916 & 3,155 & 66.1 & 66.7 & 13.0 \\
 daily 1 d & holiday week & Tree-based & 30 & 23,419 & -1,573 & 73.4 &  & 8.4 \\
-daily 1 d & weekend & TimesFM-3, no covariates & 102 & 25,490 & -6,905 & 44.6 & 83.3 & 31.1 \\
-daily 1 d & weekend & TimesFM-3, covariates & 102 & 20,428 & -10,750 & 55.6 & 86.3 & 31.1 \\
+daily 1 d & weekend & TimesFM-3 & 102 & 20,428 & -10,750 & 55.6 & 86.3 & 31.1 \\
+daily 1 d & weekend & TimesFM-3 & 102 & 25,490 & -6,905 & 44.6 & 83.3 & 31.1 \\
 daily 1 d & weekend & TabICL & 102 & 17,234 & -746 & 62.6 & 79.4 & 27.4 \\
 daily 1 d & weekend & SARIMAX & 102 & 19,249 & -1,796 & 58.2 & 81.4 & 28.4 \\
 daily 1 d & weekend & Tree-based & 102 & 25,263 & -4,652 & 45.1 &  & 30.7 \\
-daily 1 d & other weekday & TimesFM-3, no covariates & 217 & 22,260 & -1,529 & 53.3 & 81.1 & 57.7 \\
-daily 1 d & other weekday & TimesFM-3, covariates & 217 & 18,188 & 3,146 & 61.8 & 86.2 & 58.9 \\
+daily 1 d & other weekday & TimesFM-3 & 217 & 18,188 & 3,146 & 61.8 & 86.2 & 58.9 \\
+daily 1 d & other weekday & TimesFM-3 & 217 & 22,260 & -1,529 & 53.3 & 81.1 & 57.7 \\
 daily 1 d & other weekday & TabICL & 217 & 18,183 & -84 & 61.8 & 76.5 & 61.5 \\
 daily 1 d & other weekday & SARIMAX & 217 & 18,720 & -2,139 & 60.7 & 84.8 & 58.7 \\
 daily 1 d & other weekday & Tree-based & 217 & 23,574 & -5,954 & 50.5 &  & 60.9 \\
-daily 7 d & holiday week & TimesFM-3, no covariates & 30 & 29,011 & -6,971 & 64.2 & 93.4 & 7.9 \\
-daily 7 d & holiday week & TimesFM-3, covariates & 30 & 25,156 & 9,265 & 68.9 & 85.2 & 8.7 \\
+daily 7 d & holiday week & TimesFM-3 & 30 & 25,156 & 9,265 & 68.9 & 85.2 & 8.7 \\
+daily 7 d & holiday week & TimesFM-3 & 30 & 29,011 & -6,971 & 64.2 & 93.4 & 7.9 \\
 daily 7 d & holiday week & TabICL & 30 & 26,952 & 2,285 & 66.7 & 81.6 & 9.6 \\
 daily 7 d & holiday week & SARIMAX & 30 & 35,320 & 10,161 & 56.4 & 76.0 & 10.2 \\
 daily 7 d & holiday week & Tree-based & 30 & 35,451 & -4,721 & 56.2 &  & 9.2 \\
-daily 7 d & weekend & TimesFM-3, no covariates & 102 & 31,830 & -9,340 & 30.7 & 79.8 & 31.4 \\
-daily 7 d & weekend & TimesFM-3, covariates & 102 & 23,817 & -10,984 & 48.1 & 80.6 & 29.9 \\
+daily 7 d & weekend & TimesFM-3 & 102 & 23,817 & -10,984 & 48.1 & 80.6 & 29.9 \\
+daily 7 d & weekend & TimesFM-3 & 102 & 31,830 & -9,340 & 30.7 & 79.8 & 31.4 \\
 daily 7 d & weekend & TabICL & 102 & 22,246 & -1,363 & 51.5 & 76.9 & 28.9 \\
 daily 7 d & weekend & SARIMAX & 102 & 27,280 & -4,671 & 40.6 & 86.1 & 28.8 \\
 daily 7 d & weekend & Tree-based & 102 & 31,976 & -5,828 & 30.3 &  & 30.2 \\
-daily 7 d & other weekday & TimesFM-3, no covariates & 217 & 28,837 & -4,657 & 39.5 & 79.4 & 60.7 \\
-daily 7 d & other weekday & TimesFM-3, covariates & 217 & 23,026 & 2,645 & 51.7 & 77.6 & 61.5 \\
+daily 7 d & other weekday & TimesFM-3 & 217 & 23,026 & 2,645 & 51.7 & 77.6 & 61.5 \\
+daily 7 d & other weekday & TimesFM-3 & 217 & 28,837 & -4,657 & 39.5 & 79.4 & 60.7 \\
 daily 7 d & other weekday & TabICL & 217 & 22,206 & 1,159 & 53.4 & 73.0 & 61.5 \\
 daily 7 d & other weekday & SARIMAX & 217 & 27,131 & -8,239 & 43.0 & 83.9 & 61.0 \\
 daily 7 d & other weekday & Tree-based & 217 & 30,183 & -6,963 & 36.6 &  & 60.6 \\

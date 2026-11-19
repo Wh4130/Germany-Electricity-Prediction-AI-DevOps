@@ -8,13 +8,13 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 |---|---|---|---|---|---|---|---|
 | TabICL | daily 1 d | 9.6 | 2.7 | 60.0 | 50.0 | 0.0 | 30.0 |
 | TabICL | daily 7 d | 9.4 | 2.7 | 50.0 | 80.0 | 0.0 | 20.0 |
-| TimesFM-3, covariates | daily 1 d | 11.6 | 2.7 | 60.0 | 60.0 | 0.0 | 30.0 |
-| TimesFM-3, covariates | daily 7 d | 9.0 | 2.7 | 60.0 | 70.0 | 0.0 | 30.0 |
-| TimesFM-3, covariates | hourly 24 h | 11.4 | 2.7 | 80.0 | 70.0 | 0.0 | 20.0 |
-| TimesFM-3, no covariates | daily 1 d | 20.2 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
-| TimesFM-3, no covariates | daily 7 d | 16.3 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
-| TimesFM-3, no covariates | hourly 1 h | 5.5 | 2.7 | 70.0 | 60.0 | 0.0 | 20.0 |
-| TimesFM-3, no covariates | hourly 24 h | 16.4 | 2.7 | 90.0 | 70.0 | 0.0 | 10.0 |
+| TimesFM-3 | daily 1 d | 11.6 | 2.7 | 60.0 | 60.0 | 0.0 | 30.0 |
+| TimesFM-3 | daily 7 d | 9.0 | 2.7 | 60.0 | 70.0 | 0.0 | 30.0 |
+| TimesFM-3 | hourly 24 h | 11.4 | 2.7 | 80.0 | 70.0 | 0.0 | 20.0 |
+| TimesFM-3 | daily 1 d | 20.2 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
+| TimesFM-3 | daily 7 d | 16.3 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
+| TimesFM-3 | hourly 1 h | 5.5 | 2.7 | 70.0 | 60.0 | 0.0 | 20.0 |
+| TimesFM-3 | hourly 24 h | 16.4 | 2.7 | 90.0 | 70.0 | 0.0 | 10.0 |
 | SARIMAX | daily 1 d | 13.2 | 2.7 | 100.0 | 70.0 | 0.0 | 0.0 |
 | SARIMAX | daily 7 d | 7.9 | 2.7 | 80.0 | 80.0 | 0.0 | 10.0 |
 | SARIMAX | hourly 1 h | 5.3 | 2.7 | 70.0 | 40.0 | 0.0 | 20.0 |
@@ -28,35 +28,35 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 
 | Date | Models | Runs |
 |---|---|---|
-| 2024-03-31 | 17 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
-| 2024-05-01 | 10 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h) |
-| 2024-01-01 | 8 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-03-31 | 17 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-05-01 | 10 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h) |
+| 2024-01-01 | 8 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
 | 2024-12-24 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 7 d); Tree-based (daily 1 d); Tree-based (hourly 24 h) |
-| 2024-12-29 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-01-28 | 6 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
-| 2024-01-02 | 5 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3, no covariates (daily 1 d) |
-| 2024-04-01 | 5 | TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-05-30 | 5 | SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-10-03 | 5 | TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-11-16 | 5 | SARIMAX (daily 7 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-12-28 | 5 | SARIMAX (daily 7 d); SARIMAX (hourly 1 h); TabICL (daily 1 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d) |
-| 2024-12-31 | 5 | SARIMAX (daily 1 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3, covariates (daily 1 d); Tree-based (hourly 1 h) |
-| 2024-03-29 | 4 | TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-05-09 | 4 | TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-05-10 | 4 | TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 1 h); Tree-based (daily 7 d) |
-| 2024-10-04 | 4 | TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d) |
-| 2024-12-25 | 4 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-12-26 | 4 | SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-01-24 | 3 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 7 d) |
-| 2024-05-20 | 3 | TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h) |
-| 2024-07-29 | 3 | TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-09-27 | 3 | TabICL (daily 1 d); TimesFM-3, no covariates (hourly 1 h); Tree-based (hourly 1 h) |
-| 2024-11-25 | 3 | SARIMAX (hourly 1 h); TimesFM-3, no covariates (hourly 1 h); Tree-based (hourly 1 h) |
-| 2024-12-23 | 3 | SARIMAX (daily 1 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h) |
+| 2024-12-29 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-01-28 | 6 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-01-02 | 5 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3 (daily 1 d) |
+| 2024-04-01 | 5 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-05-30 | 5 | SARIMAX (hourly 1 h); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-10-03 | 5 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-11-16 | 5 | SARIMAX (daily 7 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-12-28 | 5 | SARIMAX (daily 7 d); SARIMAX (hourly 1 h); TabICL (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d) |
+| 2024-12-31 | 5 | SARIMAX (daily 1 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3 (daily 1 d); Tree-based (hourly 1 h) |
+| 2024-03-29 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h) |
+| 2024-05-09 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h) |
+| 2024-05-10 | 4 | TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); Tree-based (daily 7 d) |
+| 2024-10-04 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h); Tree-based (daily 7 d) |
+| 2024-12-25 | 4 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-12-26 | 4 | SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-01-24 | 3 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 7 d) |
+| 2024-05-20 | 3 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h) |
+| 2024-07-29 | 3 | TimesFM-3 (hourly 24 h); Tree-based (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-09-27 | 3 | TabICL (daily 1 d); TimesFM-3 (hourly 1 h); Tree-based (hourly 1 h) |
+| 2024-11-25 | 3 | SARIMAX (hourly 1 h); TimesFM-3 (hourly 1 h); Tree-based (hourly 1 h) |
+| 2024-12-23 | 3 | SARIMAX (daily 1 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h) |
 | 2024-01-03 | 2 | SARIMAX (daily 1 d); TabICL (daily 1 d) |
 | 2024-01-08 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
 | 2024-01-12 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
-| 2024-05-28 | 2 | TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d) |
+| 2024-05-28 | 2 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d) |
 | 2024-10-27 | 2 | TabICL (daily 1 d); Tree-based (daily 1 d) |
 | 2024-11-01 | 2 | SARIMAX (hourly 1 h); Tree-based (hourly 1 h) |
 | 2024-12-27 | 2 | SARIMAX (hourly 1 h); TabICL (daily 1 d) |
@@ -96,7 +96,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-02 | Thu | 73,574 | 5.9 | 73,574 | 111,116 | -12.7 | 36 | Holiday week, Much warmer than last week |
 | 10 | 2024-12-24 | Tue | 67,925 | 6.0 | 67,925 | 305,451 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
 
-## TimesFM-3, covariates (daily 1 d)
+## TimesFM-3 (daily 1 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -113,7 +113,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-11-16 | Sat | 70,706 | 5.4 | -70,706 | 103,600 | -0.6 | 94 | Weekend, no other reason in our inputs |
 | 10 | 2024-01-28 | Sun | 70,300 | 6.2 | 70,300 | 179,582 | -2.5 | 59 | Weekend, no other reason in our inputs |
 
-## TimesFM-3, covariates (daily 7 d)
+## TimesFM-3 (daily 7 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -130,7 +130,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-28 | Tue | 80,428 | 6.7 | 80,428 | 52,790 | +2.9 | 91 | none in our inputs |
 | 10 | 2024-01-01 | Mon | 79,917 | 7.8 | 79,917 | 38,117 | +3.7 | 16 | Holiday, Christmas / New Year, Much colder than last week |
 
-## TimesFM-3, covariates (hourly 24 h)
+## TimesFM-3 (hourly 24 h)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -147,7 +147,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-07-29 | Mon | 2,937 | 6.1 | 2,937 | 4,629 | +1.5 | 72 | none in our inputs |
 | 10 | 2024-12-26 | Thu | 2,929 | 6.4 | 2,929 | 12,914 | +4.8 | 113 | Holiday, Christmas / New Year, Much colder than last week |
 
-## TimesFM-3, no covariates (daily 1 d)
+## TimesFM-3 (daily 1 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -164,7 +164,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-30 | Thu | 160,714 | 14.6 | 160,714 | 138,461 | +0.7 | 97 | none in our inputs |
 | 10 | 2024-01-02 | Tue | 151,385 | 11.9 | -151,385 | 193,935 | +1.6 | 53 | Holiday week |
 
-## TimesFM-3, no covariates (daily 7 d)
+## TimesFM-3 (daily 7 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -181,7 +181,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-10 | Fri | 161,415 | 14.7 | 161,415 | 189,797 | -0.4 | 76 | Bridge day |
 | 10 | 2024-05-30 | Thu | 145,922 | 13.3 | 145,922 | 138,461 | +0.7 | 97 | none in our inputs |
 
-## TimesFM-3, no covariates (hourly 1 h)
+## TimesFM-3 (hourly 1 h)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -198,7 +198,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-10-28 | Mon | 646 | 1.3 | 106 | 2,800 | +2.5 | 111 | none in our inputs |
 | 10 | 2024-05-10 | Fri | 622 | 1.4 | 419 | 7,908 | +0.4 | 76 | Bridge day |
 
-## TimesFM-3, no covariates (hourly 24 h)
+## TimesFM-3 (hourly 24 h)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 

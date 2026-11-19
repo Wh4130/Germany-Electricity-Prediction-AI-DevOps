@@ -2,7 +2,7 @@
 \toprule
 Model & Results folder & Setting & Origins & MAE (MWh) & MAPE \% & Error reduction vs naive \% & RMSE (MWh) & Bias (MWh) & Pinball (MWh) & 80 \% band coverage \% \\
 \midrule
-\textbf{TimesFM-3, no covariates} & foundation & ctx=8192 & 8784 & 384 & 0.7 & 85.5 & 512 & 22 & 152 & 82.8 \\
+\textbf{TimesFM-3} & foundation & ctx=8192 & 8784 & 384 & 0.7 & 85.5 & 512 & 22 & 152 & 82.8 \\
 Tree-based & tree-based &  & 8784 & 408 & 0.8 & 84.7 & 531 & -46 &  &  \\
 SARIMAX & sarimax &  & 8784 & 489 & 1.0 & 81.6 & 706 & -13 & 196 & 84.7 \\
 Seasonal naive & seasonal\_naive &  & 366 & 2,154 & 4.8 & 0.0 & 2,931 & -9 &  &  \\

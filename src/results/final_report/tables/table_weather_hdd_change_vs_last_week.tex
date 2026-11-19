@@ -2,71 +2,71 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
-hourly 1 h & no heating either week & TimesFM-3, no covariates & 107 & 374 & 15 & 81.1 & 80.6 & 14.2 \\
+hourly 1 h & no heating either week & TimesFM-3 & 107 & 374 & 15 & 81.1 & 80.6 & 14.2 \\
 hourly 1 h & no heating either week & SARIMAX & 107 & 451 & -14 & 77.1 & 86.3 & 13.5 \\
 hourly 1 h & no heating either week & Tree-based & 107 & 445 & -87 & 77.5 &  & 15.7 \\
-hourly 1 h & much warmer & TimesFM-3, no covariates & 111 & 413 & 21 & 84.7 & 79.6 & 19.3 \\
+hourly 1 h & much warmer & TimesFM-3 & 111 & 413 & 21 & 84.7 & 79.6 & 19.3 \\
 hourly 1 h & much warmer & SARIMAX & 111 & 492 & 8 & 81.8 & 83.8 & 18.2 \\
 hourly 1 h & much warmer & Tree-based & 111 & 437 & 28 & 83.8 &  & 19.0 \\
-hourly 1 h & similar & TimesFM-3, no covariates & 293 & 367 & 27 & 82.3 & 83.9 & 50.9 \\
+hourly 1 h & similar & TimesFM-3 & 293 & 367 & 27 & 82.3 & 83.9 & 50.9 \\
 hourly 1 h & similar & SARIMAX & 293 & 479 & -17 & 76.9 & 85.5 & 52.3 \\
 hourly 1 h & similar & Tree-based & 293 & 393 & -52 & 81.0 &  & 50.8 \\
-hourly 1 h & much colder & TimesFM-3, no covariates & 106 & 364 & -23 & 89.0 & 85.3 & 15.6 \\
+hourly 1 h & much colder & TimesFM-3 & 106 & 364 & -23 & 89.0 & 85.3 & 15.6 \\
 hourly 1 h & much colder & SARIMAX & 106 & 472 & 17 & 85.7 & 86.5 & 16.0 \\
 hourly 1 h & much colder & Tree-based & 106 & 363 & -75 & 89.0 &  & 14.5 \\
-hourly 24 h & no heating either week & TimesFM-3, no covariates & 107 & 1,179 & -9 & 40.3 & 79.4 & 15.3 \\
-hourly 24 h & no heating either week & TimesFM-3, covariates & 107 & 1,058 & 117 & 46.4 & 81.9 & 15.4 \\
+hourly 24 h & no heating either week & TimesFM-3 & 107 & 1,058 & 117 & 46.4 & 81.9 & 15.4 \\
+hourly 24 h & no heating either week & TimesFM-3 & 107 & 1,179 & -9 & 40.3 & 79.4 & 15.3 \\
 hourly 24 h & no heating either week & SARIMAX & 107 & 1,187 & -175 & 39.9 & 85.8 & 13.6 \\
 hourly 24 h & no heating either week & Tree-based & 107 & 1,248 & 165 & 36.8 &  & 15.7 \\
-hourly 24 h & much warmer & TimesFM-3, no covariates & 111 & 1,206 & 224 & 55.3 & 77.5 & 19.3 \\
-hourly 24 h & much warmer & TimesFM-3, covariates & 111 & 1,058 & 169 & 60.8 & 79.0 & 19.0 \\
+hourly 24 h & much warmer & TimesFM-3 & 111 & 1,058 & 169 & 60.8 & 79.0 & 19.0 \\
+hourly 24 h & much warmer & TimesFM-3 & 111 & 1,206 & 224 & 55.3 & 77.5 & 19.3 \\
 hourly 24 h & much warmer & SARIMAX & 111 & 1,340 & 85 & 50.4 & 74.1 & 18.9 \\
 hourly 24 h & much warmer & Tree-based & 111 & 1,183 & -206 & 56.2 &  & 18.4 \\
-hourly 24 h & similar & TimesFM-3, no covariates & 293 & 1,031 & -32 & 50.2 & 81.7 & 48.9 \\
-hourly 24 h & similar & TimesFM-3, covariates & 293 & 934 & 33 & 54.9 & 83.3 & 49.6 \\
+hourly 24 h & similar & TimesFM-3 & 293 & 934 & 33 & 54.9 & 83.3 & 49.6 \\
+hourly 24 h & similar & TimesFM-3 & 293 & 1,031 & -32 & 50.2 & 81.7 & 48.9 \\
 hourly 24 h & similar & SARIMAX & 293 & 1,227 & -119 & 40.8 & 78.0 & 51.3 \\
 hourly 24 h & similar & Tree-based & 293 & 1,114 & -323 & 46.2 &  & 51.2 \\
-hourly 24 h & much colder & TimesFM-3, no covariates & 105 & 1,125 & -487 & 66.0 & 77.9 & 16.5 \\
-hourly 24 h & much colder & TimesFM-3, covariates & 105 & 974 & -284 & 70.6 & 80.6 & 16.0 \\
+hourly 24 h & much colder & TimesFM-3 & 105 & 974 & -284 & 70.6 & 80.6 & 16.0 \\
+hourly 24 h & much colder & TimesFM-3 & 105 & 1,125 & -487 & 66.0 & 77.9 & 16.5 \\
 hourly 24 h & much colder & SARIMAX & 105 & 1,249 & 62 & 62.3 & 77.6 & 16.2 \\
 hourly 24 h & much colder & Tree-based & 106 & 1,031 & -399 & 68.8 &  & 14.7 \\
-daily 1 d & no heating either week & TimesFM-3, no covariates & 56 & 18,994 & -8,092 & 35.9 & 78.6 & 12.7 \\
-daily 1 d & no heating either week & TimesFM-3, covariates & 56 & 17,308 & 4,231 & 41.6 & 82.1 & 14.5 \\
+daily 1 d & no heating either week & TimesFM-3 & 56 & 17,308 & 4,231 & 41.6 & 82.1 & 14.5 \\
+daily 1 d & no heating either week & TimesFM-3 & 56 & 18,994 & -8,092 & 35.9 & 78.6 & 12.7 \\
 daily 1 d & no heating either week & TabICL & 56 & 16,244 & -1,197 & 45.2 & 76.8 & 14.2 \\
 daily 1 d & no heating either week & SARIMAX & 56 & 18,027 & -792 & 39.1 & 82.1 & 14.6 \\
 daily 1 d & no heating either week & Tree-based & 56 & 21,093 & 3,297 & 28.8 &  & 14.1 \\
-daily 1 d & much warmer & TimesFM-3, no covariates & 60 & 27,511 & 6,611 & 59.7 & 80.0 & 19.7 \\
-daily 1 d & much warmer & TimesFM-3, covariates & 60 & 22,469 & 9,345 & 67.1 & 85.0 & 20.1 \\
+daily 1 d & much warmer & TimesFM-3 & 60 & 22,469 & 9,345 & 67.1 & 85.0 & 20.1 \\
+daily 1 d & much warmer & TimesFM-3 & 60 & 27,511 & 6,611 & 59.7 & 80.0 & 19.7 \\
 daily 1 d & much warmer & TabICL & 60 & 23,629 & 8,328 & 65.4 & 65.0 & 22.1 \\
 daily 1 d & much warmer & SARIMAX & 60 & 22,008 & 3,181 & 67.8 & 80.0 & 19.1 \\
 daily 1 d & much warmer & Tree-based & 60 & 26,528 & 7,450 & 61.1 &  & 19.0 \\
-daily 1 d & similar & TimesFM-3, no covariates & 180 & 24,687 & -4,186 & 42.0 & 85.6 & 53.1 \\
-daily 1 d & similar & TimesFM-3, covariates & 180 & 18,220 & -1,775 & 57.2 & 90.6 & 49.0 \\
+daily 1 d & similar & TimesFM-3 & 180 & 18,220 & -1,775 & 57.2 & 90.6 & 49.0 \\
+daily 1 d & similar & TimesFM-3 & 180 & 24,687 & -4,186 & 42.0 & 85.6 & 53.1 \\
 daily 1 d & similar & TabICL & 180 & 17,080 & -326 & 59.9 & 82.2 & 47.9 \\
 daily 1 d & similar & SARIMAX & 180 & 18,655 & -1,785 & 56.2 & 85.6 & 48.5 \\
 daily 1 d & similar & Tree-based & 180 & 21,825 & -6,375 & 48.7 &  & 46.8 \\
-daily 1 d & much colder & TimesFM-3, no covariates & 53 & 22,769 & -10,626 & 71.7 & 79.2 & 14.4 \\
-daily 1 d & much colder & TimesFM-3, covariates & 53 & 20,807 & -8,618 & 74.1 & 77.4 & 16.5 \\
+daily 1 d & much colder & TimesFM-3 & 53 & 20,807 & -8,618 & 74.1 & 77.4 & 16.5 \\
+daily 1 d & much colder & TimesFM-3 & 53 & 22,769 & -10,626 & 71.7 & 79.2 & 14.4 \\
 daily 1 d & much colder & TabICL & 53 & 19,120 & -8,333 & 76.2 & 73.6 & 15.8 \\
 daily 1 d & much colder & SARIMAX & 53 & 23,306 & -7,127 & 71.0 & 73.6 & 17.8 \\
 daily 1 d & much colder & Tree-based & 53 & 31,956 & -24,487 & 60.2 &  & 20.2 \\
-daily 7 d & no heating either week & TimesFM-3, no covariates & 56 & 24,563 & -13,520 & 17.1 & 76.0 & 13.3 \\
-daily 7 d & no heating either week & TimesFM-3, covariates & 56 & 20,603 & -3,298 & 30.4 & 73.5 & 14.2 \\
+daily 7 d & no heating either week & TimesFM-3 & 56 & 20,603 & -3,298 & 30.4 & 73.5 & 14.2 \\
+daily 7 d & no heating either week & TimesFM-3 & 56 & 24,563 & -13,520 & 17.1 & 76.0 & 13.3 \\
 daily 7 d & no heating either week & TabICL & 56 & 19,481 & -4,338 & 34.2 & 71.2 & 13.9 \\
 daily 7 d & no heating either week & SARIMAX & 56 & 21,796 & -5,160 & 26.4 & 93.1 & 12.6 \\
 daily 7 d & no heating either week & Tree-based & 56 & 24,455 & 4,668 & 17.4 &  & 12.7 \\
-daily 7 d & much warmer & TimesFM-3, no covariates & 60 & 33,865 & 12,144 & 49.5 & 76.9 & 19.5 \\
-daily 7 d & much warmer & TimesFM-3, covariates & 60 & 29,729 & 16,394 & 55.7 & 73.3 & 21.7 \\
+daily 7 d & much warmer & TimesFM-3 & 60 & 29,729 & 16,394 & 55.7 & 73.3 & 21.7 \\
+daily 7 d & much warmer & TimesFM-3 & 60 & 33,865 & 12,144 & 49.5 & 76.9 & 19.5 \\
 daily 7 d & much warmer & TabICL & 60 & 27,247 & 13,703 & 59.4 & 73.6 & 20.7 \\
 daily 7 d & much warmer & SARIMAX & 60 & 29,157 & 2,919 & 56.5 & 83.2 & 17.9 \\
 daily 7 d & much warmer & Tree-based & 60 & 33,610 & 7,664 & 49.9 &  & 18.5 \\
-daily 7 d & similar & TimesFM-3, no covariates & 180 & 29,435 & -5,721 & 29.9 & 82.2 & 51.2 \\
-daily 7 d & similar & TimesFM-3, covariates & 180 & 21,408 & -2,611 & 49.0 & 83.6 & 47.2 \\
+daily 7 d & similar & TimesFM-3 & 180 & 21,408 & -2,611 & 49.0 & 83.6 & 47.2 \\
+daily 7 d & similar & TimesFM-3 & 180 & 29,435 & -5,721 & 29.9 & 82.2 & 51.2 \\
 daily 7 d & similar & TabICL & 180 & 20,963 & 472 & 50.1 & 77.8 & 47.9 \\
 daily 7 d & similar & SARIMAX & 180 & 25,821 & -6,247 & 38.5 & 86.1 & 47.9 \\
 daily 7 d & similar & Tree-based & 180 & 30,374 & -8,030 & 27.6 &  & 50.4 \\
-daily 7 d & much colder & TimesFM-3, no covariates & 53 & 31,578 & -21,017 & 60.0 & 84.4 & 16.0 \\
-daily 7 d & much colder & TimesFM-3, covariates & 53 & 26,239 & -11,636 & 66.7 & 76.4 & 16.8 \\
+daily 7 d & much colder & TimesFM-3 & 53 & 26,239 & -11,636 & 66.7 & 76.4 & 16.8 \\
+daily 7 d & much colder & TimesFM-3 & 53 & 31,578 & -21,017 & 60.0 & 84.4 & 16.0 \\
 daily 7 d & much colder & TabICL & 53 & 26,289 & -9,193 & 66.7 & 70.1 & 17.5 \\
 daily 7 d & much colder & SARIMAX & 53 & 39,747 & -14,261 & 49.6 & 67.1 & 21.5 \\
 daily 7 d & much colder & Tree-based & 53 & 38,102 & -29,035 & 51.7 &  & 18.4 \\
