@@ -25,6 +25,14 @@ Outputs (src/results/tree-based/):
         has every step the direct models cover, stacked (horizon=7 or 24). Both come from
         the same fit - no separate refit for the 1-step file. q0.1 .. q0.9 are NaN: these
         models give a point forecast only, no native quantiles.
+        Hourly origins: the "_1h_" file keeps every hour as its own origin; the "_24h_"
+        file's origins are local midnight only (one per day, 24 steps each), matching
+        SARIMAX / the foundation models' hourly 24h design instead of every hour being
+        its own origin.
+        Daily origins: the "_1d_" file keeps every origin; the "_7d_" file's origins are
+        restricted to those whose whole 7-day horizon stays inside the same year,
+        matching SARIMAX / TabICL / TimesFM-3's daily 7d origin set instead of keeping
+        the ragged, incomplete-horizon origins of the last 6 days of the year.
     models/{daily,hourly}/final_model_h{h}.joblib
 
 Usage (from the project root):
@@ -154,6 +162,12 @@ def build_daily_horizons(data: pd.DataFrame) -> dict:
                 .join(target_calendar.loc[idx].astype(calendar_dtypes))
             )
     out["origin"] = data["date_from"]
+    # whether the whole 7-day horizon of this origin stays inside the origin's own year -
+    # matches SARIMAX's rule for the 7d file (see docs/models/SARIMAX.md), excludes the
+    # last 6 days of a year from the 7d file (their step=7 target falls in the next year)
+    out["full_horizon_valid"] = (
+        (data["date_from"] + pd.Timedelta(days=DAILY_HORIZON - 1)).dt.year == data["date_from"].dt.year
+    )
     return out
 
 
@@ -224,6 +238,7 @@ def build_hourly_horizons(data: pd.DataFrame) -> dict:
                 .join(target_calendar.loc[idx].astype(calendar_dtypes))
             )
     out["origin"] = data["date_from_utc"]
+    out["is_midnight"] = data["date_from"].dt.hour == 0
     return out
 
 
@@ -267,19 +282,26 @@ def refit_and_forecast(horizons: dict, best_model_config: dict, max_horizon: int
     return {"models": final_models_h, "y_pred_h": y_pred_h}
 
 
-def forecast_frame(horizons: dict, fit: dict, max_horizon: int, step_unit: str) -> pd.DataFrame:
-    """ shared format (MODELS.md): one row per (origin, step); q0.1 .. q0.9 are NaN (point forecast only) """
+def forecast_frame(horizons: dict, fit: dict, max_horizon: int, step_unit: str,
+                   origin_idx: pd.Index | None = None) -> pd.DataFrame:
+    """ shared format (MODELS.md): one row per (origin, step); q0.1 .. q0.9 are NaN (point
+    forecast only). origin_idx, if given, keeps only origins in this index (order-preserving
+    filter on each horizon's full index) - used for the hourly 24h file, whose origins are
+    local midnight only (one per day), matching SARIMAX / the foundation models; the
+    default (None) keeps every origin, as all other files do. """
     one = pd.Timedelta(hours=1) if step_unit == "h" else pd.Timedelta(days=1)
     rows = []
     for h in range(1, max_horizon + 1):
-        idx = horizons["y_test_h"][h].index
+        full_idx = horizons["y_test_h"][h].index
+        idx = full_idx[full_idx.isin(origin_idx)] if origin_idx is not None else full_idx
         origin = horizons["origin"].loc[idx]
+        y_pred = pd.Series(fit["y_pred_h"][h], index=full_idx).loc[idx]
         part = pd.DataFrame({
             "origin": origin.values,
             "target_time": (origin + (h - 1) * one).values,
             "step": h,
-            "y_true": horizons["y_test_h"][h].values,
-            "y_pred": fit["y_pred_h"][h],
+            "y_true": horizons["y_test_h"][h].loc[idx].values,
+            "y_pred": y_pred.values,
         })
         for col in QUANTILE_COLUMNS:
             part[col] = np.nan
@@ -311,12 +333,17 @@ def write_forecast_file(frame: pd.DataFrame, resolution: str, horizon: int, unit
     print(f"  -> {csv_path.relative_to(PROJECT_ROOT)}: {len(frame)} rows, {meta['n_origins']} origins")
 
 
-def write_outputs(frame: pd.DataFrame, fit: dict, resolution: str, max_horizon: int, best_model_config: dict) -> None:
+def write_outputs(frame: pd.DataFrame, fit: dict, resolution: str, max_horizon: int, best_model_config: dict,
+                  max_horizon_frame: pd.DataFrame | None = None) -> None:
+    """ max_horizon_frame, if given, is written as the "_{max_horizon}{unit}_" file instead
+    of `frame` (used for hourly's midnight-only 24h origins); `frame` is always used for the
+    "_1{unit}_" file (step-1 rows, every origin). """
     forecast_dir = OUT_DIR / "forecasts"
     forecast_dir.mkdir(parents=True, exist_ok=True)
     unit = "d" if resolution == "daily" else "h"
 
-    write_forecast_file(frame, resolution, max_horizon, unit, best_model_config, forecast_dir)
+    write_forecast_file(max_horizon_frame if max_horizon_frame is not None else frame,
+                        resolution, max_horizon, unit, best_model_config, forecast_dir)
     step1 = frame[frame["step"] == 1].reset_index(drop=True)
     write_forecast_file(step1, resolution, 1, unit, best_model_config, forecast_dir)
 
@@ -335,7 +362,14 @@ def run_daily() -> None:
     print("[daily] refit (5 seeds per horizon) + test (2019-2023 -> 2024)")
     fit = refit_and_forecast(horizons, best_model_config, DAILY_HORIZON, "daily")
     frame = forecast_frame(horizons, fit, DAILY_HORIZON, "d")
-    write_outputs(frame, fit, "daily", DAILY_HORIZON, best_model_config)
+
+    # the 1d file keeps every origin (unchanged); the 7d file's origins are restricted to
+    # those whose whole 7-day horizon stays inside the same year, matching SARIMAX /
+    # TabICL / TimesFM-3's daily 7d origin set instead of keeping ragged tail-of-year rows
+    full_horizon_idx = horizons["origin"].index[horizons["full_horizon_valid"]]
+    frame_7d = forecast_frame(horizons, fit, DAILY_HORIZON, "d", origin_idx=full_horizon_idx)
+
+    write_outputs(frame, fit, "daily", DAILY_HORIZON, best_model_config, max_horizon_frame=frame_7d)
 
 
 def run_hourly() -> None:
@@ -346,7 +380,14 @@ def run_hourly() -> None:
     print("[hourly] refit (5 seeds per horizon) + test (2019-2023 -> 2024)")
     fit = refit_and_forecast(horizons, best_model_config, HOURLY_HORIZON, "hourly")
     frame = forecast_frame(horizons, fit, HOURLY_HORIZON, "h")
-    write_outputs(frame, fit, "hourly", HOURLY_HORIZON, best_model_config)
+
+    # the 1h file keeps every hour as its own origin (unchanged); the 24h file's origins
+    # are local midnight only - one per day, 24 steps each - matching SARIMAX / the
+    # foundation models' hourly 24h design instead of every hour being its own origin
+    midnight_idx = horizons["origin"].index[horizons["is_midnight"]]
+    frame_24h = forecast_frame(horizons, fit, HOURLY_HORIZON, "h", origin_idx=midnight_idx)
+
+    write_outputs(frame, fit, "hourly", HOURLY_HORIZON, best_model_config, max_horizon_frame=frame_24h)
 
 
 def main() -> None:
