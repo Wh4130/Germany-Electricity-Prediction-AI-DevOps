@@ -160,5 +160,27 @@
         "MAE": 21138.051830481498
       }
     ]
+  },
+  "F1_1": {
+    "experiment": "F1",
+    "horizon": 1,
+    "metric": null,
+    "chosen": {
+      "context_length": 8192
+    },
+    "validation": [],
+    "fixed": true,
+    "note": "fixed setting, no validation run (--skip-val)"
+  },
+  "F2_1": {
+    "experiment": "F2",
+    "horizon": 1,
+    "metric": null,
+    "chosen": {
+      "context_length": 8192
+    },
+    "validation": [],
+    "fixed": true,
+    "note": "fixed setting, no validation run (--skip-val)"
   }
 }
