@@ -1,0 +1,12 @@
+\begin{tabular}{lllllllrrr}
+\toprule
+Better model & Other model & Error correlation & RMSE ratio & Threshold & Expected & Result & RMSE of the better model (MWh) & RMSE of the average (MWh) & RMSE change vs better \% \\
+\midrule
+SARIMAX & Tree-based & 0.53 & 1.15 & 0.74 & helps & helps & 29,852 & 27,998 & -6.2 \\
+TimesFM-3, covariates & SARIMAX & 0.76 & 1.07 & 0.87 & helps & helps & 27,985 & 27,085 & -3.2 \\
+TimesFM-3, covariates & Tree-based & 0.58 & 1.22 & 0.62 & helps & helps & 27,985 & 27,647 & -1.2 \\
+TabICL & TimesFM-3, covariates & 0.72 & 1.13 & 0.76 & helps & helps & 24,700 & 24,437 & -1.1 \\
+TabICL & SARIMAX & 0.66 & 1.21 & 0.64 & does not help & does not help & 24,700 & 24,860 & +0.6 \\
+TabICL & Tree-based & 0.61 & 1.38 & 0.39 & does not help & does not help & 24,700 & 26,459 & +7.1 \\
+\bottomrule
+\end{tabular}

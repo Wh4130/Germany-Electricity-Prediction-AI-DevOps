@@ -1,0 +1,7 @@
+Better model,Other model,Error correlation,RMSE ratio,Threshold,Expected,Result,RMSE of the better model (MWh),RMSE of the average (MWh),RMSE change vs better %
+SARIMAX,Tree-based,0.53,1.15,0.74,helps,helps,29851.998898532827,27998.36862042285,-6.209400865953668
+"TimesFM-3, covariates",SARIMAX,0.76,1.07,0.87,helps,helps,27984.917993278686,27085.437904573802,-3.214160173422405
+"TimesFM-3, covariates",Tree-based,0.58,1.22,0.62,helps,helps,27984.917993278686,27646.900402642474,-1.2078562842935494
+TabICL,"TimesFM-3, covariates",0.72,1.13,0.76,helps,helps,24699.838813099544,24437.451042571396,-1.062305598484275
+TabICL,SARIMAX,0.66,1.21,0.64,does not help,does not help,24699.838813099544,24859.568004693152,0.6466811091451141
+TabICL,Tree-based,0.61,1.38,0.39,does not help,does not help,24699.838813099544,26459.431472757962,7.123903410759178
