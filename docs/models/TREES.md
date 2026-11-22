@@ -38,7 +38,7 @@ Direct multi-step forecasting: one independently tuned model per horizon `h`, no
 | Candidate model families | XGBoost, CatBoost, LightGBM, RandomForest | XGBoost, CatBoost, LightGBM (RandomForest not tried - not enough compute for its grid at this scale) |
 | Final refit | 5 random seeds per horizon, lowest-test-MAE seed kept, metrics averaged over seeds | same: 5 random seeds per horizon |
 | Test MAE (h = 1) | 25,212 MWh (MAPE 2.02%) | 408 MWh (MAPE 0.78%) |
-| Test MAE (h = max, all steps stacked) | 32,188 MWh (MAPE 2.55%) | 1,153 MWh (MAPE 2.21%) |
+| Test MAE (h = max, all steps stacked) | 32,091 MWh (MAPE 2.54%) | 1,147 MWh (MAPE 2.16%) |
 
 Code in `src/models/trees/`:
 
@@ -158,7 +158,7 @@ Best model per horizon and 5-seed-averaged test (2024) metrics:
 | 6 | LightGBM | 33,610 | 44,434 | 2.67% | 33,610 |
 | 7 | RandomForest | 40,701 | 55,953 | 3.26% | 40,543 |
 
-Shared-evaluation metrics (`src.analysis.evaluate`, computed from the kept, lowest-MAE-seed forecasts - so they match the "Best-seed MAE" column, not the 5-seed average): h = 1 alone (366 origins) MAE 25,212 / RMSE 34,207 / MAPE 2.02%, skill vs. seasonal naive 0.563; h = 1…7 stacked (366 origins, 2,541 rows) MAE 32,188 / RMSE 43,203 / MAPE 2.55%, skill 0.435.
+Shared-evaluation metrics (`src.analysis.evaluate`, computed from the kept, lowest-MAE-seed forecasts - so they match the "Best-seed MAE" column, not the 5-seed average): h = 1 alone (366 origins) MAE 25,212 / RMSE 34,207 / MAPE 2.02%, skill vs. seasonal naive 0.563; h = 1…7 stacked (360 origins whose whole horizon stays inside 2024, 2,520 rows) MAE 32,091 / RMSE 43,116 / MAPE 2.54%, skill 0.435.
 
 ### Hourly results
 
@@ -174,9 +174,9 @@ Best model per horizon and 5-seed-averaged test (2024) metrics (full 24-row tabl
 
 CatBoost covers h = 1–11, 13–21, 24; XGBoost h = 12, 22, 23 - no horizon picks LightGBM any more (it did before the calendar/harmonic swap described above was added). The error grows from the nowcast (h = 1) through the early afternoon-equivalent horizons and flattens out past h ≈ 13, rather than increasing monotonically with h, because the lag features (`lag_24`, `lag_168`) stay informative at any horizon.
 
-Shared-evaluation metrics (computed from the kept, lowest-MAE-seed forecasts, so they match the "Best-seed MAE" column, not the 5-seed average): h = 1 alone (8,784 origins) MAE 408 / RMSE 531 / MAPE 0.78%, skill 0.847; h = 1…24 stacked (8,784 origins, 210,540 rows) MAE 1,153 / RMSE 1,508 / MAPE 2.21%, skill 0.566.
+Shared-evaluation metrics (computed from the kept, lowest-MAE-seed forecasts, so they match the "Best-seed MAE" column, not the 5-seed average): h = 1 alone (8,784 origins, one per hour) MAE 408 / RMSE 531 / MAPE 0.78%, skill 0.847; h = 1…24 stacked (366 origins, one per local midnight, 8,784 rows) MAE 1,147 / RMSE 1,518 / MAPE 2.16%, skill 0.568.
 
-The swap to target-hour calendar/harmonics (see [Hourly features](#hourly-features)) was re-run through the full CV + 5-seed refit after it was added: it leaves h = 1 about unchanged (barely any origin/target difference at that horizon) but clearly helps the larger horizons - h = 24's MAE dropped from 1,401 to 1,232 (best seed, about 12% lower) and the skill of the full stacked 24 h forecast rose from 0.523 to 0.566.
+The swap to target-hour calendar/harmonics (see [Hourly features](#hourly-features)) was re-run through the full CV + 5-seed refit after it was added: it leaves h = 1 about unchanged (barely any origin/target difference at that horizon) but clearly helps the larger horizons - h = 24's MAE dropped from 1,401 to 1,232 (best seed, about 12% lower).
 
 ### Forecast files
 
@@ -185,11 +185,11 @@ Two files per resolution, like the other models' `_1d_`/`_7d_` (daily) and `_1h_
 | File | Horizon | Content |
 |---|---|---|
 | `tree_daily_1d_test.csv` | 1 | Step-1-only rows (one per origin, 366 origins) |
-| `tree_daily_7d_test.csv` | 7 | All 7 steps stacked per origin (2,541 rows) |
-| `tree_hourly_1h_test.csv` | 1 | Step-1-only rows (8,784 origins) |
-| `tree_hourly_24h_test.csv` | 24 | All 24 steps stacked per origin (210,540 rows) |
+| `tree_daily_7d_test.csv` | 7 | All 7 steps stacked per origin, origins whose whole horizon stays inside 2024 - 360 origins, 2,520 rows |
+| `tree_hourly_1h_test.csv` | 1 | Step-1-only rows, one origin per hour (8,784 origins) |
+| `tree_hourly_24h_test.csv` | 24 | All 24 steps stacked per origin, one origin per **local midnight only** - 366 origins, 8,784 rows |
 
-Both files of a resolution come from the same fit - the `_1{d,h}_` file is not a separate model, just the step-1 rows of the same forecast. Columns: `origin`, `target_time`, `step`, `y_true`, `y_pred`, `q0.1` … `q0.9` (always `NaN` - these models give a point forecast only, no native quantiles). The JSON sidecar records `model`, `resolution`, `horizon`, `split`, `n_origins`, and `model_per_horizon` / `params_per_horizon` (the chosen family and hyperparameters of every horizon up to the file's own `horizon`).
+Both files of a resolution come from the same fit - the `_1{d,h}_` file is not a separate model, just the step-1 rows of the same forecast. The max-horizon file of each resolution additionally restricts its origins, matching the other models' origin set instead of keeping every origin the raw per-horizon fit covers: daily `_7d_` keeps only origins whose whole 7-day horizon stays inside the same year (`full_horizon_valid` in `build_daily_horizons`) - without it, the last 6 days of the year would appear as ragged, incomplete-horizon origins (step 1 only, 1-2 only, …) instead of being excluded like SARIMAX / TabICL / TimesFM-3 do; hourly `_24h_` keeps only local-midnight origins (`is_midnight` in `build_hourly_horizons`), matching SARIMAX / the foundation models' hourly 24h origin set instead of using every hour. The `_1{d,h}_` files keep every origin, which already matched the other models' own `_1d_`/`_1h_` files. Columns: `origin`, `target_time`, `step`, `y_true`, `y_pred`, `q0.1` … `q0.9` (always `NaN` - these models give a point forecast only, no native quantiles). The JSON sidecar records `model`, `resolution`, `horizon`, `split`, `n_origins`, and `model_per_horizon` / `params_per_horizon` (the chosen family and hyperparameters of every horizon up to the file's own `horizon`).
 
 ## Saved models
 
@@ -230,7 +230,7 @@ The [shared setup](../MODELS.md#shared-setup) is a proposal of 2026-10-27. The t
 | Shared setup | Tree-based | Effect |
 |---|---|---|
 | Daily horizons 7 d and 30 d | h = 1 to 7 days, each its own model | 30 d horizon not covered |
-| Hourly horizons 24 h and 168 h | h = 1 to 24 hours, one origin **per hour**, not only at local midnight | 168 h horizon not covered; origins are not aligned with SARIMAX / the foundation models (midnight-only origins), see [Limitations](#limitations-and-open-questions) |
+| Hourly horizons 24 h and 168 h | h = 1 to 24 hours | 168 h horizon not covered. The 24 h file's origins are local midnight only, and the 1 h file's are every hour - both now aligned with SARIMAX / the foundation models' own `_1h_`/`_24h_` origin sets |
 | Main metric MAE; skill vs. seasonal naive; pinball loss and coverage | Point forecast only, no quantiles | Pinball loss and coverage stay empty in the shared evaluation |
 | Weather variant B (realistic) for the main results | Observed weather for all horizons (variant A, ex-post) | Optimistic, more so at longer horizons |
 
@@ -238,6 +238,5 @@ The [shared setup](../MODELS.md#shared-setup) is a proposal of 2026-10-27. The t
 
 - **Calendar feature gap** (from the h = 1 insights above): `is_holiday × day_of_week_raw` (one-hot per weekday) plus `is_day_before_holiday` / `is_day_after_holiday`, across all horizons - not tried. Would cover days that behave like holidays but legally are not (Whit Sunday, New Year's Eve, Easter Sunday, Dec 24).
 - **Extreme-temperature feature**: a feature for a given year's cold spells or other unusually large temperature swings, instead of relying only on daily `hdd` - not tried; see the Jan 8 / Jan 12 / Jan 27 cases above.
-- **Hourly forecast origin differs from SARIMAX / the foundation models.** Tree-based treats every hour as its own forecast origin (`docs/FORCAST_FORMAT.md` allows this - "one origin per hour (as in the tree model) also works"), while SARIMAX and the foundation models forecast 24 h ahead from local midnight only. Both are evaluated correctly in isolation and both pass the shared evaluation script, but the hourly 1 h / 24 h numbers across models are not forecasting the exact same set of origins - a direct ranking between tree-based and the other models' hourly results should keep this in mind.
 - **RandomForest not tuned for the hourly data** (only XGBoost, CatBoost, LightGBM) - its `GridSearchCV` grid (same size as daily's) over 24 horizons × hourly rows (~24× daily's row count per horizon) was not feasible on the available hardware in reasonable time, not a result ruling RandomForest out.
 - **No native quantiles.** The point-forecast-only design means pinball loss and interval coverage cannot be reported for tree-based in the shared evaluation; a quantile variant (e.g. `LGBMRegressor(objective="quantile")` per quantile, or `CatBoostRegressor(loss_function="Quantile:alpha=...")`) was not tried.
