@@ -3,7 +3,7 @@ import Plotly from "plotly.js-basic-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 import type { Data, Layout, PlotMouseEvent, PlotRelayoutEvent } from "plotly.js";
 import type { ForecastRow, ModelConfig, Prediction } from "./api";
-import { type Theme, withAlpha } from "./theme";
+import { type Theme, lineWidth, withAlpha } from "./theme";
 
 const Plot = createPlotlyComponent(Plotly);
 const GWH = (mwh: number) => mwh / 1000;
@@ -45,6 +45,11 @@ export function Chart({
   // the x range the user zoomed to (null: the whole year); kept across re-renders, so changing an X on the left
   // does not reset the zoom
   const [xRange, setXRange] = useState<Range | null>(null);
+  // "load": the load in GWh; "error": forecast − actual, which pulls the models apart when their lines overlap
+  const [view, setView] = useState<"load" | "error">("load");
+  const err = view === "error";
+  const val = (mwh: number, actual: number) => GWH(err ? mwh - actual : mwh);
+  const hover = err ? "%{y:+,.1f} GWh" : "%{y:,.1f} GWh";
 
   // a day picked outside the zoomed window: move the window to it (same width)
   useEffect(() => {
@@ -71,17 +76,17 @@ export function Chart({
       if (!rows.length || rows[0]["q0.1"] === undefined) continue;
       const dates = rows.map((r) => r.date);
       traces.push(
-        { x: dates, y: rows.map((r) => GWH(r["q0.9"]!)), type: "scatter", mode: "lines",
+        { x: dates, y: rows.map((r) => val(r["q0.9"]!, r.y_true)), type: "scatter", mode: "lines",
           line: { width: 0 }, hoverinfo: "skip", showlegend: false, legendgroup: model.id },
-        { x: dates, y: rows.map((r) => GWH(r["q0.1"]!)), type: "scatter", mode: "lines",
+        { x: dates, y: rows.map((r) => val(r["q0.1"]!, r.y_true)), type: "scatter", mode: "lines",
           line: { width: 0 }, fill: "tonexty", fillcolor: withAlpha(model.color, 0.14),
           hoverinfo: "skip", showlegend: false, legendgroup: model.id },
       );
     }
   }
 
-  // actual load: always shown, also when every model is hidden
-  if (actual?.length) {
+  // actual load: always shown (also when every model is hidden), except in the error view, where it is the zero line
+  if (actual?.length && !err) {
     traces.push({
       x: actual.map((r) => r.date), y: actual.map((r) => GWH(r.y_true)),
       type: "scatter", mode: "lines", name: "Actual",
@@ -93,10 +98,10 @@ export function Chart({
   for (const model of models) {
     const rows = forecasts[model.id] ?? [];
     traces.push({
-      x: rows.map((r) => r.date), y: rows.map((r) => GWH(r.y_pred)),
+      x: rows.map((r) => r.date), y: rows.map((r) => val(r.y_pred, r.y_true)),
       type: "scatter", mode: "lines", name: model.label, legendgroup: model.id,
-      line: { color: model.color, width: 2 },
-      hovertemplate: `%{y:,.1f} GWh<extra>${model.label}</extra>`,
+      line: { color: model.color, width: lineWidth(model.id) },
+      hovertemplate: `${hover}<extra>${model.label}</extra>`,
     });
   }
 
@@ -105,16 +110,16 @@ export function Chart({
     const p = predictions[model.id];
     if (!p) continue;
     const hasInterval = showIntervals && p["q0.1"] !== undefined && p["q0.9"] !== undefined;
-    if (hasInterval) whiskers.push([p.date, GWH(p["q0.1"]!)], [p.date, GWH(p["q0.9"]!)]);
+    if (hasInterval) whiskers.push([p.date, val(p["q0.1"]!, p.y_true)], [p.date, val(p["q0.9"]!, p.y_true)]);
     traces.push({
-      x: [p.date], y: [GWH(p.y_pred)],
+      x: [p.date], y: [val(p.y_pred, p.y_true)],
       type: "scatter", mode: "markers", name: `${model.label} what-if`, legendgroup: model.id,
       marker: { symbol: "diamond", size: 13, color: model.color, line: { color: theme.surface, width: 2 } },
       error_y: hasInterval
         ? { type: "data", symmetric: false, array: [GWH(p["q0.9"]! - p.y_pred)],
             arrayminus: [GWH(p.y_pred - p["q0.1"]!)], color: model.color, thickness: 2, width: 6 }
         : undefined,
-      hovertemplate: `%{y:,.1f} GWh<extra>${model.label} what-if</extra>`,
+      hovertemplate: `${hover}<extra>${model.label} what-if</extra>`,
     });
   }
 
@@ -174,8 +179,9 @@ export function Chart({
                      borderwidth: 1 },
     },
     yaxis: {
-      title: { text: "Load (GWh / day)" }, gridcolor: theme.grid, zeroline: false,
-      tickformat: ",.0f", linecolor: theme.axis,
+      title: { text: err ? "Forecast − actual (GWh / day)" : "Load (GWh / day)" },
+      gridcolor: theme.grid, zeroline: err, zerolinecolor: theme.ink, zerolinewidth: 2,
+      tickformat: err ? "+,.0f" : ",.0f", linecolor: theme.axis,
       fixedrange: true, // zoom only along time; the y range follows the window
       ...(yRange ? { range: yRange, autorange: false } : { autorange: true }),
     },
@@ -194,7 +200,15 @@ export function Chart({
 
   return (
     <>
-      <div className="zoom" role="group" aria-label="Zoom">
+      <div className="zoom" role="group" aria-label="View and zoom">
+        {(["load", "error"] as const).map((v) => (
+          <button key={v} className={view === v ? "active" : ""} aria-pressed={view === v} onClick={() => setView(v)}>
+            {v === "load" ? "Load" : "Error"}
+          </button>
+        ))}
+        <span className="hint" style={{ marginRight: 10 }}>
+          {err ? "forecast − actual" : "the load in GWh"}
+        </span>
         {WINDOWS.map((w) => (
           <button
             key={w.label}

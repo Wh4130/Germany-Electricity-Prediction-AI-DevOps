@@ -110,9 +110,11 @@ A model that does not use one of these X returns it in `/features` with its valu
     { "id": "sarimax", "label": "SARIMAX", "url": "http://localhost:8000" },
     { "id": "tree", "label": "Tree", "url": "http://localhost:8001" },
     { "id": "tabicl", "label": "TabICL", "forecastCsv": "forecasts/tabicl_default_daily_1d_ctxall_test.csv" },
-    { "id": "timesfm", "label": "TimesFM-3", "forecastCsv": "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" }
+    { "id": "timesfm", "label": "TimesFM-3", "forecastCsv": "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" },
+    { "id": "hybrid", "label": "Hybrid", "forecastCsv": "forecasts/hybrid_daily_1d_test.csv" }
   ],
-  "featureSource": "sarimax"
+  "featureSource": "sarimax",
+  "defaultVisible": ["sarimax"]
 }
 ```
 
@@ -120,8 +122,13 @@ A model that does not use one of these X returns it in `/features` with its valu
 - `forecastCsv`: a static model, no API and no what-if. The file is in the shared forecast format; only its
   step-1 rows are drawn. Put it in `deploy/dashboard/public/` (the path is relative to the page).
 - `featureSource`: the live model whose `/features` fills the sliders.
-- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` aqua, `tabicl` pink, `timesfm` purple. A static
-  model has no what-if: the sliders do not move its forecast.
+- `defaultVisible` (optional): the ids of the models shown at the start; the others can be switched on above the
+  chart, and "Deselect all" hides every model. Without it, all models are shown. With one model shown, its 80%
+  interval is drawn.
+- Colors are fixed per `id`: `sarimax` blue, `tree` orange, `hybrid` cyan, `tabicl` pink, `timesfm` purple. A static
+  model has no what-if: the sliders do not move its forecast. The hybrid line is thicker than the others. The chart can show the load or the error (forecast − actual).
+- The `hybrid` forecasts are the average of TabICL and TimesFM-3 (point forecast and every quantile), made by
+  `src/analysis/make_hybrid_forecast.py`. The two models were chosen with the test year, so the hybrid is exploratory.
 - The 80% interval is drawn only when one model is shown; the models can be hidden in the chart.
 
 ## SARIMAX notes
