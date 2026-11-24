@@ -6,6 +6,7 @@ Run every EDA script and write all figures and tables to results/eda/.
 
 from __future__ import annotations
 
+import analyze_feature_correlation
 import analyze_pv_wind_vs_consumption
 import analyze_stationarity
 import make_feature_sources_table
@@ -27,6 +28,7 @@ def main() -> None:
     plot_mstl_decomposition.main("hourly")
     analyze_stationarity.main()
     analyze_pv_wind_vs_consumption.main()
+    analyze_feature_correlation.main()
     make_feature_sources_table.main()
 
 

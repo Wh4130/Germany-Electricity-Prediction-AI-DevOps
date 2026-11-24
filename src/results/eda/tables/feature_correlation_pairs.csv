@@ -1,0 +1,19 @@
+Feature A,Feature B,r
+cos_y1,daylight_duration,-0.98
+solar_generation_proxy,shortwave_radiation_sum,0.96
+shortwave_radiation_sum,daylight_duration,0.92
+cos_y1,shortwave_radiation_sum,-0.90
+is_holiday_weekday,is_holiday,0.88
+day_ahead_price_mean,gas_price_eu_usd,0.88
+solar_generation_proxy,daylight_duration,0.87
+cos_y1,is_dst,-0.86
+cos_y1,solar_generation_proxy,-0.86
+cos_y1,hdd,0.84
+daylight_duration,is_dst,0.81
+hdd,is_dst,-0.79
+daylight_duration,hdd,-0.77
+shortwave_radiation_sum,is_dst,0.75
+solar_generation_proxy,is_dst,0.72
+shortwave_radiation_sum,hdd,-0.72
+solar_capacity_mw,ipi_ei_level,-0.71
+solar_generation_proxy,hdd,-0.70
