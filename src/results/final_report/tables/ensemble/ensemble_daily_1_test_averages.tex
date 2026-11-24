@@ -1,0 +1,17 @@
+\begin{tabular}{lrrrrr}
+\toprule
+Average of & Models & RMSE (MWh) & RMSE gain vs best single \% & MAE (MWh) & MAE gain vs best single \% \\
+\midrule
+\textbf{TabICL + TimesFM-3, covariates} & 2 & 24,437 & 1.1 & 18,534 & 2.9 \\
+TabICL + TimesFM-3, covariates + SARIMAX & 3 & 24,745 & -0.2 & 18,373 & 3.8 \\
+TabICL + TimesFM-3, covariates + SARIMAX + Tree-based & 4 & 24,849 & -0.6 & 18,568 & 2.7 \\
+TabICL + SARIMAX & 2 & 24,860 & -0.6 & 18,593 & 2.6 \\
+TabICL + TimesFM-3, covariates + Tree-based & 3 & 25,129 & -1.7 & 18,850 & 1.3 \\
+TabICL + SARIMAX + Tree-based & 3 & 25,247 & -2.2 & 18,938 & 0.8 \\
+TimesFM-3, covariates + SARIMAX + Tree-based & 3 & 26,422 & 5.6 & 19,362 & 6.4 \\
+TabICL + Tree-based & 2 & 26,459 & -7.1 & 20,008 & -4.8 \\
+TimesFM-3, covariates + SARIMAX & 2 & 27,085 & 3.2 & 19,703 & 4.8 \\
+TimesFM-3, covariates + Tree-based & 2 & 27,647 & 1.2 & 20,241 & 2.2 \\
+SARIMAX + Tree-based & 2 & 27,998 & 6.2 & 20,415 & 5.5 \\
+\bottomrule
+\end{tabular}

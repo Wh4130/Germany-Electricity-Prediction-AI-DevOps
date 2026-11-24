@@ -2,9 +2,13 @@
 import { useEffect, useState } from "react";
 
 // a model keeps its color whatever else is shown (fixed slots, never by position)
-// (slot 4, yellow, is left out: next to the orange of the tree model it is hard to tell apart;
-//  slot 6, dark green, is left out: next to the green of the hybrid model it is hard to tell apart)
-const MODEL_SLOT: Record<string, number> = { sarimax: 1, tree: 2, hybrid: 3, tabicl: 5, timesfm: 7, foundation: 5 };
+// (slot 3, green, is left out: in dark mode it cannot be told from the pink of TabICL with green-blind vision;
+//  slot 4, yellow, is left out: next to the orange of the tree model it is hard to tell apart.
+//  The hybrid model has the cyan, slot 6.)
+const MODEL_SLOT: Record<string, number> = { sarimax: 1, tree: 2, hybrid: 6, tabicl: 5, timesfm: 7, foundation: 5 };
+
+// Width of the line of a model: the hybrid is drawn thicker than the models it is made of
+export const lineWidth = (id: string): number => (id === "hybrid" ? 3 : 2);
 
 export function modelSlot(id: string, index: number): number {
   return MODEL_SLOT[id] ?? Math.min(6 + index, 8); // any other model: the slots that are still free
