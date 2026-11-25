@@ -61,18 +61,19 @@ def latex_escape(text) -> str:
     return "".join(_LATEX_ESCAPES.get(ch, ch) for ch in str(text))
 
 
-def latex_table(raw: pd.DataFrame, shown: pd.DataFrame, bold_rows=None) -> str:
+def latex_table(raw: pd.DataFrame, shown: pd.DataFrame, bold_rows=None, numeric_align: str = "r") -> str:
     """
     A booktabs ``tabular`` for the LaTeX report. ``shown`` is the formatted table (``fmt``), ``raw`` the numbers
-    (they decide the alignment: text columns left, numeric columns right). The bold rows are the same as in the
-    Markdown table. Cells and headers are escaped, so the file can be ``\\input`` as it is.
+    (they decide the alignment: text columns left, numeric columns ``numeric_align``, right by default; "c" centres
+    them). The bold rows are the same as in the Markdown table. Cells and headers are escaped, so the file can be
+    ``\\input`` as it is.
     """
     def label(col) -> str:
         return " ".join(map(str, col)) if isinstance(col, tuple) else str(col)
 
     numeric = [pd.api.types.is_numeric_dtype(raw[c]) and not pd.api.types.is_bool_dtype(raw[c]) for c in raw.columns]
     bold = set(bold_rows) if bold_rows is not None else set()
-    lines = [r"\begin{tabular}{" + "".join("r" if n else "l" for n in numeric) + "}", r"\toprule",
+    lines = [r"\begin{tabular}{" + "".join(numeric_align if n else "l" for n in numeric) + "}", r"\toprule",
              " & ".join(latex_escape(label(c)) for c in shown.columns) + r" \\", r"\midrule"]
     for i, row in enumerate(shown.itertuples(index=False)):
         cells = ["" if pd.isna(v) else latex_escape(v) for v in row]
@@ -95,11 +96,11 @@ class Report:
         self.n_tables = 0
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
-    def add(self, name: str, title: str, df: pd.DataFrame, note: str = "", bold_rows=None):
+    def add(self, name: str, title: str, df: pd.DataFrame, note: str = "", bold_rows=None, numeric_align: str = "r"):
         df = df.reset_index(drop=True)
         df.to_csv(self.out_dir / f"{self.prefix}{name}.csv", index=False)
         shown = fmt(df).astype(object)
-        (self.out_dir / f"{self.prefix}{name}.tex").write_text(latex_table(df, shown, bold_rows))
+        (self.out_dir / f"{self.prefix}{name}.tex").write_text(latex_table(df, shown, bold_rows, numeric_align))
         if bold_rows is not None and len(shown):
             first = shown.columns[0]
             shown.loc[bold_rows, first] = "**" + shown.loc[bold_rows, first].astype(str) + "**"

@@ -14,6 +14,7 @@ export const isLive = (model: ModelConfig): model is ModelConfig & { url: string
 export interface AppConfig {
   models: ModelConfig[];
   featureSource: string; // the model whose /features fills the sliders
+  defaultVisible?: string[]; // the models shown at the start (the others can be switched on); default: all
 }
 
 export type Quantiles = Partial<Record<"q0.1" | "q0.9", number>>;

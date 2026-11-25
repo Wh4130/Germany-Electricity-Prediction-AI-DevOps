@@ -1,0 +1,13 @@
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccc}
+\toprule
+Pair & Correlation & Threshold & \shortstack{RMSE of\\better model} & \shortstack{RMSE of\\average} & \shortstack{RMSE\\change \%} \\
+\midrule
+SARIMAX + Tree-based & 0.53 & 0.74 & 29,852 & 27,998 & $-$6.2 \\
+TimesFM-3 cov. + SARIMAX & 0.76 & 0.87 & 27,985 & 27,085 & $-$3.2 \\
+TimesFM-3 cov. + Tree-based & 0.58 & 0.62 & 27,985 & 27,647 & $-$1.2 \\
+TabICL + TimesFM-3 cov. & 0.72 & 0.76 & 24,700 & 24,437 & $-$1.1 \\
+TabICL + SARIMAX & 0.66 & 0.64 & 24,700 & 24,860 & +0.6 \\
+TabICL + Tree-based & 0.61 & 0.39 & 24,700 & 26,459 & +7.1 \\
+\bottomrule
+\end{tabular}

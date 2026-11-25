@@ -3,8 +3,8 @@
   "resolution": "daily",
   "horizon": 7,
   "split": "test",
-  "n_origins": 366,
-  "created_at": "2026-11-17T20:58:56",
+  "n_origins": 360,
+  "created_at": "2026-11-20T15:49:46",
   "model_per_horizon": {
     "1": "LightGBM",
     "2": "XGBoost",

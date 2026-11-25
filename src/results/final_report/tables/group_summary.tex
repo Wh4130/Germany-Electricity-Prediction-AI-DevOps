@@ -1,0 +1,23 @@
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash\hangindent=1em}p{0.23\textwidth}ccccc>{\raggedright\arraybackslash}p{0.15\textwidth}}
+\toprule
+Group & Days & SARIMAX & Tree-based & TabICL & \shortstack{TimesFM-3\\cov.} & Best \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Day type}} \\
+\hspace{1em}Normal weekday & 247 & 20,080 & 23,555 & 18,855 & 18,689 & TimesFM-3 \\
+\hspace{1em}Weekend & 102 & 19,249 & 25,263 & 17,234 & 20,428 & TabICL \\
+\hspace{1em}Holiday & 9 & 55,684 & 49,216 & 26,699 & 34,613 & TabICL \\
+\hspace{1em}Bridge day & 3 & 22,157 & 54,459 & 28,069 & 64,909 & SARIMAX \\
+\hspace{1em}Christmas / New Year & 9 & 81,205 & 49,772 & 43,897 & 69,133 & TabICL \\
+\multicolumn{7}{@{}l}{\textit{Heating degree days}} \\
+\hspace{1em}0 (no heating) & 75 & 18,284 & 20,816 & 16,594 & 18,429 & TabICL \\
+\hspace{1em}mild & 94 & 18,880 & 19,581 & 17,514 & 18,040 & TabICL \\
+\hspace{1em}cool & 92 & 21,078 & 24,055 & 20,841 & 18,994 & TimesFM-3 \\
+\hspace{1em}cold & 88 & 20,886 & 31,593 & 18,261 & 21,300 & TabICL \\
+\multicolumn{7}{@{}l}{\textit{Change vs. last week}} \\
+\hspace{1em}no heating either week & 56 & 18,027 & 21,093 & 16,244 & 17,308 & TabICL \\
+\hspace{1em}much warmer & 60 & 22,008 & 26,528 & 23,629 & 22,469 & SARIMAX \\
+\hspace{1em}similar & 180 & 18,655 & 21,825 & 17,080 & 18,220 & TabICL \\
+\hspace{1em}much colder & 53 & 23,306 & 31,956 & 19,120 & 20,807 & TabICL \\
+\bottomrule
+\end{tabular}

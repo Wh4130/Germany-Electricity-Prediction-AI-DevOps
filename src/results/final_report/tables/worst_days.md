@@ -20,17 +20,17 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 | SARIMAX | hourly 1 h | 5.3 | 2.7 | 70.0 | 40.0 | 0.0 | 20.0 |
 | SARIMAX | hourly 24 h | 9.9 | 2.7 | 80.0 | 70.0 | 0.0 | 10.0 |
 | Tree-based | daily 1 d | 11.9 | 2.7 | 50.0 | 70.0 | 0.0 | 20.0 |
-| Tree-based | daily 7 d | 8.5 | 2.7 | 50.0 | 70.0 | 0.0 | 20.0 |
+| Tree-based | daily 7 d | 8.6 | 2.7 | 50.0 | 70.0 | 0.0 | 20.0 |
 | Tree-based | hourly 1 h | 4.8 | 2.7 | 40.0 | 50.0 | 0.0 | 30.0 |
-| Tree-based | hourly 24 h | 6.3 | 2.7 | 30.0 | 30.0 | 0.0 | 70.0 |
+| Tree-based | hourly 24 h | 7.5 | 2.7 | 40.0 | 40.0 | 0.0 | 60.0 |
 
 ## Days among the worst for several models
 
 | Date | Models | Runs |
 |---|---|---|
-| 2024-03-31 | 17 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
-| 2024-05-01 | 10 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h) |
-| 2024-01-01 | 8 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-03-31 | 16 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-05-01 | 10 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-01-01 | 8 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
 | 2024-12-24 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 7 d); Tree-based (daily 1 d); Tree-based (hourly 24 h) |
 | 2024-12-29 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (hourly 24 h) |
 | 2024-01-28 | 6 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
@@ -56,7 +56,9 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 | 2024-01-03 | 2 | SARIMAX (daily 1 d); TabICL (daily 1 d) |
 | 2024-01-08 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
 | 2024-01-12 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
-| 2024-05-28 | 2 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d) |
+| 2024-01-29 | 2 | Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-05-28 | 2 | TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d) |
+| 2024-09-27 | 2 | TabICL (daily 1 d); Tree-based (hourly 1 h) |
 | 2024-10-27 | 2 | TabICL (daily 1 d); Tree-based (daily 1 d) |
 | 2024-11-01 | 2 | SARIMAX (hourly 1 h); Tree-based (hourly 1 h) |
 | 2024-12-27 | 2 | SARIMAX (hourly 1 h); TabICL (daily 1 d) |
@@ -340,13 +342,13 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
 | Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-03-31 | Sun | 3,500 | 9.4 | 3,463 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
-| 2 | 2024-12-09 | Mon | 2,915 | 4.4 | -2,905 | 2,555 | +0.8 | 100 | none in our inputs |
-| 3 | 2024-12-29 | Sun | 2,753 | 5.5 | -2,741 | 698 | +4.9 | 105 | Christmas / New Year, Weekend, Much colder than last week |
-| 4 | 2024-11-16 | Sat | 2,684 | 5.0 | -2,654 | 4,317 | -0.6 | 94 | Weekend, no other reason in our inputs |
-| 5 | 2024-01-13 | Sat | 2,608 | 4.3 | -2,583 | 5,744 | +1.2 | 75 | Weekend, no other reason in our inputs |
-| 6 | 2024-12-24 | Tue | 2,566 | 5.4 | 2,335 | 12,727 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
-| 7 | 2024-07-29 | Mon | 2,547 | 5.1 | 2,511 | 4,629 | +1.5 | 72 | none in our inputs |
-| 8 | 2024-01-19 | Fri | 2,436 | 3.8 | -2,419 | 2,170 | +0.8 | 79 | none in our inputs |
-| 9 | 2024-11-17 | Sun | 2,335 | 4.4 | -2,271 | 4,072 | -1.2 | 63 | Weekend, no other reason in our inputs |
-| 10 | 2024-01-21 | Sun | 2,227 | 4.0 | -2,174 | 1,161 | +0.4 | 50 | Weekend, no other reason in our inputs |
+| 1 | 2024-03-31 | Sun | 4,035 | 10.9 | 4,035 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
+| 2 | 2024-07-29 | Mon | 3,637 | 7.4 | 3,637 | 4,629 | +1.5 | 72 | none in our inputs |
+| 3 | 2024-05-01 | Wed | 3,318 | 8.2 | 3,318 | 16,540 | -11.2 | 4 | Holiday, Much warmer than last week |
+| 4 | 2024-12-24 | Tue | 3,277 | 6.8 | 3,277 | 12,727 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
+| 5 | 2024-12-09 | Mon | 3,210 | 4.7 | -3,210 | 2,555 | +0.8 | 100 | none in our inputs |
+| 6 | 2024-01-13 | Sat | 3,170 | 5.2 | -3,152 | 5,744 | +1.2 | 75 | Weekend, no other reason in our inputs |
+| 7 | 2024-12-29 | Sun | 3,067 | 6.1 | -3,037 | 698 | +4.9 | 105 | Christmas / New Year, Weekend, Much colder than last week |
+| 8 | 2024-01-29 | Mon | 2,766 | 4.6 | 2,668 | 5,862 | +1.8 | 81 | none in our inputs |
+| 9 | 2024-11-16 | Sat | 2,602 | 4.7 | -2,602 | 4,317 | -0.6 | 94 | Weekend, no other reason in our inputs |
+| 10 | 2024-11-17 | Sun | 2,550 | 4.7 | -2,524 | 4,072 | -1.2 | 63 | Weekend, no other reason in our inputs |

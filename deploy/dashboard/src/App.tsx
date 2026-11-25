@@ -42,6 +42,7 @@ export function App() {
       .then((c) => {
         if (cancelled) return;
         setConfig(c);
+        if (c.defaultVisible) setHidden(new Set(c.models.map((m) => m.id).filter((id) => !c.defaultVisible!.includes(id))));
         for (const model of c.models) {
           const fail = (e: Error, note = "") => {
             if (!cancelled) setError(model.id, `${model.label}: ${e.message}${note}`);
@@ -177,6 +178,13 @@ export function App() {
                   </button>
                 );
               })}
+              <button
+                className="legend-item"
+                title={visible.length ? "Hide every model" : "Show every model"}
+                onClick={() => setHidden(visible.length ? new Set(models.map((m) => m.id)) : new Set())}
+              >
+                {visible.length ? "Deselect all" : "Select all"}
+              </button>
             </div>
           </div>
           {Object.entries(errors)
@@ -196,7 +204,8 @@ export function App() {
           />
           <p className="hint">
             Click a day to select it. Diamonds: the forecasts of that day with the X on the left. Click a model above
-            to hide or show it; the 80% interval is drawn when only one model is shown.
+            to hide or show it; the 80% interval is drawn when only one model is shown. "Error" shows forecast − actual,
+            which separates the models.
           </p>
         </section>
 

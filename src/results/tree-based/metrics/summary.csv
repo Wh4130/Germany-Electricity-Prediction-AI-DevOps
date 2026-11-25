@@ -1,5 +1,5 @@
 file,model_dir,model,experiment,setting,resolution,horizon,split,n_origins,MAE,RMSE,MAPE_%,bias,MAE_skill,pinball,coverage80_%
 tree_daily_1d_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,daily,1,test,366,25211.681496278128,34206.96086266705,2.015827434617048,-3385.826580457345,0.5631746243788692,,
-tree_daily_7d_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,daily,7,test,366,32188.101522776684,43203.18331073815,2.5523967238725347,-4993.767343164538,0.4353315601394676,,
-tree_hourly_1h_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,hourly,1,test,8784,407.5247405859039,530.7650203473058,0.7820086476231811,-46.05179959974193,0.846572578538081,,
-tree_hourly_24h_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,hourly,24,test,8784,1152.571801337606,1507.5437393030736,2.210252421342982,-238.3646451702705,0.5662075480693426,,
+tree_daily_7d_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,daily,7,test,360,32090.807579445296,43115.586093083955,2.5432562720735796,-4821.096107399693,0.4354356406299278,,
+tree_hourly_1h_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,hourly,1,test,8784,407.524740585904,530.765020347306,0.7820086476231813,-46.05179959974217,0.8465725785380809,,
+tree_hourly_24h_test.csv,tree-based,"tree-based (direct multi-step, one model per horizon)",,,hourly,24,test,366,1146.939241862793,1517.973998080105,2.1618918016650066,-148.6378778824809,0.5683600936703934,,

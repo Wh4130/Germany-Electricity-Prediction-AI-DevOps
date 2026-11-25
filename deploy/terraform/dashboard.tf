@@ -65,8 +65,11 @@ resource "azurerm_storage_blob" "config" {
       # static models: the forecast files are in the dashboard (deploy/dashboard/public/forecasts), no API
       { id = "tabicl", label = "TabICL", forecastCsv = "forecasts/tabicl_default_daily_1d_ctxall_test.csv" },
       { id = "timesfm", label = "TimesFM-3", forecastCsv = "forecasts/timesfm3_zs_cov_daily_1d_ctxall_test.csv" },
+      # hybrid: average of TabICL and TimesFM-3 (src/analysis/make_hybrid_forecast.py); exploratory, chosen on the test year
+      { id = "hybrid", label = "Hybrid", forecastCsv = "forecasts/hybrid_daily_1d_test.csv" },
     ]
-    featureSource = "sarimax"
+    featureSource  = "sarimax"
+    defaultVisible = ["sarimax"]
   })
 
   depends_on = [azurerm_storage_account_static_website.dashboard]
