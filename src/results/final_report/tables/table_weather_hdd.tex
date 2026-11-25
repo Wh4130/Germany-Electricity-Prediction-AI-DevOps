@@ -2,71 +2,59 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
-hourly 1 h & 0 (no heating) & TimesFM-3 & 137 & 383 & 10 & 81.4 & 80.3 & 21.8 \\
+hourly 1 h & 0 (no heating) & TimesFM-3, covariates & 137 & 385 & 10 & 81.3 & 82.6 & 21.7 \\
 hourly 1 h & 0 (no heating) & SARIMAX & 137 & 463 & -41 & 77.5 & 85.3 & 20.8 \\
 hourly 1 h & 0 (no heating) & Tree-based & 137 & 452 & -69 & 78.1 &  & 23.9 \\
-hourly 1 h & mild & TimesFM-3 & 202 & 382 & 36 & 82.1 & 82.2 & 27.4 \\
+hourly 1 h & mild & TimesFM-3, covariates & 202 & 387 & 53 & 81.9 & 84.1 & 27.5 \\
 hourly 1 h & mild & SARIMAX & 202 & 503 & 24 & 76.4 & 83.3 & 28.5 \\
 hourly 1 h & mild & Tree-based & 202 & 394 & 3 & 81.5 &  & 26.3 \\
-hourly 1 h & cool & TimesFM-3 & 195 & 387 & 30 & 83.7 & 82.4 & 27.3 \\
+hourly 1 h & cool & TimesFM-3, covariates & 195 & 388 & 37 & 83.7 & 85.4 & 27.2 \\
 hourly 1 h & cool & SARIMAX & 195 & 472 & 17 & 80.1 & 86.4 & 26.3 \\
 hourly 1 h & cool & Tree-based & 195 & 407 & -64 & 82.9 &  & 26.7 \\
-hourly 1 h & cold & TimesFM-3 & 138 & 351 & -13 & 87.8 & 86.3 & 23.5 \\
+hourly 1 h & cold & TimesFM-3, covariates & 138 & 353 & 36 & 87.7 & 88.7 & 23.5 \\
 hourly 1 h & cold & SARIMAX & 138 & 462 & -35 & 83.9 & 87.0 & 24.4 \\
 hourly 1 h & cold & Tree-based & 138 & 369 & -64 & 87.2 &  & 23.0 \\
-hourly 24 h & 0 (no heating) & TimesFM-3 & 137 & 1,000 & 29 & 51.5 & 82.4 & 21.8 \\
-hourly 24 h & 0 (no heating) & TimesFM-3 & 137 & 1,134 & 25 & 45.0 & 80.7 & 22.1 \\
+hourly 24 h & 0 (no heating) & TimesFM-3, covariates & 137 & 1,000 & 29 & 51.5 & 82.4 & 21.8 \\
 hourly 24 h & 0 (no heating) & SARIMAX & 137 & 1,200 & -278 & 41.8 & 83.0 & 20.6 \\
-hourly 24 h & 0 (no heating) & Tree-based & 137 & 1,254 & 450 & 39.1 &  & 24.0 \\
-hourly 24 h & mild & TimesFM-3, no covariates & 202 & 1,048 & 68 & 50.8 & 80.3 & 25.7 \\
+hourly 24 h & 0 (no heating) & Tree-based & 137 & 1,268 & 80 & 38.5 &  & 23.9 \\
 hourly 24 h & mild & TimesFM-3, covariates & 202 & 932 & 80 & 56.3 & 82.1 & 25.6 \\
 hourly 24 h & mild & SARIMAX & 202 & 1,276 & 113 & 40.2 & 77.2 & 27.6 \\
-hourly 24 h & mild & Tree-based & 202 & 982 & 36 & 53.9 &  & 23.7 \\
-hourly 24 h & cool & TimesFM-3, no covariates & 195 & 1,170 & -54 & 50.7 & 79.3 & 28.2 \\
+hourly 24 h & mild & Tree-based & 202 & 991 & -18 & 53.5 &  & 23.6 \\
 hourly 24 h & cool & TimesFM-3, covariates & 195 & 1,039 & 76 & 56.3 & 80.1 & 28.1 \\
 hourly 24 h & cool & SARIMAX & 195 & 1,244 & 153 & 47.6 & 77.6 & 26.5 \\
-hourly 24 h & cool & Tree-based & 195 & 1,062 & -293 & 55.3 &  & 25.2 \\
-hourly 24 h & cold & TimesFM-3, no covariates & 138 & 1,045 & -263 & 63.7 & 79.9 & 24.0 \\
+hourly 24 h & cool & Tree-based & 195 & 1,054 & -266 & 55.6 &  & 24.7 \\
 hourly 24 h & cold & TimesFM-3, covariates & 138 & 952 & -119 & 66.9 & 83.2 & 24.4 \\
 hourly 24 h & cold & SARIMAX & 138 & 1,250 & -292 & 56.6 & 76.6 & 25.3 \\
-hourly 24 h & cold & Tree-based & 138 & 1,205 & -764 & 58.1 &  & 27.1 \\
-daily 1 d & 0 (no heating) & TimesFM-3, no covariates & 75 & 20,356 & -9,330 & 37.5 & 78.7 & 18.3 \\
+hourly 24 h & cold & Tree-based & 138 & 1,248 & -742 & 56.6 &  & 27.8 \\
 daily 1 d & 0 (no heating) & TimesFM-3, covariates & 75 & 18,429 & 1,306 & 43.4 & 81.3 & 20.6 \\
 daily 1 d & 0 (no heating) & TabICL & 75 & 16,594 & -2,284 & 49.1 & 78.7 & 19.4 \\
 daily 1 d & 0 (no heating) & SARIMAX & 75 & 18,284 & -3,654 & 43.9 & 84.0 & 19.8 \\
 daily 1 d & 0 (no heating) & Tree-based & 75 & 20,816 & 1,232 & 36.1 &  & 18.6 \\
-daily 1 d & mild & TimesFM-3 & 94 & 18,040 & 2,522 & 64.8 & 90.4 & 25.3 \\
-daily 1 d & mild & TimesFM-3 & 94 & 23,257 & -298 & 54.7 & 89.4 & 26.1 \\
+daily 1 d & mild & TimesFM-3, covariates & 94 & 18,040 & 2,522 & 64.8 & 90.4 & 25.3 \\
 daily 1 d & mild & TabICL & 94 & 17,514 & 4,401 & 65.9 & 76.6 & 25.7 \\
 daily 1 d & mild & SARIMAX & 94 & 18,880 & 2,742 & 63.2 & 85.1 & 25.6 \\
 daily 1 d & mild & Tree-based & 94 & 19,581 & 1,687 & 61.8 &  & 21.9 \\
-daily 1 d & cool & TimesFM-3 & 92 & 18,994 & 4,511 & 62.7 & 91.3 & 26.1 \\
-daily 1 d & cool & TimesFM-3 & 92 & 26,402 & 1,365 & 48.1 & 80.4 & 29.0 \\
+daily 1 d & cool & TimesFM-3, covariates & 92 & 18,994 & 4,511 & 62.7 & 91.3 & 26.1 \\
 daily 1 d & cool & TabICL & 92 & 20,841 & 1,521 & 59.0 & 75.0 & 29.9 \\
 daily 1 d & cool & SARIMAX & 92 & 21,078 & 4,402 & 58.6 & 82.6 & 28.0 \\
 daily 1 d & cool & Tree-based & 92 & 24,055 & -6,133 & 52.7 &  & 26.4 \\
-daily 1 d & cold & TimesFM-3 & 88 & 21,300 & -8,280 & 67.3 & 80.7 & 28.0 \\
-daily 1 d & cold & TimesFM-3 & 88 & 25,261 & -8,761 & 61.2 & 80.7 & 26.6 \\
+daily 1 d & cold & TimesFM-3, covariates & 88 & 21,300 & -8,280 & 67.3 & 80.7 & 28.0 \\
 daily 1 d & cold & TabICL & 88 & 18,261 & -5,113 & 72.0 & 78.4 & 25.0 \\
 daily 1 d & cold & SARIMAX & 88 & 20,886 & -10,696 & 68.0 & 77.3 & 26.5 \\
 daily 1 d & cold & Tree-based & 88 & 31,593 & -17,050 & 51.5 &  & 33.1 \\
-daily 7 d & 0 (no heating) & TimesFM-3 & 75 & 20,563 & -4,624 & 36.9 & 73.0 & 19.0 \\
-daily 7 d & 0 (no heating) & TimesFM-3 & 75 & 24,864 & -12,927 & 23.7 & 76.2 & 18.1 \\
+daily 7 d & 0 (no heating) & TimesFM-3, covariates & 75 & 20,563 & -4,624 & 36.9 & 73.0 & 19.0 \\
 daily 7 d & 0 (no heating) & TabICL & 75 & 19,558 & -4,747 & 40.0 & 72.4 & 18.7 \\
 daily 7 d & 0 (no heating) & SARIMAX & 75 & 22,283 & -8,459 & 31.6 & 92.6 & 17.3 \\
 daily 7 d & 0 (no heating) & Tree-based & 75 & 23,997 & 3,501 & 26.4 &  & 16.7 \\
-daily 7 d & mild & TimesFM-3 & 94 & 20,361 & 6,595 & 60.3 & 85.6 & 23.6 \\
-daily 7 d & mild & TimesFM-3 & 94 & 26,203 & 1,683 & 48.9 & 87.4 & 23.9 \\
+daily 7 d & mild & TimesFM-3, covariates & 94 & 20,361 & 6,595 & 60.3 & 85.6 & 23.6 \\
 daily 7 d & mild & TabICL & 94 & 20,907 & 9,092 & 59.2 & 77.7 & 25.1 \\
 daily 7 d & mild & SARIMAX & 94 & 22,894 & 8,030 & 55.4 & 91.3 & 22.3 \\
 daily 7 d & mild & Tree-based & 94 & 25,368 & 6,597 & 50.5 &  & 22.1 \\
-daily 7 d & cool & TimesFM-3 & 92 & 24,512 & 5,039 & 49.8 & 80.8 & 27.4 \\
-daily 7 d & cool & TimesFM-3 & 92 & 30,841 & 3,471 & 36.8 & 83.5 & 27.1 \\
+daily 7 d & cool & TimesFM-3, covariates & 92 & 24,512 & 5,039 & 49.8 & 80.8 & 27.4 \\
 daily 7 d & cool & TabICL & 92 & 25,170 & 3,471 & 48.4 & 75.0 & 29.1 \\
 daily 7 d & cool & SARIMAX & 92 & 28,387 & 3,478 & 41.8 & 82.5 & 26.7 \\
 daily 7 d & cool & Tree-based & 92 & 31,724 & -5,061 & 35.0 &  & 26.6 \\
-daily 7 d & cold & TimesFM-3 & 88 & 28,082 & -11,655 & 56.2 & 75.7 & 30.1 \\
-daily 7 d & cold & TimesFM-3 & 88 & 36,565 & -19,056 & 43.0 & 74.3 & 30.9 \\
+daily 7 d & cold & TimesFM-3, covariates & 88 & 28,082 & -11,655 & 56.2 & 75.7 & 30.1 \\
 daily 7 d & cold & TabICL & 88 & 24,372 & -7,308 & 62.0 & 73.8 & 27.1 \\
 daily 7 d & cold & SARIMAX & 88 & 37,373 & -27,713 & 41.7 & 69.8 & 33.7 \\
 daily 7 d & cold & Tree-based & 88 & 42,885 & -30,529 & 33.1 &  & 34.6 \\

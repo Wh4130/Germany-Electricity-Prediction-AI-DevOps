@@ -8,13 +8,10 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 |---|---|---|---|---|---|---|---|
 | TabICL | daily 1 d | 9.6 | 2.7 | 60.0 | 50.0 | 0.0 | 30.0 |
 | TabICL | daily 7 d | 9.4 | 2.7 | 50.0 | 80.0 | 0.0 | 20.0 |
-| TimesFM-3 | daily 1 d | 11.6 | 2.7 | 60.0 | 60.0 | 0.0 | 30.0 |
-| TimesFM-3 | daily 7 d | 9.0 | 2.7 | 60.0 | 70.0 | 0.0 | 30.0 |
-| TimesFM-3 | hourly 24 h | 11.4 | 2.7 | 80.0 | 70.0 | 0.0 | 20.0 |
-| TimesFM-3 | daily 1 d | 20.2 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
-| TimesFM-3 | daily 7 d | 16.3 | 2.7 | 90.0 | 60.0 | 0.0 | 10.0 |
-| TimesFM-3 | hourly 1 h | 5.5 | 2.7 | 70.0 | 60.0 | 0.0 | 20.0 |
-| TimesFM-3 | hourly 24 h | 16.4 | 2.7 | 90.0 | 70.0 | 0.0 | 10.0 |
+| TimesFM-3, covariates | daily 1 d | 11.6 | 2.7 | 60.0 | 60.0 | 0.0 | 30.0 |
+| TimesFM-3, covariates | daily 7 d | 9.0 | 2.7 | 60.0 | 70.0 | 0.0 | 30.0 |
+| TimesFM-3, covariates | hourly 1 h | 5.4 | 2.7 | 80.0 | 50.0 | 0.0 | 10.0 |
+| TimesFM-3, covariates | hourly 24 h | 11.4 | 2.7 | 80.0 | 70.0 | 0.0 | 20.0 |
 | SARIMAX | daily 1 d | 13.2 | 2.7 | 100.0 | 70.0 | 0.0 | 0.0 |
 | SARIMAX | daily 7 d | 7.9 | 2.7 | 80.0 | 80.0 | 0.0 | 10.0 |
 | SARIMAX | hourly 1 h | 5.3 | 2.7 | 70.0 | 40.0 | 0.0 | 20.0 |
@@ -22,43 +19,38 @@ Tags can overlap, so the shares need not add up to 100 %. Weekend alone does not
 | Tree-based | daily 1 d | 11.9 | 2.7 | 50.0 | 70.0 | 0.0 | 20.0 |
 | Tree-based | daily 7 d | 8.6 | 2.7 | 50.0 | 70.0 | 0.0 | 20.0 |
 | Tree-based | hourly 1 h | 4.8 | 2.7 | 40.0 | 50.0 | 0.0 | 30.0 |
-| Tree-based | hourly 24 h | 7.5 | 2.7 | 40.0 | 40.0 | 0.0 | 60.0 |
+| Tree-based | hourly 24 h | 6.3 | 2.7 | 30.0 | 30.0 | 0.0 | 70.0 |
 
 ## Days among the worst for several models
 
 | Date | Models | Runs |
 |---|---|---|
-| 2024-03-31 | 16 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
-| 2024-05-01 | 10 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
-| 2024-01-01 | 8 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-03-31 | 14 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-05-01 | 7 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h) |
 | 2024-12-24 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 7 d); Tree-based (daily 1 d); Tree-based (hourly 24 h) |
-| 2024-12-29 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-01-28 | 6 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
-| 2024-01-02 | 5 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3 (daily 1 d) |
-| 2024-04-01 | 5 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
-| 2024-05-30 | 5 | SARIMAX (hourly 1 h); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
-| 2024-10-03 | 5 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
-| 2024-11-16 | 5 | SARIMAX (daily 7 d); TabICL (daily 7 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-12-28 | 5 | SARIMAX (daily 7 d); SARIMAX (hourly 1 h); TabICL (daily 1 d); TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d) |
-| 2024-12-31 | 5 | SARIMAX (daily 1 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3 (daily 1 d); Tree-based (hourly 1 h) |
-| 2024-03-29 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h) |
-| 2024-05-09 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h) |
-| 2024-05-10 | 4 | TimesFM-3 (daily 7 d); TimesFM-3 (hourly 1 h); TimesFM-3 (hourly 24 h); Tree-based (daily 7 d) |
-| 2024-10-04 | 4 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h); Tree-based (daily 7 d) |
-| 2024-12-25 | 4 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h) |
-| 2024-12-26 | 4 | SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h); TimesFM-3 (hourly 24 h) |
-| 2024-01-24 | 3 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3 (daily 7 d) |
-| 2024-05-20 | 3 | TimesFM-3 (daily 1 d); TimesFM-3 (daily 7 d); TimesFM-3 (hourly 24 h) |
-| 2024-07-29 | 3 | TimesFM-3 (hourly 24 h); Tree-based (daily 7 d); Tree-based (hourly 24 h) |
-| 2024-09-27 | 3 | TabICL (daily 1 d); TimesFM-3 (hourly 1 h); Tree-based (hourly 1 h) |
-| 2024-11-25 | 3 | SARIMAX (hourly 1 h); TimesFM-3 (hourly 1 h); Tree-based (hourly 1 h) |
-| 2024-12-23 | 3 | SARIMAX (daily 1 d); SARIMAX (hourly 24 h); TimesFM-3 (hourly 24 h) |
+| 2024-12-29 | 7 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-01-01 | 6 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-01-28 | 6 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d) |
+| 2024-11-16 | 5 | SARIMAX (daily 7 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-12-28 | 5 | SARIMAX (daily 7 d); SARIMAX (hourly 1 h); TabICL (daily 1 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d) |
+| 2024-12-31 | 5 | SARIMAX (daily 1 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3, covariates (daily 1 d); Tree-based (hourly 1 h) |
+| 2024-01-02 | 4 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h) |
+| 2024-10-04 | 4 | TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d) |
+| 2024-01-24 | 3 | TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 7 d) |
+| 2024-05-10 | 3 | TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d) |
+| 2024-07-29 | 3 | TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d); Tree-based (hourly 24 h) |
+| 2024-09-27 | 3 | TabICL (daily 1 d); TimesFM-3, covariates (hourly 1 h); Tree-based (hourly 1 h) |
+| 2024-11-25 | 3 | SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 1 h); Tree-based (hourly 1 h) |
+| 2024-12-23 | 3 | SARIMAX (daily 1 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h) |
+| 2024-12-25 | 3 | SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h) |
+| 2024-12-26 | 3 | SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h) |
 | 2024-01-03 | 2 | SARIMAX (daily 1 d); TabICL (daily 1 d) |
 | 2024-01-08 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
 | 2024-01-12 | 2 | Tree-based (daily 1 d); Tree-based (daily 7 d) |
-| 2024-01-29 | 2 | Tree-based (hourly 1 h); Tree-based (hourly 24 h) |
+| 2024-04-01 | 2 | TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h) |
 | 2024-05-28 | 2 | TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d) |
-| 2024-09-27 | 2 | TabICL (daily 1 d); Tree-based (hourly 1 h) |
+| 2024-05-30 | 2 | SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 24 h) |
+| 2024-10-03 | 2 | TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h) |
 | 2024-10-27 | 2 | TabICL (daily 1 d); Tree-based (daily 1 d) |
 | 2024-11-01 | 2 | SARIMAX (hourly 1 h); Tree-based (hourly 1 h) |
 | 2024-12-27 | 2 | SARIMAX (hourly 1 h); TabICL (daily 1 d) |
@@ -98,7 +90,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-02 | Thu | 73,574 | 5.9 | 73,574 | 111,116 | -12.7 | 36 | Holiday week, Much warmer than last week |
 | 10 | 2024-12-24 | Tue | 67,925 | 6.0 | 67,925 | 305,451 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
 
-## TimesFM-3 (daily 1 d)
+## TimesFM-3, covariates (daily 1 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -115,7 +107,7 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-11-16 | Sat | 70,706 | 5.4 | -70,706 | 103,600 | -0.6 | 94 | Weekend, no other reason in our inputs |
 | 10 | 2024-01-28 | Sun | 70,300 | 6.2 | 70,300 | 179,582 | -2.5 | 59 | Weekend, no other reason in our inputs |
 
-## TimesFM-3 (daily 7 d)
+## TimesFM-3, covariates (daily 7 d)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -132,7 +124,24 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 9 | 2024-05-28 | Tue | 80,428 | 6.7 | 80,428 | 52,790 | +2.9 | 91 | none in our inputs |
 | 10 | 2024-01-01 | Mon | 79,917 | 7.8 | 79,917 | 38,117 | +3.7 | 16 | Holiday, Christmas / New Year, Much colder than last week |
 
-## TimesFM-3 (hourly 24 h)
+## TimesFM-3, covariates (hourly 1 h)
+
+All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
+
+| Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 2024-03-31 | Sun | 1,051 | 2.8 | 534 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
+| 2 | 2024-04-01 | Mon | 880 | 2.1 | -153 | 11,563 | -4.7 | 36 | Holiday, Much warmer than last week |
+| 3 | 2024-05-01 | Wed | 829 | 2.1 | 407 | 16,540 | -11.2 | 4 | Holiday, Much warmer than last week |
+| 4 | 2024-11-25 | Mon | 795 | 1.3 | -139 | 1,983 | -7.3 | 55 | Much warmer than last week |
+| 5 | 2024-05-10 | Fri | 757 | 1.7 | 600 | 7,908 | +0.4 | 76 | Bridge day |
+| 6 | 2024-09-27 | Fri | 741 | 1.3 | -521 | 5,358 | +1.1 | 15 | none in our inputs |
+| 7 | 2024-10-03 | Thu | 707 | 1.6 | 325 | 9,526 | +5.8 | 73 | Holiday, Much colder than last week |
+| 8 | 2024-04-02 | Tue | 654 | 1.2 | -67 | 2,552 | -2.3 | 33 | Holiday week |
+| 9 | 2024-03-29 | Fri | 640 | 1.4 | 83 | 10,281 | +0.2 | 38 | Holiday |
+| 10 | 2024-03-28 | Thu | 634 | 1.1 | 88 | 1,237 | +1.6 | 51 | Holiday week |
+
+## TimesFM-3, covariates (hourly 24 h)
 
 All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
@@ -148,74 +157,6 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 | 8 | 2024-12-23 | Mon | 3,122 | 5.8 | 2,424 | 6,902 | +6.0 | 59 | Holiday week, Much colder than last week |
 | 9 | 2024-07-29 | Mon | 2,937 | 6.1 | 2,937 | 4,629 | +1.5 | 72 | none in our inputs |
 | 10 | 2024-12-26 | Thu | 2,929 | 6.4 | 2,929 | 12,914 | +4.8 | 113 | Holiday, Christmas / New Year, Much colder than last week |
-
-## TimesFM-3 (daily 1 d)
-
-All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
-
-| Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-05-01 | Wed | 309,136 | 31.6 | 309,136 | 396,971 | -12.8 | 4 | Holiday, Much warmer than last week |
-| 2 | 2024-05-20 | Mon | 273,788 | 28.4 | 273,788 | 295,639 | +1.2 | 65 | Holiday |
-| 3 | 2024-05-09 | Thu | 267,879 | 26.3 | 267,879 | 231,526 | +5.0 | 62 | Holiday, Much colder than last week |
-| 4 | 2024-10-03 | Thu | 229,004 | 20.9 | 229,004 | 225,698 | +6.0 | 73 | Holiday, Much colder than last week |
-| 5 | 2024-01-01 | Mon | 201,932 | 19.8 | 201,932 | 38,117 | +3.7 | 16 | Holiday, Christmas / New Year, Much colder than last week |
-| 6 | 2024-03-29 | Fri | 195,897 | 17.5 | 195,897 | 246,754 | +0.2 | 38 | Holiday |
-| 7 | 2024-04-01 | Mon | 175,987 | 16.9 | 175,987 | 281,394 | -4.7 | 36 | Holiday, Much warmer than last week |
-| 8 | 2024-03-31 | Sun | 165,755 | 19.2 | 165,755 | 272,193 | -7.1 | 55 | Weekend, DST change, Much warmer than last week |
-| 9 | 2024-05-30 | Thu | 160,714 | 14.6 | 160,714 | 138,461 | +0.7 | 97 | none in our inputs |
-| 10 | 2024-01-02 | Tue | 151,385 | 11.9 | -151,385 | 193,935 | +1.6 | 53 | Holiday week |
-
-## TimesFM-3 (daily 7 d)
-
-All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
-
-| Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-05-01 | Wed | 330,578 | 33.8 | 330,578 | 396,971 | -12.8 | 4 | Holiday, Much warmer than last week |
-| 2 | 2024-05-20 | Mon | 278,828 | 28.9 | 278,828 | 295,639 | +1.2 | 65 | Holiday |
-| 3 | 2024-05-09 | Thu | 276,326 | 27.2 | 276,326 | 231,526 | +5.0 | 62 | Holiday, Much colder than last week |
-| 4 | 2024-04-01 | Mon | 234,586 | 22.5 | 234,586 | 281,394 | -4.7 | 36 | Holiday, Much warmer than last week |
-| 5 | 2024-10-03 | Thu | 230,660 | 21.1 | 230,660 | 225,698 | +6.0 | 73 | Holiday, Much colder than last week |
-| 6 | 2024-01-01 | Mon | 201,932 | 19.8 | 201,932 | 38,117 | +3.7 | 16 | Holiday, Christmas / New Year, Much colder than last week |
-| 7 | 2024-03-31 | Sun | 169,518 | 19.6 | 169,518 | 272,193 | -7.1 | 55 | Weekend, DST change, Much warmer than last week |
-| 8 | 2024-03-29 | Fri | 168,338 | 15.0 | 168,338 | 246,754 | +0.2 | 38 | Holiday |
-| 9 | 2024-05-10 | Fri | 161,415 | 14.7 | 161,415 | 189,797 | -0.4 | 76 | Bridge day |
-| 10 | 2024-05-30 | Thu | 145,922 | 13.3 | 145,922 | 138,461 | +0.7 | 97 | none in our inputs |
-
-## TimesFM-3 (hourly 1 h)
-
-All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
-
-| Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-03-31 | Sun | 1,052 | 2.8 | 515 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
-| 2 | 2024-04-01 | Mon | 1,002 | 2.5 | 3 | 11,563 | -4.7 | 36 | Holiday, Much warmer than last week |
-| 3 | 2024-05-01 | Wed | 918 | 2.3 | 468 | 16,540 | -11.2 | 4 | Holiday, Much warmer than last week |
-| 4 | 2024-03-29 | Fri | 792 | 1.7 | 433 | 10,281 | +0.2 | 38 | Holiday |
-| 5 | 2024-10-03 | Thu | 717 | 1.6 | 347 | 9,526 | +5.8 | 73 | Holiday, Much colder than last week |
-| 6 | 2024-11-25 | Mon | 717 | 1.2 | 77 | 1,983 | -7.3 | 55 | Much warmer than last week |
-| 7 | 2024-09-27 | Fri | 694 | 1.2 | -395 | 5,358 | +1.1 | 15 | none in our inputs |
-| 8 | 2024-05-09 | Thu | 658 | 1.6 | 305 | 10,173 | +3.7 | 62 | Holiday, Much colder than last week |
-| 9 | 2024-10-28 | Mon | 646 | 1.3 | 106 | 2,800 | +2.5 | 111 | none in our inputs |
-| 10 | 2024-05-10 | Fri | 622 | 1.4 | 419 | 7,908 | +0.4 | 76 | Bridge day |
-
-## TimesFM-3 (hourly 24 h)
-
-All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
-
-| Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-05-09 | Thu | 10,799 | 25.2 | 10,799 | 10,173 | +3.7 | 62 | Holiday, Much colder than last week |
-| 2 | 2024-05-01 | Wed | 9,264 | 22.8 | 9,264 | 16,540 | -11.2 | 4 | Holiday, Much warmer than last week |
-| 3 | 2024-10-03 | Thu | 8,122 | 17.5 | 8,121 | 9,526 | +5.8 | 73 | Holiday, Much colder than last week |
-| 4 | 2024-03-29 | Fri | 7,761 | 16.4 | 7,761 | 10,281 | +0.2 | 38 | Holiday |
-| 5 | 2024-12-25 | Wed | 7,702 | 16.4 | 7,638 | 13,072 | +4.5 | 99 | Holiday, Christmas / New Year, Much colder than last week |
-| 6 | 2024-12-26 | Thu | 6,833 | 14.8 | 6,833 | 12,914 | +4.8 | 113 | Holiday, Christmas / New Year, Much colder than last week |
-| 7 | 2024-05-20 | Mon | 6,795 | 16.5 | 6,795 | 12,318 | +0.4 | 65 | Holiday |
-| 8 | 2024-03-31 | Sun | 6,715 | 17.8 | 6,715 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
-| 9 | 2024-05-30 | Thu | 6,354 | 13.5 | 6,354 | 5,769 | +0.3 | 97 | none in our inputs |
-| 10 | 2024-04-01 | Mon | 5,497 | 12.7 | 3,972 | 11,462 | -4.7 | 36 | Holiday, Much warmer than last week |
 
 ## SARIMAX (daily 1 d)
 
@@ -342,13 +283,13 @@ All forecast rows whose target falls on that day. Bias < 0 = under-forecast.
 
 | Rank | Date | Weekday | MAE (MWh) | MAPE % | Bias (MWh) | Naive MAE (MWh) | HDD change vs last week | Mean price (EUR/MWh) | Likely reason |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 2024-03-31 | Sun | 4,035 | 10.9 | 4,035 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
-| 2 | 2024-07-29 | Mon | 3,637 | 7.4 | 3,637 | 4,629 | +1.5 | 72 | none in our inputs |
-| 3 | 2024-05-01 | Wed | 3,318 | 8.2 | 3,318 | 16,540 | -11.2 | 4 | Holiday, Much warmer than last week |
-| 4 | 2024-12-24 | Tue | 3,277 | 6.8 | 3,277 | 12,727 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
-| 5 | 2024-12-09 | Mon | 3,210 | 4.7 | -3,210 | 2,555 | +0.8 | 100 | none in our inputs |
-| 6 | 2024-01-13 | Sat | 3,170 | 5.2 | -3,152 | 5,744 | +1.2 | 75 | Weekend, no other reason in our inputs |
-| 7 | 2024-12-29 | Sun | 3,067 | 6.1 | -3,037 | 698 | +4.9 | 105 | Christmas / New Year, Weekend, Much colder than last week |
-| 8 | 2024-01-29 | Mon | 2,766 | 4.6 | 2,668 | 5,862 | +1.8 | 81 | none in our inputs |
-| 9 | 2024-11-16 | Sat | 2,602 | 4.7 | -2,602 | 4,317 | -0.6 | 94 | Weekend, no other reason in our inputs |
-| 10 | 2024-11-17 | Sun | 2,550 | 4.7 | -2,524 | 4,072 | -1.2 | 63 | Weekend, no other reason in our inputs |
+| 1 | 2024-03-31 | Sun | 3,500 | 9.4 | 3,463 | 9,841 | -7.2 | 55 | Weekend, DST change, Much warmer than last week |
+| 2 | 2024-12-09 | Mon | 2,915 | 4.4 | -2,905 | 2,555 | +0.8 | 100 | none in our inputs |
+| 3 | 2024-12-29 | Sun | 2,753 | 5.5 | -2,741 | 698 | +4.9 | 105 | Christmas / New Year, Weekend, Much colder than last week |
+| 4 | 2024-11-16 | Sat | 2,684 | 5.0 | -2,654 | 4,317 | -0.6 | 94 | Weekend, no other reason in our inputs |
+| 5 | 2024-01-13 | Sat | 2,608 | 4.3 | -2,583 | 5,744 | +1.2 | 75 | Weekend, no other reason in our inputs |
+| 6 | 2024-12-24 | Tue | 2,566 | 5.4 | 2,335 | 12,727 | +4.7 | 102 | Christmas / New Year, Much colder than last week |
+| 7 | 2024-07-29 | Mon | 2,547 | 5.1 | 2,511 | 4,629 | +1.5 | 72 | none in our inputs |
+| 8 | 2024-01-19 | Fri | 2,436 | 3.8 | -2,419 | 2,170 | +0.8 | 79 | none in our inputs |
+| 9 | 2024-11-17 | Sun | 2,335 | 4.4 | -2,271 | 4,072 | -1.2 | 63 | Weekend, no other reason in our inputs |
+| 10 | 2024-01-21 | Sun | 2,227 | 4.0 | -2,174 | 1,161 | +0.4 | 50 | Weekend, no other reason in our inputs |

@@ -26,9 +26,9 @@ CATEGORICAL = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300",
 FIXED_COLOR = {
     "TimesFM-3, covariates": CATEGORICAL[0],
     "TabICL": CATEGORICAL[1],
-    "TimesFM-3, no covariates": CATEGORICAL[2],
+    "TimesFM-3, no covariates": CATEGORICAL[4],
     "SARIMAX": CATEGORICAL[3],
-    "Tree-based": CATEGORICAL[4],
+    "Tree-based": CATEGORICAL[2],
 }
 BLUE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
 RED_RAMP = ["#fbe0df", "#f3a9a8", "#e34948", "#b02a2a"]  # red arm of the blue <-> red diverging pair

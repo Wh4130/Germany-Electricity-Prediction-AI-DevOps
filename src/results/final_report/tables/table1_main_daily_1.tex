@@ -3,10 +3,9 @@
 Model & Results folder & Setting & Origins & MAE (MWh) & MAPE \% & Error reduction vs naive \% & RMSE (MWh) & Bias (MWh) & Pinball (MWh) & 80 \% band coverage \% \\
 \midrule
 \textbf{TabICL} & foundation & features=default ctx=all & 366 & 19,091 & 1.5 & 66.9 & 24,700 & -205 & 7,448 & 76.5 \\
-TimesFM-3 & foundation & ctx=all & 366 & 20,691 & 1.7 & 64.2 & 27,985 & 560 & 8,186 & 85.2 \\
+TimesFM-3, covariates & foundation & ctx=all & 366 & 20,691 & 1.7 & 64.2 & 27,985 & 560 & 8,186 & 85.2 \\
 SARIMAX & sarimax &  & 366 & 21,600 & 1.7 & 62.6 & 29,852 & -1,138 & 8,520 & 80.6 \\
 Tree-based & tree-based &  & 366 & 25,212 & 2.0 & 56.3 & 34,207 & -3,386 &  &  \\
-TimesFM-3 & foundation & ctx=all & 366 & 28,796 & 2.4 & 50.1 & 46,954 & 945 & 11,572 & 80.3 \\
 Seasonal naive & seasonal\_naive &  & 366 & 57,716 & 4.7 & 0.0 & 89,644 & -785 &  &  \\
 \bottomrule
 \end{tabular}

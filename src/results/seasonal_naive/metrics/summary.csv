@@ -3,6 +3,6 @@ seasonal_naive_daily_1d_test.csv,seasonal_naive,seasonal naive,baseline,,daily,1
 seasonal_naive_daily_1d_val.csv,seasonal_naive,seasonal naive,baseline,,daily,1,val,365,49920.80890410959,81771.93182964153,4.1225767667378665,75.42945205479452,0.0,,
 seasonal_naive_daily_7d_test.csv,seasonal_naive,seasonal naive,baseline,,daily,7,test,360,56841.71706349206,88603.33829646737,4.598327425254427,-59.56170634920635,0.0,,
 seasonal_naive_daily_7d_val.csv,seasonal_naive,seasonal naive,baseline,,daily,7,val,359,48666.46309192201,80183.07273176209,4.017954191057951,-129.31227616394747,0.0,,
-seasonal_naive_hourly_1h_test.csv,seasonal_naive,seasonal naive,baseline,,hourly,1,test,366,2154.4945901639344,2930.7408116510487,4.8201102480869675,-9.116120218579235,0.0,,
+seasonal_naive_hourly_1h_test.csv,seasonal_naive,seasonal naive,baseline,,hourly,1,test,8784,2656.1401912568303,4100.841117377879,5.140117743346067,-32.69085837887067,0.0,,
 seasonal_naive_hourly_24h_test.csv,seasonal_naive,seasonal naive,baseline,,hourly,24,test,366,2657.1668306010924,4101.975039226356,5.142907761535674,-31.65943761384335,0.0,,
 seasonal_naive_hourly_24h_val.csv,seasonal_naive,seasonal naive,baseline,,hourly,24,val,365,2339.6975171232875,3769.9120378193525,4.635933768138461,3.183019406392694,0.0,,

@@ -112,8 +112,8 @@ def fig_week(run: Run, week_start: str | None, colors: Colors, out_dir: Path, fo
     tidy(ax)
     ax.legend(loc="upper left", bbox_to_anchor=(0, 1.02), ncol=3)
     end = start + pd.Timedelta(days=6)
-    headline(fig, f"In a typical week, the hourly forecast is off by {mape:.1f} % on average",
-             f"{run.label}, {issued}, {start:%d %b} to {end:%d %b %Y}." + (" Shaded: 80 % band." if has_band else ""))
+    # headline(fig, f"In a typical week, the hourly forecast is off by {mape:.1f} % on average",
+    #          f"{run.label}, {issued}, {start:%d %b} to {end:%d %b %Y}." + (" Shaded: 80 % band." if has_band else ""))
     fig.subplots_adjust(top=0.82)
     return save(fig, out_dir, "fig1_typical_week", formats)
 
@@ -149,8 +149,8 @@ def fig_skill(summary: pd.DataFrame, colors: Colors, out_dir: Path, formats: lis
     ax.legend(handles=legend_handles(models, colors), loc="lower right")
     title = (f"Every model removes {lo:.0f} to {hi:.0f} % of the benchmark's error" if lo > 0 else
              f"Error removed vs the benchmark ranges from {lo:.0f} to {hi:.0f} %")
-    headline(fig, title, f"{split.capitalize()} year {SPLITS[split]}. Benchmark: the same hour or day one week "
-                         "before. Hatched: a model variant.")
+    # headline(fig, title, f"{split.capitalize()} year {SPLITS[split]}. Benchmark: the same hour or day one week "
+    #                      "before. Hatched: a model variant.")
     fig.subplots_adjust(top=1 - 0.75 / fig.get_figheight())
     return save(fig, out_dir, "fig2_skill_by_model", formats)
 
@@ -194,7 +194,7 @@ def fig_day_types(metrics: dict, colors: Colors, out_dir: Path, formats: list[st
         title = (f"{DAY_TYPE_LABEL[top]}s are the hardest days for {worst.value_counts().iloc[0]} of "
                  f"{len(worst)} runs")
     normal = df[df["type"] == "normal_weekday"]["MAPE"].mean()
-    headline(fig, title, f"MAPE by day type of the target. Normal weekdays: {normal:.1f} % on average over all runs.")
+    # headline(fig, title, f"MAPE by day type of the target. Normal weekdays: {normal:.1f} % on average over all runs.")
     fig.subplots_adjust(top=0.80, bottom=0.24, wspace=0.28)
     return save(fig, out_dir, "fig3_error_by_day_type", formats)
 
@@ -234,8 +234,8 @@ def fig_weather_change(weather: pd.DataFrame, colors: Colors, out_dir: Path, for
     else:
         title = (f"{int(lag.sum())} of {len(lag)} runs lag behind the weather "
                  "(too low when it turns colder, too high when warmer)")
-    headline(fig, title, "Temperature change = heating degrees vs the same time one week before. Bias = forecast "
-                         f"minus actual. Ordinary days of {SPLITS[split]}, observed weather as input.")
+    # headline(fig, title, "Temperature change = heating degrees vs the same time one week before. Bias = forecast "
+    #                      f"minus actual. Ordinary days of {SPLITS[split]}, observed weather as input.")
     fig.subplots_adjust(top=0.80, bottom=0.2, wspace=0.35)
     return save(fig, out_dir, "fig4_bias_by_temperature_change", formats)
 
@@ -274,8 +274,8 @@ def fig_heatmap(path: Path, run: Run, out_dir: Path, formats: list[str]):
     peak, low = int(by_hour.idxmax()), int(by_hour.idxmin())
     ratio = by_hour.max() / by_hour.min()
     tail = (": midday, when rooftop solar shapes the load, is the hardest time" if 10 <= peak <= 15 else "")
-    headline(fig, f"Errors peak around {peak:02d}:00, {ratio:.1f} times the error at {low:02d}:00{tail}",
-             f"{run.display}, ordinary days of {SPLITS[run.split]}.")
+    # headline(fig, f"Errors peak around {peak:02d}:00, {ratio:.1f} times the error at {low:02d}:00{tail}",
+    #         f"{run.display}, ordinary days of {SPLITS[run.split]}.")
     fig.subplots_adjust(top=0.84, wspace=0.18)
     return save(fig, out_dir, "fig5_hour_month_heatmap", formats)
 

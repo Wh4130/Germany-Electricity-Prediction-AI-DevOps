@@ -31,8 +31,8 @@ NAIVE_LABEL = "Seasonal naive"
 
 LABEL_RULES: list[tuple[str, str]] = [
     (r"^seasonal_naive", NAIVE_LABEL),
-    # (r"^timesfm3_.*_nocov_", "TimesFM-3, no covariates"),
-    (r"^timesfm3_", "TimesFM-3"),
+    (r"^timesfm3_.*_nocov_", "TimesFM-3, no covariates"),
+    (r"^timesfm3_", "TimesFM-3, covariates"),
     (r"^tabicl", "TabICL"),
     (r"^sarimax", "SARIMAX"),
     (r"^tree", "Tree-based"),
@@ -40,7 +40,7 @@ LABEL_RULES: list[tuple[str, str]] = [
 MODEL_DIR_SUFFIX = {"foundation_extra_features": " + extra features"}
 
 # Fixed display order of the known models (others follow alphabetically).
-MODEL_ORDER = ["TimesFM-3", "TabICL", "SARIMAX", "Tree-based"]
+MODEL_ORDER = ["TimesFM-3, covariates", "TimesFM-3, no covariates", "TabICL", "SARIMAX", "Tree-based"]
 HORIZON_ORDER = ["hourly 1 h", "hourly 24 h", "daily 1 d", "daily 7 d"]
 
 
