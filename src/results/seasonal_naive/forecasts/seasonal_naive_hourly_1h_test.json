@@ -4,6 +4,6 @@
   "resolution": "hourly",
   "horizon": 1,
   "split": "test",
-  "n_origins": 366,
+  "n_origins": 8784,
   "period": 168
 }

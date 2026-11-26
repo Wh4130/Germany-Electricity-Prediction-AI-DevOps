@@ -2,21 +2,19 @@
 \toprule
 Model & Horizon & MAE (MWh) & Yearly error (TWh) & Naive yearly error (TWh) & Reduction vs naive (TWh) & Reference & Reduction vs reference (TWh) \\
 \midrule
+TimesFM-3, covariates & hourly 1 h & 386 & 3.39 & 23.33 & 19.95 &  &  \\
 Tree-based & hourly 1 h & 408 & 3.58 & 23.33 & 19.75 &  &  \\
 SARIMAX & hourly 1 h & 489 & 4.29 & 23.33 & 19.04 &  &  \\
 TimesFM-3, covariates & hourly 24 h & 1,045 & 9.18 & 23.34 & 14.16 &  &  \\
-Tree-based & hourly 24 h & 1,147 & 10.07 & 23.34 & 13.26 &  &  \\
-TimesFM-3, no covariates & hourly 24 h & 1,260 & 11.07 & 23.34 & 12.27 &  &  \\
+Tree-based & hourly 24 h & 1,153 & 10.12 & 23.34 & 13.21 &  &  \\
 SARIMAX & hourly 24 h & 1,330 & 11.69 & 23.34 & 11.65 &  &  \\
 TabICL & daily 1 d & 19,091 & 6.99 & 21.12 & 14.14 &  &  \\
 TimesFM-3, covariates & daily 1 d & 20,691 & 7.57 & 21.12 & 13.55 &  &  \\
 SARIMAX & daily 1 d & 21,600 & 7.91 & 21.12 & 13.22 &  &  \\
 Tree-based & daily 1 d & 25,212 & 9.23 & 21.12 & 11.90 &  &  \\
-TimesFM-3, no covariates & daily 1 d & 28,796 & 10.54 & 21.12 & 10.59 &  &  \\
 TabICL & daily 7 d & 22,911 & 8.38 & 20.80 & 12.42 &  &  \\
 TimesFM-3, covariates & daily 7 d & 24,331 & 8.90 & 20.80 & 11.90 &  &  \\
 SARIMAX & daily 7 d & 29,385 & 10.76 & 20.80 & 10.05 &  &  \\
 Tree-based & daily 7 d & 32,091 & 11.74 & 20.80 & 9.06 &  &  \\
-TimesFM-3, no covariates & daily 7 d & 34,562 & 12.65 & 20.80 & 8.15 &  &  \\
 \bottomrule
 \end{tabular}

@@ -3,8 +3,8 @@ TimesFM-3 zero-shot forecasts: experiments F1, F2 (hourly) and F4, F5 (daily).
 
 | #  | Resolution | Horizons    | Covariates                          |
 |----|------------|-------------|-------------------------------------|
-| F1 | hourly     | 24 h        | none (target history only)          |
-| F2 | hourly     | 24 h        | known future + past only            |
+| F1 | hourly     | 1 h, 24 h   | none (target history only)          |
+| F2 | hourly     | 1 h, 24 h   | known future + past only            |
 | F4 | daily      | 1 d, 7 d    | none                                |
 | F5 | daily      | 1 d, 7 d    | known future + past only            |
 
@@ -13,9 +13,15 @@ covariates), the point forecast (median) and 9 quantiles come out. The model
 normalises every variate by itself, so raw MWh values go in and come out
 (FOUNDATION.md, "Normalization").
 
+Origins: hourly 24 h at every local midnight, hourly 1 h at every hour (like
+the 1-hour forecasts of the tree and SARIMAX runs), daily every day. A 1 h run
+has 24 times the origins of a 24 h run and one forward pass per origin, so it
+takes about 24 times as long.
+
 Examples (from the project root):
 
     uv run python -m src.models.foundation.timesfm3_forecast --resolution hourly --split val --covariates --context-length 2048
+    uv run python -m src.models.foundation.timesfm3_forecast --resolution hourly --split val --horizons 1 --context-length 2048
     uv run python -m src.models.foundation.timesfm3_forecast --resolution daily --split test --no-covariates
 """
 
@@ -39,12 +45,14 @@ from src.models.foundation.data import (
     load_frame,
     make_window,
     origin_positions,
+    origin_rule,
     write_forecasts,
 )
 
 CHECKPOINT = "google/timesfm-3.0-pytorch"
 MAX_VARIATES = 32  # TimesFM3Evaluator drops covariates at random above this
 PATCH = 32  # input patch length; contexts that are a multiple of it need no padding
+PRINT_EVERY = 10  # progress line every N chunks (a 1 h run has ~140 chunks)
 
 
 def load_model(checkpoint: str = CHECKPOINT, batch_size: int = 16, device: str | None = None):
@@ -151,7 +159,8 @@ def forecast(
     t0 = time.time()
     y_pred = np.empty((len(positions), horizon))
     q_pred = np.empty((len(positions), horizon, len(QUANTILES)))
-    for start in range(0, len(positions), chunk_size):
+    n_chunks = -(-len(positions) // chunk_size)
+    for c, start in enumerate(range(0, len(positions), chunk_size)):
         chunk = positions[start : start + chunk_size]
         wins = [make_window(frame, y, known, past, p, horizon, context_length) for p in chunk]
         contexts = [w.y_context for w in wins]
@@ -163,10 +172,13 @@ def forecast(
             po = pf = None
         outs = _predict_chunk(model, contexts, po, pf, horizon, use_znorm)
         for i, out in enumerate(outs):
-            y_pred[start + i] = out.forecast
-            q_pred[start + i] = out.quantiles
-        print(f"[timesfm3] {frame.resolution} {horizon_label(frame.resolution, horizon)} {split}: "
-              f"{min(start + chunk_size, len(positions))}/{len(positions)} origins")
+            # The model pads the horizon to a full output patch; keep the first H steps.
+            y_pred[start + i] = np.asarray(out.forecast)[:horizon]
+            q_pred[start + i] = np.asarray(out.quantiles)[:horizon]
+        if c % PRINT_EVERY == 0 or c == n_chunks - 1:
+            print(f"[timesfm3] {frame.resolution} {horizon_label(frame.resolution, horizon)} {split}: "
+                  f"{min(start + chunk_size, len(positions))}/{len(positions)} origins "
+                  f"({time.time() - t0:.0f} s)")
     runtime = time.time() - t0
 
     out_df = forecasts_to_frame(frame, positions, horizon, y_pred, q_pred)
@@ -178,6 +190,7 @@ def forecast(
         "resolution": frame.resolution,
         "horizon": horizon,
         "split": split,
+        "origins": origin_rule(frame.resolution, horizon),
         "n_origins": int(len(positions)),
         "context_length": "all" if context_length is None else int(context_length),
         "covariates_known": cov.known,
@@ -197,7 +210,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--resolution", choices=["hourly", "daily"], required=True)
     p.add_argument("--split", choices=["val", "test"], required=True)
-    p.add_argument("--horizons", type=int, nargs="+", help="default: 24 (hourly), 1 7 (daily)")
+    p.add_argument("--horizons", type=int, nargs="+", help="default: 1 24 (hourly), 1 7 (daily)")
     p.add_argument("--covariates", action=argparse.BooleanOptionalAction, default=True,
                    help="--no-covariates gives F1 / F4, --covariates F2 / F5")
     p.add_argument("--context-length", type=int, default=None,
@@ -211,6 +224,8 @@ def main() -> None:
     p.add_argument("--out-dir", type=Path, default=DEFAULT_FORECAST_DIR)
     args = p.parse_args()
 
+    horizons = args.horizons or list(HORIZONS[args.resolution])
+
     context_length = args.context_length
     if context_length is None and args.resolution == "hourly":
         context_length = 2048
@@ -219,7 +234,7 @@ def main() -> None:
 
     frame = load_frame(args.resolution, args.data_dir)
     model = load_model(args.checkpoint, args.batch_size, args.device)
-    for h in args.horizons or HORIZONS[args.resolution]:
+    for h in horizons:
         out, meta = forecast(model, frame, args.split, h, args.covariates, context_length,
                              use_znorm=args.use_znorm, max_origins=args.max_origins)
         name = run_name(args.resolution, h, args.split, args.covariates, context_length, args.use_znorm)

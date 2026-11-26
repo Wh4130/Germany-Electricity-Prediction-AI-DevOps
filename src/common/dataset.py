@@ -231,10 +231,22 @@ class FrameCache(dict):
 # --------------------------------------------------------------------------
 
 
-def origin_positions(frame: SeriesFrame, split: str, horizon: int) -> np.ndarray:
-    """Row positions of the forecast origins of one evaluation year.
+def origin_rule(resolution: str, horizon: int) -> str:
+    """Which rows are forecast origins (written to the JSON sidecars).
 
-    Hourly: every local midnight (the first row of each local date).
+    Hourly 1-step forecasts start at every hour, like the 1-hour forecasts of
+    the tree and SARIMAX runs; longer hourly horizons start at local midnight.
+    """
+    if resolution == "daily":
+        return "every day"
+    return "every hour" if horizon == 1 else "every local midnight"
+
+
+def origin_positions(frame: SeriesFrame, split: str, horizon: int) -> np.ndarray:
+    """Row positions of the forecast origins of one evaluation year (see ``origin_rule``).
+
+    Hourly 1 step: every hour (8760 origins in 2023, 8784 in 2024).
+    Hourly, longer horizons: every local midnight (the first row of each local date).
     Daily: every day. Only origins whose whole horizon lies inside the year.
     """
     if split not in SPLITS:
@@ -245,7 +257,7 @@ def origin_positions(frame: SeriesFrame, split: str, horizon: int) -> np.ndarray
         raise ValueError(f"no rows of {year} in the {frame.resolution} data")
     last = in_year[-1]
 
-    if frame.resolution == "hourly":
+    if origin_rule(frame.resolution, horizon) == "every local midnight":
         new_day = frame.local_date.ne(frame.local_date.shift()).to_numpy()
         cand = in_year[new_day[in_year]]
     else:

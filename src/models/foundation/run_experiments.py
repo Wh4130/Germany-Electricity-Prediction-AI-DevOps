@@ -5,13 +5,19 @@ Protocol (MODELS.md, "Shared setup"; FOUNDATION.md, "Experiments"):
 
 1. **Validation year (2023)**: every setting that has to be chosen is run on
    the 2023 origins.
-   - F1 / F2 (hourly TimesFM-3): context length 2048, 4096, 8192 h.
+   - F1 / F2 (hourly TimesFM-3, 1 h and 24 h): context length 2048, 4096,
+     8192 h, chosen separately for each horizon. The 1 h runs have an origin
+     at every hour (8760 in 2023), so each takes ~24 times as long as the
+     24 h run with the same context.
    - F4 / F5 (daily TimesFM-3): the whole history, nothing to choose
      (the validation run is still made, as a reference).
    - F6 (TabICL): features ``ours`` / ``default`` x context ``all`` / ``730`` days.
 2. **Selection**: per experiment and horizon, the setting with the lowest
    validation MAE (``--select-metric pinball`` for the mean pinball loss).
 3. **Test year (2024)**: one run with the selected setting, used once.
+   ``--skip-val`` skips steps 1 and 2: the test runs use the one setting given
+   on the command line (e.g. the context chosen for 24 h), marked
+   ``"fixed": true`` in ``selection_foundation.json``.
 4. Seasonal naive files for every resolution, horizon and split (in
    ``src/results/seasonal_naive/``), then all metrics, ``summary_foundation.csv``
    and ``selection_foundation.json`` in ``<results-dir>/metrics``.
@@ -24,6 +30,10 @@ Examples (from the project root):
     uv run python -m src.models.foundation.run_experiments                     # all five experiments
     uv run python -m src.models.foundation.run_experiments --experiments F4 F5 F6
     uv run python -m src.models.foundation.run_experiments --hourly-contexts 2048 4096   # smaller F1 / F2 grid
+    uv run python -m src.models.foundation.run_experiments --experiments F1 F2 --hourly-horizons 1   # only the 1 h runs
+    uv run python -m src.models.foundation.run_experiments --hourly-horizons 24  # without the 1 h runs
+    uv run python -m src.models.foundation.run_experiments --experiments F1 F2 --hourly-horizons 1 \\
+        --skip-val --hourly-contexts 8192                                        # 1 h test runs only
     uv run python -m src.models.foundation.run_experiments --extra-features    # = run_extra_features.py
 """
 
@@ -60,6 +70,40 @@ def same_run(path: Path, cov, n_origins: int) -> bool:
             and meta.get("n_origins") == n_origins)
 
 
+def fixed_settings(args, horizons: dict, previous: dict) -> dict:
+    """--skip-val: the one setting of every experiment and horizon, in the format of the selection.
+
+    Each grid option must have exactly one value; a validated choice of an
+    earlier run (``previous``, from selection_foundation.json) is shown as a hint.
+    """
+    def one(values, flag, exps):
+        if len(values) == 1:
+            return values[0]
+        done = [f"{k}: {v['chosen']}" for k, v in previous.items()
+                if v.get("experiment") in exps and not v.get("fixed")]
+        hint = f"; chosen on the validation year before: {', '.join(done)}" if done else ""
+        raise SystemExit(f"--skip-val needs exactly one value of {flag}, got {values}{hint}")
+
+    out = {}
+    for exp in args.experiments:
+        if exp == "F6":
+            chosen = {"features": one(args.tabicl_features, "--tabicl-features", ["F6"]),
+                      "context_days": tabicl_forecaster.parse_context(
+                          one(args.tabicl_contexts, "--tabicl-contexts", ["F6"]))}
+            hs = horizons["daily"]
+        else:
+            res, _ = TIMESFM_EXPERIMENTS[exp]
+            ctx = one(args.hourly_contexts, "--hourly-contexts", ["F1", "F2"]) if res == "hourly" else None
+            chosen = {"context_length": ctx}
+            hs = horizons[res]
+        for h in hs:
+            out[f"{exp}_{h}"] = {"experiment": exp, "horizon": h, "metric": None, "chosen": chosen,
+                                 "validation": [], "fixed": True,
+                                 "note": "fixed setting, no validation run (--skip-val)"}
+            print(f"[select] {exp} h={h}: {chosen} (fixed, no validation)")
+    return out
+
+
 def build_parser(extra_features: bool = False) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--experiments", nargs="+", choices=ALL_EXPERIMENTS,
@@ -67,11 +111,17 @@ def build_parser(extra_features: bool = False) -> argparse.ArgumentParser:
     p.add_argument("--extra-features", action="store_true", default=extra_features,
                    help="give the covariate models the engineered covariates (data.ENGINEERED); "
                         f"results go to src/results/{data.EXTRA_FEATURES_NAME}/ unless --results-dir is given")
+    p.add_argument("--hourly-horizons", type=int, nargs="+", choices=HORIZONS["hourly"],
+                   default=list(HORIZONS["hourly"]),
+                   help="horizons of F1 / F2 (1 h: an origin at every hour, ~24x the run time of 24 h)")
     p.add_argument("--hourly-contexts", type=int, nargs="+", default=[2048, 4096, 8192])
     p.add_argument("--tabicl-contexts", nargs="+", default=["all", "730"])
     p.add_argument("--tabicl-features", nargs="+", default=["ours", "default"])
     p.add_argument("--select-metric", choices=["MAE", "pinball"], default="MAE")
     p.add_argument("--skip-test", action="store_true", help="validation runs and selection only")
+    p.add_argument("--skip-val", action="store_true",
+                   help="no validation runs and no selection: test runs with a fixed setting, so exactly one "
+                        "value of --hourly-contexts (and of --tabicl-features / --tabicl-contexts for F6)")
     p.add_argument("--batch-size", type=int, default=16, help="TimesFM-3 per_core_batch_size")
     p.add_argument("--device", default=None)
     p.add_argument("--timesfm-checkpoint", default=timesfm3_forecast.CHECKPOINT)
@@ -89,15 +139,23 @@ def build_parser(extra_features: bool = False) -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None, extra_features: bool = False) -> None:
-    args = build_parser(extra_features).parse_args(argv)
+    parser = build_parser(extra_features)
+    args = parser.parse_args(argv)
+    if args.skip_val and args.skip_test:
+        parser.error("--skip-val and --skip-test together leave nothing to run")
     if args.extra_features:
         data.EXTRA_FEATURES = True  # read by covariate_set() at call time
         print(f"[run] engineered covariates switched on: {data.ENGINEERED}")
     if args.results_dir is None:
         args.results_dir = data.model_dir(data.EXTRA_FEATURES_NAME if args.extra_features else data.MODEL_NAME)
 
+    # Horizons of this run: the TimesFM-3 hourly ones can be narrowed with --hourly-horizons.
+    horizons = {**HORIZONS, "hourly": tuple(sorted(set(args.hourly_horizons)))}
+
     forecast_dir_ = args.results_dir / "forecasts"
     metrics_dir = args.results_dir / "metrics"
+    selection_file = metrics_dir / "selection_foundation.json"
+    previous_selection = json.loads(selection_file.read_text()) if selection_file.exists() else {}
     frames = {}
 
     def frame(res):
@@ -152,23 +210,23 @@ def main(argv: list[str] | None = None, extra_features: bool = False) -> None:
             covariate_set("daily", h, calendar=tabicl_forecaster.FEATURE_SETS[feats][0]), "daily", split, h)
 
     # ---------------------------------------------------------------- 1. validation
-    for exp in [e for e in args.experiments if e in TIMESFM_EXPERIMENTS]:
+    for exp in [e for e in args.experiments if e in TIMESFM_EXPERIMENTS and not args.skip_val]:
         res, _ = TIMESFM_EXPERIMENTS[exp]
         contexts = args.hourly_contexts if res == "hourly" else [None]
-        for h in HORIZONS[res]:
+        for h in horizons[res]:
             for ctx in contexts:
                 path = timesfm_run(exp, h, "val", ctx)
                 candidates.setdefault((exp, h), []).append(({"context_length": ctx}, path))
 
-    if "F6" in args.experiments:
-        for h in HORIZONS["daily"]:
+    if "F6" in args.experiments and not args.skip_val:
+        for h in horizons["daily"]:
             for feats in args.tabicl_features:
                 for ctx in map(tabicl_forecaster.parse_context, args.tabicl_contexts):
                     path = tabicl_run(h, "val", feats, ctx)
                     candidates.setdefault(("F6", h), []).append(({"features": feats, "context_days": ctx}, path))
 
     # ---------------------------------------------------------------- 2. selection
-    selection = {}
+    selection = fixed_settings(args, horizons, previous_selection) if args.skip_val else {}
     for (exp, h), cands in candidates.items():
         scores = evaluation.evaluate_files([pth for _, pth in cands], metrics_dir, data_dir=args.data_dir,
                                            frames=frames)
@@ -193,17 +251,29 @@ def main(argv: list[str] | None = None, extra_features: bool = False) -> None:
     # ---------------------------------------------------------------- 4. baselines + metrics
     resolutions = sorted({TIMESFM_EXPERIMENTS[e][0] for e in args.experiments if e in TIMESFM_EXPERIMENTS}
                          | ({"daily"} if "F6" in args.experiments else set()))
-    splits = ["val"] if args.skip_test else ["val", "test"]
+    splits = ["val"] if args.skip_test else ["test"] if args.skip_val else ["val", "test"]
     naive_files = [evaluation.naive_forecast_file(frame(res), split, h, args.naive_dir)
-                   for res in resolutions for h in HORIZONS[res] for split in splits]
+                   for res in resolutions for h in horizons[res] for split in splits]
 
     model_summary = evaluation.evaluate_files(sorted(set(produced)), metrics_dir, data_dir=args.data_dir,
                                               frames=frames)
     naive_summary = evaluation.evaluate_files(naive_files, data_dir=args.data_dir, frames=frames)  # own folder
     summary = pd.concat([model_summary, naive_summary], ignore_index=True)
     metrics_dir.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(metrics_dir / "summary_foundation.csv", index=False)
-    (metrics_dir / "selection_foundation.json").write_text(json.dumps(selection, indent=2, default=str))
+
+    # Merge with the files of earlier runs, so a partial run (e.g. --hourly-horizons 1)
+    # adds its rows instead of dropping the others. Rows of the same file are replaced.
+    summary_path = metrics_dir / "summary_foundation.csv"
+    selection_path = metrics_dir / "selection_foundation.json"
+    if summary_path.exists():
+        old = pd.read_csv(summary_path)
+        summary = pd.concat([old[~old["file"].isin(summary["file"])], summary], ignore_index=True)
+    # A --skip-val entry does not replace a validated entry that chose the same setting.
+    selection = {**previous_selection, **{k: v for k, v in selection.items()
+                                          if not (v.get("fixed") and k in previous_selection
+                                                  and previous_selection[k]["chosen"] == v["chosen"])}}
+    summary.to_csv(summary_path, index=False)
+    selection_path.write_text(json.dumps(selection, indent=2, default=str))
 
     with pd.option_context("display.width", 220, "display.max_columns", 20, "display.float_format", "{:,.3f}".format):
         print(summary.drop(columns=["file", "model", "model_dir"])

@@ -1,35 +1,31 @@
 Date,Models,Runs
-2024-03-31,16,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h)"
-2024-05-01,10,"TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h)"
-2024-01-01,8,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d)"
+2024-03-31,14,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h); Tree-based (hourly 24 h)"
+2024-05-01,7,"TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 1 d); Tree-based (daily 7 d); Tree-based (hourly 1 h)"
 2024-12-24,7,SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TabICL (daily 7 d); Tree-based (daily 1 d); Tree-based (hourly 24 h)
 2024-12-29,7,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h)"
+2024-01-01,6,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d)"
 2024-01-28,6,"TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (daily 1 d); Tree-based (daily 7 d)"
-2024-01-02,5,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3, no covariates (daily 1 d)"
-2024-05-30,5,"SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
 2024-11-16,5,"SARIMAX (daily 7 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); Tree-based (hourly 24 h)"
 2024-12-28,5,"SARIMAX (daily 7 d); SARIMAX (hourly 1 h); TabICL (daily 1 d); TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d)"
 2024-12-31,5,"SARIMAX (daily 1 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h); TimesFM-3, covariates (daily 1 d); Tree-based (hourly 1 h)"
-2024-04-01,4,"TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
-2024-10-03,4,"TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
+2024-01-02,4,SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 1 h); SARIMAX (hourly 24 h)
 2024-10-04,4,"TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d)"
-2024-12-25,4,"SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, no covariates (hourly 24 h)"
-2024-12-26,4,"SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (hourly 24 h)"
 2024-01-24,3,"TabICL (daily 1 d); TabICL (daily 7 d); TimesFM-3, covariates (daily 7 d)"
-2024-03-29,3,"TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
-2024-05-09,3,"TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
-2024-05-10,3,"TimesFM-3, covariates (hourly 24 h); TimesFM-3, no covariates (daily 7 d); Tree-based (daily 7 d)"
-2024-05-20,3,"TimesFM-3, no covariates (daily 1 d); TimesFM-3, no covariates (daily 7 d); TimesFM-3, no covariates (hourly 24 h)"
+2024-05-10,3,"TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d)"
 2024-07-29,3,"TimesFM-3, covariates (hourly 24 h); Tree-based (daily 7 d); Tree-based (hourly 24 h)"
+2024-09-27,3,"TabICL (daily 1 d); TimesFM-3, covariates (hourly 1 h); Tree-based (hourly 1 h)"
+2024-11-25,3,"SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 1 h); Tree-based (hourly 1 h)"
 2024-12-23,3,"SARIMAX (daily 1 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h)"
+2024-12-25,3,SARIMAX (daily 1 d); SARIMAX (daily 7 d); SARIMAX (hourly 24 h)
+2024-12-26,3,"SARIMAX (daily 7 d); SARIMAX (hourly 24 h); TimesFM-3, covariates (hourly 24 h)"
 2024-01-03,2,SARIMAX (daily 1 d); TabICL (daily 1 d)
 2024-01-08,2,Tree-based (daily 1 d); Tree-based (daily 7 d)
 2024-01-12,2,Tree-based (daily 1 d); Tree-based (daily 7 d)
-2024-01-29,2,Tree-based (hourly 1 h); Tree-based (hourly 24 h)
+2024-04-01,2,"TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h)"
 2024-05-28,2,"TimesFM-3, covariates (daily 1 d); TimesFM-3, covariates (daily 7 d)"
-2024-09-27,2,TabICL (daily 1 d); Tree-based (hourly 1 h)
+2024-05-30,2,"SARIMAX (hourly 1 h); TimesFM-3, covariates (hourly 24 h)"
+2024-10-03,2,"TimesFM-3, covariates (hourly 1 h); TimesFM-3, covariates (hourly 24 h)"
 2024-10-27,2,TabICL (daily 1 d); Tree-based (daily 1 d)
 2024-11-01,2,SARIMAX (hourly 1 h); Tree-based (hourly 1 h)
-2024-11-25,2,SARIMAX (hourly 1 h); Tree-based (hourly 1 h)
 2024-12-27,2,SARIMAX (hourly 1 h); TabICL (daily 1 d)
 2024-12-30,2,SARIMAX (daily 1 d); SARIMAX (hourly 1 h)

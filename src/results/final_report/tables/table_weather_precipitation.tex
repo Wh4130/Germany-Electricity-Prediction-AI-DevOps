@@ -2,34 +2,30 @@
 \toprule
 Horizon & Weather & Model & Days & MAE (MWh) & Bias (MWh) & Error reduction vs naive \% & 80 \% band coverage \% & Share of all error \% \\
 \midrule
+hourly 1 h & dry & TimesFM-3, covariates & 346 & 375 & 44 & 84.2 & 85.5 & 68.5 \\
 hourly 1 h & dry & SARIMAX & 346 & 470 & -18 & 80.2 & 86.2 & 68.1 \\
 hourly 1 h & dry & Tree-based & 346 & 405 & -38 & 82.9 &  & 69.4 \\
+hourly 1 h & wet & TimesFM-3, covariates & 254 & 384 & 17 & 83.7 & 84.7 & 31.5 \\
 hourly 1 h & wet & SARIMAX & 254 & 491 & 20 & 79.2 & 84.1 & 31.9 \\
 hourly 1 h & wet & Tree-based & 254 & 399 & -65 & 83.1 &  & 30.6 \\
-hourly 24 h & dry & TimesFM-3, no covariates & 346 & 1,077 & 71 & 54.7 & 81.3 & 67.6 \\
 hourly 24 h & dry & TimesFM-3, covariates & 346 & 970 & 40 & 59.2 & 82.3 & 68.3 \\
 hourly 24 h & dry & SARIMAX & 346 & 1,205 & -87 & 49.3 & 78.8 & 66.8 \\
-hourly 24 h & dry & Tree-based & 346 & 1,109 & -23 & 53.3 &  & 68.5 \\
-hourly 24 h & wet & TimesFM-3, no covariates & 254 & 1,146 & -342 & 51.3 & 77.3 & 32.4 \\
+hourly 24 h & dry & Tree-based & 346 & 1,132 & -138 & 52.3 &  & 69.0 \\
 hourly 24 h & wet & TimesFM-3, covariates & 254 & 1,003 & -31 & 57.4 & 81.1 & 31.7 \\
 hourly 24 h & wet & SARIMAX & 254 & 1,332 & -7 & 43.4 & 77.4 & 33.2 \\
-hourly 24 h & wet & Tree-based & 254 & 1,136 & -478 & 51.7 &  & 31.5 \\
-daily 1 d & dry & TimesFM-3, no covariates & 134 & 23,449 & 2,220 & 55.5 & 81.3 & 37.6 \\
+hourly 24 h & wet & Tree-based & 254 & 1,132 & -485 & 51.9 &  & 31.0 \\
 daily 1 d & dry & TimesFM-3, covariates & 134 & 18,643 & -2,545 & 64.6 & 85.8 & 37.3 \\
 daily 1 d & dry & TabICL & 134 & 18,877 & -499 & 64.2 & 76.9 & 39.4 \\
 daily 1 d & dry & SARIMAX & 134 & 18,683 & -5,642 & 64.5 & 81.3 & 36.2 \\
 daily 1 d & dry & Tree-based & 134 & 27,843 & -3,530 & 47.1 &  & 44.4 \\
-daily 1 d & wet & TimesFM-3, no covariates & 215 & 24,291 & -7,770 & 50.8 & 83.3 & 62.4 \\
 daily 1 d & wet & TimesFM-3, covariates & 215 & 19,542 & 1,685 & 60.4 & 86.5 & 62.7 \\
 daily 1 d & wet & TabICL & 215 & 18,073 & -3 & 63.4 & 77.2 & 60.6 \\
 daily 1 d & wet & SARIMAX & 215 & 20,557 & 947 & 58.4 & 82.8 & 63.8 \\
 daily 1 d & wet & Tree-based & 215 & 21,693 & -6,235 & 56.1 &  & 55.6 \\
-daily 7 d & dry & TimesFM-3, no covariates & 134 & 28,974 & 2,925 & 45.0 & 82.3 & 37.6 \\
 daily 7 d & dry & TimesFM-3, covariates & 134 & 24,557 & -1,191 & 53.4 & 76.1 & 40.5 \\
 daily 7 d & dry & TabICL & 134 & 22,768 & 180 & 56.8 & 75.3 & 38.9 \\
 daily 7 d & dry & SARIMAX & 134 & 28,585 & -9,996 & 45.7 & 82.7 & 39.7 \\
 daily 7 d & dry & Tree-based & 134 & 33,063 & 1,102 & 37.2 &  & 41.0 \\
-daily 7 d & wet & TimesFM-3, no covariates & 215 & 30,206 & -11,975 & 37.1 & 79.6 & 62.4 \\
 daily 7 d & wet & TimesFM-3, covariates & 215 & 22,721 & -590 & 52.7 & 81.0 & 59.5 \\
 daily 7 d & wet & TabICL & 215 & 22,495 & 717 & 53.2 & 74.6 & 61.1 \\
 daily 7 d & wet & SARIMAX & 215 & 27,364 & -3,005 & 43.0 & 84.6 & 60.3 \\
